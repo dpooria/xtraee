@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "xtraee"
+description = "CLI tool to extract data from excited state calculations with qchem output files"
+version = "0.0.1"
+authors = [
+    { name = "P. Dabbaghi"}
+]
+requires-python = ">=3.8"
+license = {text="MIT License"}
+readme = "README.md"
+keywords = ["excited state", "chemistry", "physics", "QChem", "CCSD", "CIS"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Chemistry",
+    "Topic :: Scientific/Engineering :: Physics"
+]
+dependencies = [
+    "rich",
+    "pandas",
+]
+
+[project.scripts]
+    xtraee="xtraee.cli:main"
+
+# [tool.coverage.run]
+# source = ['xtraee']
+
+# [tool.setuptools.package-data]
+# "test" = [
+#     "happy-family.txt",
+# ]

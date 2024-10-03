@@ -1,0 +1,11 @@
+**/__pycache__/
+/venv*/
+
+
+# Editor backup files:
+*~
+\#*
+
+# Vim swap files:
+.*.sw?
+
