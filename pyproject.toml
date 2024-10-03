@@ -23,11 +23,16 @@ classifiers = [
 ]
 dependencies = [
     "rich",
-    "pandas",
 ]
 
 [project.scripts]
     xtraee="xtraee.cli:main"
+
+
+[tool.pytest.ini_options]
+testpaths = [
+    "tests",
+]
 
 # [tool.coverage.run]
 # source = ['xtraee']

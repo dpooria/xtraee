@@ -1,4 +1,5 @@
 import re
+import pathlib
 from typing import List, Dict, Optional, Any
 
 
@@ -181,7 +182,7 @@ class Irrep:
         return self.eomee_transitions[key]
 
 
-class CCSDParser:
+class QCCSDParser:
     EE_SINGLETS_PATTERN = re.compile(r"^EE_SINGLETS\s+\[(.*)\]\s*")
     EE_TRIPLETS_PATTERN = re.compile(r"^EE_TRIPLETS\s+\[(.*)\]\s*")
     IRREPSOLV_PATTERN = re.compile(
@@ -208,17 +209,22 @@ class CCSDParser:
     LAMBDA_BLOCK = "lambda"
     TRPROPS_BLOCK = "transition_prop"
 
-    def __init__(self, input_file: str, first_kid: str, happy_family: str):
+    def __init__(
+        self,
+        input_file: str | pathlib.Path,
+        first_kid: str | pathlib.Path,
+        happy_family: str | pathlib.Path,
+    ):
         self.input_file = input_file
         self.first_kid = first_kid
         self.happy_family = happy_family
         self.parser = {
-            CCSDParser.NULL_BLOCK: lambda line: None,
-            CCSDParser.INPUT_BLOCK: self.process_input_block,
-            CCSDParser.LAMBDA_BLOCK: self.process_lambda_block,
-            CCSDParser.TRPROPS_BLOCK: self.process_trprops_block,
+            QCCSDParser.NULL_BLOCK: lambda line: None,
+            QCCSDParser.INPUT_BLOCK: self.process_input_block,
+            QCCSDParser.LAMBDA_BLOCK: self.process_lambda_block,
+            QCCSDParser.TRPROPS_BLOCK: self.process_trprops_block,
         }
-        self.block = CCSDParser.NULL_BLOCK
+        self.block = QCCSDParser.NULL_BLOCK
         self.ee_singlets: List[int] = []
         self.N_singlets = 0
         self.ee_triplets: List[int] = []
@@ -257,7 +263,7 @@ class CCSDParser:
             irr.sort()
         singlets = [irr for irr in self.irreps if irr.ee_type == "singlet"]
         triplets = [irr for irr in self.irreps if irr.ee_type == "triplet"]
-        lowest_singlets = CCSDParser.select_lowest_excitations(singlets)
+        lowest_singlets = QCCSDParser.select_lowest_excitations(singlets)
         data = {}
         for i, singlet in enumerate(lowest_singlets):
             matched_triplets = []

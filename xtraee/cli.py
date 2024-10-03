@@ -1,5 +1,5 @@
 import argparse
-from xtraee.parser.ccsd import CCSDParser
+from xtraee.parser.qc_ccsd import QCCSDParser
 
 
 def parse_args() -> argparse.Namespace:
@@ -26,7 +26,7 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> int:
     args = parse_args()
-    qccsd = CCSDParser(args.input, args.first_kid, args.happy_family)
+    qccsd = QCCSDParser(args.input, args.first_kid, args.happy_family)
     qccsd.process_file()
     qccsd.write_first_kid()
     qccsd.write_happy_family()
