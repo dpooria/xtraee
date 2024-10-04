@@ -70,12 +70,13 @@ class EOMEETransitionBlock(TransitionBlock):
             self.excitation_energy = float(m.group(1))
 
     def __repr__(self) -> str:
+        line = "\n".join(map(str, self.transitions))
         return (
             f"EOMEE transition {self.excitation} {self.id_number}/{self.irrep}\n"  # noqa
             f"EE: {self.excitation_energy:.4f} eV.\n"
             f"R0^2: {self.R0:.4f} R1^2: {self.R1:.4f} R2^2: {self.R2:.4f}\n"  # noqa
             "Amplitude Transitions between orbitals\n"
-            f'{"\n".join(map(str, self.transitions))}\n'
+            f"{line}\n"
             f"Oscillator strength (a.u.): {self.oscillator_strength:.6f},"
             f"omega (Mulliken): {self.omega:.4f}\n"
         )
@@ -99,11 +100,12 @@ class CISTransitionBlock(TransitionBlock):
             self.excitation = m.group(1).lower()
 
     def __repr__(self) -> str:
+        line = "\n".join(map(str, self.transitions))
         return (
             f"CIS transition {self.id_number}/{self.irrep} {self.excitation}\n"  # noqa
             f"EE: {self.excitation_energy:.4f} eV.\n"
             "Amplitude Transitions between orbitals\n"
-            f'{"\n".join(map(str, self.transitions))}\n'
+            f"{line}\n"
             f"Oscillator strength (a.u.): {self.oscillator_strength:.6f}, \n"
         )
 
