@@ -1,6 +1,8 @@
 **/__pycache__/
 /venv*/
 /*.egg-info/
+/.pytest_cache/
+/.mypy_cache/
 
 
 # Editor backup files:

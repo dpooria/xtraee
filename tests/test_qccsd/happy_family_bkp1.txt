@@ -1,0 +1,339 @@
+Lowest excitation transitions
+---- Happy family -----
+----------------S1--------------
+EOMEE transition singlet 1/A"
+EE: 3.9960 eV.
+R0^2: 0.0000 R1^2: 0.9130 R2^2: 0.0870
+Amplitude Transitions between orbitals
+0.6217	 13 (A') A -> 3 (A") A
+0.6217	 13 (A') B -> 3 (A") B
+0.2236	 13 (A') A -> 4 (A") A
+0.2236	 13 (A') B -> 4 (A") B
+
+Oscillator strength (a.u.): 0.000123,omega (Mulliken): 0.8144
+Matched triplets [with 0: 0.6217	 13 (A') A -> 3 (A") A
+]
+EOMEE transition triplet 1/A"
+EE: 3.5955 eV.
+R0^2: 0.0000 R1^2: 0.9320 R2^2: 0.0680
+Amplitude Transitions between orbitals
+0.6194	 13 (A') A -> 3 (A") A
+-0.6194	 13 (A') B -> 3 (A") B
+0.2444	 13 (A') A -> 4 (A") A
+-0.2444	 13 (A') B -> 4 (A") B
+
+Oscillator strength (a.u.): -0.000000,omega (Mulliken): 0.8354
+
+EOMEE transition triplet 2/A"
+EE: 7.5312 eV.
+R0^2: 0.0000 R1^2: 0.8998 R2^2: 0.1002
+Amplitude Transitions between orbitals
+0.5205	 13 (A') A -> 4 (A") A
+-0.5205	 13 (A') B -> 4 (A") B
+0.2668	 12 (A') A -> 3 (A") A
+-0.2668	 12 (A') B -> 3 (A") B
+-0.2399	 13 (A') A -> 3 (A") A
+0.2399	 13 (A') B -> 3 (A") B
+-0.1635	 11 (A') A -> 3 (A") A
+0.1635	 11 (A') B -> 3 (A") B
+
+Oscillator strength (a.u.): 0.000000,omega (Mulliken): 0.8156
+
+----------------S2--------------
+EOMEE transition singlet 2/A"
+EE: 7.7851 eV.
+R0^2: 0.0000 R1^2: 0.8811 R2^2: 0.1189
+Amplitude Transitions between orbitals
+-0.5641	 13 (A') A -> 4 (A") A
+-0.5641	 13 (A') B -> 4 (A") B
+0.2287	 13 (A') A -> 3 (A") A
+0.2287	 13 (A') B -> 3 (A") B
+-0.2116	 12 (A') A -> 3 (A") A
+-0.2116	 12 (A') B -> 3 (A") B
+
+Oscillator strength (a.u.): 0.000084,omega (Mulliken): 0.8006
+Matched triplets [with 0: -0.5641	 13 (A') A -> 4 (A") A
+]
+EOMEE transition triplet 1/A"
+EE: 3.5955 eV.
+R0^2: 0.0000 R1^2: 0.9320 R2^2: 0.0680
+Amplitude Transitions between orbitals
+0.6194	 13 (A') A -> 3 (A") A
+-0.6194	 13 (A') B -> 3 (A") B
+0.2444	 13 (A') A -> 4 (A") A
+-0.2444	 13 (A') B -> 4 (A") B
+
+Oscillator strength (a.u.): -0.000000,omega (Mulliken): 0.8354
+
+EOMEE transition triplet 2/A"
+EE: 7.5312 eV.
+R0^2: 0.0000 R1^2: 0.8998 R2^2: 0.1002
+Amplitude Transitions between orbitals
+0.5205	 13 (A') A -> 4 (A") A
+-0.5205	 13 (A') B -> 4 (A") B
+0.2668	 12 (A') A -> 3 (A") A
+-0.2668	 12 (A') B -> 3 (A") B
+-0.2399	 13 (A') A -> 3 (A") A
+0.2399	 13 (A') B -> 3 (A") B
+-0.1635	 11 (A') A -> 3 (A") A
+0.1635	 11 (A') B -> 3 (A") B
+
+Oscillator strength (a.u.): 0.000000,omega (Mulliken): 0.8156
+
+EOMEE transition triplet 3/A"
+EE: 8.3299 eV.
+R0^2: 0.0000 R1^2: 0.9044 R2^2: 0.0956
+Amplitude Transitions between orbitals
+0.4961	 12 (A') A -> 3 (A") A
+-0.4961	 12 (A') B -> 3 (A") B
+-0.2791	 13 (A') A -> 4 (A") A
+0.2791	 13 (A') B -> 4 (A") B
+-0.2314	 11 (A') A -> 3 (A") A
+0.2314	 11 (A') B -> 3 (A") B
+-0.1504	 9 (A') A -> 3 (A") A
+0.1504	 9 (A') B -> 3 (A") B
+-0.1177	 11 (A') A -> 4 (A") A
+0.1177	 11 (A') B -> 4 (A") B
+
+Oscillator strength (a.u.): -0.000000,omega (Mulliken): 0.8152
+
+EOMEE transition triplet 7/A"
+EE: 9.8985 eV.
+R0^2: 0.0000 R1^2: 0.9211 R2^2: 0.0789
+Amplitude Transitions between orbitals
+-0.5335	 9 (A') A -> 3 (A") A
+0.5335	 9 (A') B -> 3 (A") B
+-0.2564	 11 (A') A -> 4 (A") A
+0.2564	 11 (A') B -> 4 (A") B
+0.2292	 11 (A') A -> 3 (A") A
+-0.2292	 11 (A') B -> 3 (A") B
+-0.1196	 10 (A') A -> 3 (A") A
+0.1196	 10 (A') B -> 3 (A") B
+0.1168	 13 (A') A -> 4 (A") A
+-0.1168	 13 (A') B -> 4 (A") B
+
+Oscillator strength (a.u.): 0.000000,omega (Mulliken): 0.8320
+
+----------------S3--------------
+EOMEE transition singlet 3/A"
+EE: 8.6240 eV.
+R0^2: 0.0000 R1^2: 0.9016 R2^2: 0.0984
+Amplitude Transitions between orbitals
+0.6140	 12 (A') A -> 3 (A") A
+0.6140	 12 (A') B -> 3 (A") B
+-0.2112	 13 (A') A -> 4 (A") A
+-0.2112	 13 (A') B -> 4 (A") B
+
+Oscillator strength (a.u.): 0.001638,omega (Mulliken): 0.8096
+Matched triplets [with 0: 0.6140	 12 (A') A -> 3 (A") A
+]
+EOMEE transition triplet 2/A"
+EE: 7.5312 eV.
+R0^2: 0.0000 R1^2: 0.8998 R2^2: 0.1002
+Amplitude Transitions between orbitals
+0.5205	 13 (A') A -> 4 (A") A
+-0.5205	 13 (A') B -> 4 (A") B
+0.2668	 12 (A') A -> 3 (A") A
+-0.2668	 12 (A') B -> 3 (A") B
+-0.2399	 13 (A') A -> 3 (A") A
+0.2399	 13 (A') B -> 3 (A") B
+-0.1635	 11 (A') A -> 3 (A") A
+0.1635	 11 (A') B -> 3 (A") B
+
+Oscillator strength (a.u.): 0.000000,omega (Mulliken): 0.8156
+
+EOMEE transition triplet 3/A"
+EE: 8.3299 eV.
+R0^2: 0.0000 R1^2: 0.9044 R2^2: 0.0956
+Amplitude Transitions between orbitals
+0.4961	 12 (A') A -> 3 (A") A
+-0.4961	 12 (A') B -> 3 (A") B
+-0.2791	 13 (A') A -> 4 (A") A
+0.2791	 13 (A') B -> 4 (A") B
+-0.2314	 11 (A') A -> 3 (A") A
+0.2314	 11 (A') B -> 3 (A") B
+-0.1504	 9 (A') A -> 3 (A") A
+0.1504	 9 (A') B -> 3 (A") B
+-0.1177	 11 (A') A -> 4 (A") A
+0.1177	 11 (A') B -> 4 (A") B
+
+Oscillator strength (a.u.): -0.000000,omega (Mulliken): 0.8152
+
+EOMEE transition triplet 4/A"
+EE: 8.4148 eV.
+R0^2: 0.0000 R1^2: 0.9332 R2^2: 0.0668
+Amplitude Transitions between orbitals
+-0.5229	 11 (A') A -> 3 (A") A
+0.5229	 11 (A') B -> 3 (A") B
+-0.2842	 12 (A') A -> 3 (A") A
+0.2842	 12 (A') B -> 3 (A") B
+-0.1764	 9 (A') A -> 4 (A") A
+0.1764	 9 (A') B -> 4 (A") B
+-0.1730	 9 (A') A -> 3 (A") A
+0.1730	 9 (A') B -> 3 (A") B
+-0.1269	 11 (A') A -> 4 (A") A
+0.1269	 11 (A') B -> 4 (A") B
+0.1056	 10 (A') A -> 3 (A") A
+-0.1056	 10 (A') B -> 3 (A") B
+
+Oscillator strength (a.u.): 0.000000,omega (Mulliken): 0.8389
+
+----------------S4--------------
+EOMEE transition singlet 4/A"
+EE: 9.0236 eV.
+R0^2: 0.0000 R1^2: 0.9153 R2^2: 0.0847
+Amplitude Transitions between orbitals
+0.6089	 11 (A') A -> 3 (A") A
+0.6089	 11 (A') B -> 3 (A") B
+0.1539	 9 (A') A -> 4 (A") A
+0.1539	 9 (A') B -> 4 (A") B
+0.1466	 9 (A') A -> 3 (A") A
+0.1466	 9 (A') B -> 3 (A") B
+0.1087	 11 (A') A -> 4 (A") A
+0.1087	 11 (A') B -> 4 (A") B
+-0.1065	 10 (A') A -> 3 (A") A
+-0.1065	 10 (A') B -> 3 (A") B
+
+Oscillator strength (a.u.): 0.003045,omega (Mulliken): 0.8187
+Matched triplets [with 0: 0.6089	 11 (A') A -> 3 (A") A
+]
+EOMEE transition triplet 2/A"
+EE: 7.5312 eV.
+R0^2: 0.0000 R1^2: 0.8998 R2^2: 0.1002
+Amplitude Transitions between orbitals
+0.5205	 13 (A') A -> 4 (A") A
+-0.5205	 13 (A') B -> 4 (A") B
+0.2668	 12 (A') A -> 3 (A") A
+-0.2668	 12 (A') B -> 3 (A") B
+-0.2399	 13 (A') A -> 3 (A") A
+0.2399	 13 (A') B -> 3 (A") B
+-0.1635	 11 (A') A -> 3 (A") A
+0.1635	 11 (A') B -> 3 (A") B
+
+Oscillator strength (a.u.): 0.000000,omega (Mulliken): 0.8156
+
+EOMEE transition triplet 3/A"
+EE: 8.3299 eV.
+R0^2: 0.0000 R1^2: 0.9044 R2^2: 0.0956
+Amplitude Transitions between orbitals
+0.4961	 12 (A') A -> 3 (A") A
+-0.4961	 12 (A') B -> 3 (A") B
+-0.2791	 13 (A') A -> 4 (A") A
+0.2791	 13 (A') B -> 4 (A") B
+-0.2314	 11 (A') A -> 3 (A") A
+0.2314	 11 (A') B -> 3 (A") B
+-0.1504	 9 (A') A -> 3 (A") A
+0.1504	 9 (A') B -> 3 (A") B
+-0.1177	 11 (A') A -> 4 (A") A
+0.1177	 11 (A') B -> 4 (A") B
+
+Oscillator strength (a.u.): -0.000000,omega (Mulliken): 0.8152
+
+EOMEE transition triplet 4/A"
+EE: 8.4148 eV.
+R0^2: 0.0000 R1^2: 0.9332 R2^2: 0.0668
+Amplitude Transitions between orbitals
+-0.5229	 11 (A') A -> 3 (A") A
+0.5229	 11 (A') B -> 3 (A") B
+-0.2842	 12 (A') A -> 3 (A") A
+0.2842	 12 (A') B -> 3 (A") B
+-0.1764	 9 (A') A -> 4 (A") A
+0.1764	 9 (A') B -> 4 (A") B
+-0.1730	 9 (A') A -> 3 (A") A
+0.1730	 9 (A') B -> 3 (A") B
+-0.1269	 11 (A') A -> 4 (A") A
+0.1269	 11 (A') B -> 4 (A") B
+0.1056	 10 (A') A -> 3 (A") A
+-0.1056	 10 (A') B -> 3 (A") B
+
+Oscillator strength (a.u.): 0.000000,omega (Mulliken): 0.8389
+
+EOMEE transition triplet 7/A"
+EE: 9.8985 eV.
+R0^2: 0.0000 R1^2: 0.9211 R2^2: 0.0789
+Amplitude Transitions between orbitals
+-0.5335	 9 (A') A -> 3 (A") A
+0.5335	 9 (A') B -> 3 (A") B
+-0.2564	 11 (A') A -> 4 (A") A
+0.2564	 11 (A') B -> 4 (A") B
+0.2292	 11 (A') A -> 3 (A") A
+-0.2292	 11 (A') B -> 3 (A") B
+-0.1196	 10 (A') A -> 3 (A") A
+0.1196	 10 (A') B -> 3 (A") B
+0.1168	 13 (A') A -> 4 (A") A
+-0.1168	 13 (A') B -> 4 (A") B
+
+Oscillator strength (a.u.): 0.000000,omega (Mulliken): 0.8320
+
+EOMEE transition triplet 8/A"
+EE: 10.2528 eV.
+R0^2: 0.0000 R1^2: 0.9199 R2^2: 0.0801
+Amplitude Transitions between orbitals
+-0.5545	 10 (A') A -> 3 (A") A
+0.5545	 10 (A') B -> 3 (A") B
+-0.2292	 12 (A') A -> 4 (A") A
+0.2292	 12 (A') B -> 4 (A") B
+-0.1977	 11 (A') A -> 3 (A") A
+0.1977	 11 (A') B -> 3 (A") B
+-0.1017	 8 (A') A -> 4 (A") A
+0.1017	 8 (A') B -> 4 (A") B
+
+Oscillator strength (a.u.): -0.000000,omega (Mulliken): 0.8310
+
+----------------S5--------------
+EOMEE transition singlet 5/A"
+EE: 9.6935 eV.
+R0^2: 0.0000 R1^2: 0.9354 R2^2: 0.0646
+Amplitude Transitions between orbitals
+0.5681	 2 (A") A -> 14 (A') A
+0.5681	 2 (A") B -> 14 (A') B
+0.3608	 2 (A") A -> 15 (A') A
+0.3608	 2 (A") B -> 15 (A') B
+
+Oscillator strength (a.u.): 0.016465,omega (Mulliken): 0.8453
+Matched triplets [with 0: 0.5681	 2 (A") A -> 14 (A') A
+]
+EOMEE transition triplet 5/A"
+EE: 9.4861 eV.
+R0^2: 0.0000 R1^2: 0.9425 R2^2: 0.0575
+Amplitude Transitions between orbitals
+-0.5656	 2 (A") A -> 14 (A') A
+0.5656	 2 (A") B -> 14 (A') B
+-0.3660	 2 (A") A -> 15 (A') A
+0.3660	 2 (A") B -> 15 (A') B
+
+Oscillator strength (a.u.): -0.000000,omega (Mulliken): 0.8542
+
+EOMEE transition triplet 6/A"
+EE: 9.7120 eV.
+R0^2: 0.0000 R1^2: 0.9434 R2^2: 0.0566
+Amplitude Transitions between orbitals
+-0.5425	 2 (A") A -> 15 (A') A
+0.5425	 2 (A") B -> 15 (A') B
+0.3535	 2 (A") A -> 14 (A') A
+-0.3535	 2 (A") B -> 14 (A') B
+-0.1653	 2 (A") A -> 16 (A') A
+0.1653	 2 (A") B -> 16 (A') B
+
+Oscillator strength (a.u.): 0.000000,omega (Mulliken): 0.8531
+
+EOMEE transition triplet 9/A"
+EE: 11.2948 eV.
+R0^2: 0.0000 R1^2: 0.9317 R2^2: 0.0683
+Amplitude Transitions between orbitals
+0.5963	 2 (A") A -> 16 (A') A
+-0.5963	 2 (A") B -> 16 (A') B
+-0.1912	 2 (A") A -> 17 (A') A
+0.1912	 2 (A") B -> 17 (A') B
+-0.1295	 2 (A") A -> 15 (A') A
+0.1295	 2 (A") B -> 15 (A') B
+0.1177	 2 (A") A -> 14 (A') A
+-0.1177	 2 (A") B -> 14 (A') B
+0.1110	 2 (A") A -> 20 (A') A
+-0.1110	 2 (A") B -> 20 (A') B
+0.1034	 1 (A") A -> 14 (A') A
+-0.1034	 1 (A") B -> 14 (A') B
+
+Oscillator strength (a.u.): -0.000000,omega (Mulliken): 0.8409
+
+--- End of happy family :) ---

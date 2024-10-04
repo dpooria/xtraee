@@ -1,0 +1,475 @@
+singlet
+CIS transition 3/ singlet
+EE: 6.7823 eV.
+Amplitude Transitions between orbitals
+0.9698	 D(   15) -> V(    1)
+0.1242	 D(   14) -> V(    5)
+-0.0662	 D(   11) -> V(   11)
+-0.0599	 D(   12) -> V(    6)
+0.0546	 D(    7) -> V(    4)
+0.0512	 D(    9) -> V(    3)
+0.0464	 D(   10) -> V(    2)
+0.0431	 D(   12) -> V(   10)
+Oscillator strength (a.u.): 1.153462, 
+
+CIS transition 7/ singlet
+EE: 8.4390 eV.
+Amplitude Transitions between orbitals
+0.9169	 D(   15) -> V(    2)
+-0.2260	 D(   15) -> V(    4)
+-0.1734	 D(   14) -> V(    6)
+0.1650	 D(   13) -> V(    1)
+-0.1165	 D(   14) -> V(    3)
+0.0913	 D(   15) -> V(   12)
+-0.0856	 D(   14) -> V(    7)
+0.0685	 D(   15) -> V(    9)
+-0.0652	 D(   15) -> V(   23)
+-0.0634	 D(   15) -> V(    8)
+0.0547	 D(   12) -> V(    5)
+0.0476	 D(   14) -> V(   22)
+Oscillator strength (a.u.): 0.001680, 
+
+CIS transition 9/ singlet
+EE: 8.6521 eV.
+Amplitude Transitions between orbitals
+0.9420	 D(   15) -> V(    3)
+0.2684	 D(   14) -> V(    4)
+-0.1002	 D(   14) -> V(    2)
+0.0855	 D(   15) -> V(    6)
+0.0832	 D(   15) -> V(    7)
+0.0688	 D(   15) -> V(   10)
+0.0503	 D(   15) -> V(   25)
+Oscillator strength (a.u.): 0.000000, 
+
+CIS transition 10/ singlet
+EE: 8.9455 eV.
+Amplitude Transitions between orbitals
+0.9412	 D(   13) -> V(    1)
+0.2243	 D(   12) -> V(    5)
+-0.1794	 D(   15) -> V(    2)
+0.0998	 D(   11) -> V(    1)
+0.0656	 D(   13) -> V(   21)
+-0.0536	 D(    8) -> V(    5)
+-0.0440	 D(   10) -> V(    1)
+-0.0436	 D(   15) -> V(    8)
+Oscillator strength (a.u.): 0.001012, 
+
+CIS transition 11/ singlet
+EE: 8.9863 eV.
+Amplitude Transitions between orbitals
+0.9009	 D(   15) -> V(    4)
+0.3014	 D(   14) -> V(    3)
+0.2360	 D(   15) -> V(    2)
+-0.1035	 D(   14) -> V(    7)
+-0.1031	 D(   11) -> V(    1)
+-0.0737	 D(   15) -> V(    8)
+-0.0446	 D(   15) -> V(   11)
+Oscillator strength (a.u.): 0.029047, 
+
+CIS transition 13/ singlet
+EE: 9.1174 eV.
+Amplitude Transitions between orbitals
+0.6828	 D(   15) -> V(    5)
+0.6724	 D(   14) -> V(    1)
+0.0847	 D(   12) -> V(    2)
+-0.0793	 D(   13) -> V(    3)
+0.0715	 D(   10) -> V(    3)
+-0.0581	 D(    8) -> V(    8)
+0.0564	 D(    7) -> V(    3)
+0.0547	 D(   13) -> V(   13)
+0.0542	 D(   10) -> V(    7)
+-0.0536	 D(   11) -> V(   10)
+0.0524	 D(    9) -> V(   11)
+0.0523	 D(   11) -> V(   27)
+0.0489	 D(    9) -> V(    9)
+0.0485	 D(   13) -> V(   10)
+0.0447	 D(    8) -> V(    4)
+-0.0443	 D(   10) -> V(    6)
+0.0442	 D(    9) -> V(    2)
+-0.0436	 D(   12) -> V(   12)
+Oscillator strength (a.u.): 0.000000, 
+
+CIS transition 17/ singlet
+EE: 9.7575 eV.
+Amplitude Transitions between orbitals
+0.9078	 D(   11) -> V(    1)
+-0.2659	 D(    9) -> V(    5)
+-0.1551	 D(   12) -> V(    5)
+-0.1364	 D(   10) -> V(    1)
+0.0962	 D(   15) -> V(    4)
+-0.0936	 D(   15) -> V(    8)
+0.0901	 D(   11) -> V(   21)
+-0.0804	 D(   13) -> V(    1)
+0.0730	 D(    6) -> V(    5)
+0.0700	 D(    9) -> V(   20)
+-0.0583	 D(    5) -> V(    1)
+0.0460	 D(   15) -> V(    9)
+0.0451	 D(    7) -> V(    1)
+0.0439	 D(   15) -> V(    2)
+Oscillator strength (a.u.): 0.000012, 
+
+CIS transition 18/ singlet
+EE: 9.7781 eV.
+Amplitude Transitions between orbitals
+0.7053	 D(   14) -> V(    1)
+-0.7048	 D(   15) -> V(    5)
+Oscillator strength (a.u.): 0.000000, 
+
+CIS transition 19/ singlet
+EE: 9.8320 eV.
+Amplitude Transitions between orbitals
+0.6650	 D(   12) -> V(    1)
+-0.4531	 D(   15) -> V(    6)
+0.3227	 D(   13) -> V(    5)
+0.3198	 D(   14) -> V(    2)
+-0.2461	 D(   15) -> V(    7)
+-0.1372	 D(   11) -> V(    5)
+0.1246	 D(   15) -> V(    3)
+0.1126	 D(    9) -> V(    1)
+0.0946	 D(   10) -> V(    5)
+-0.0738	 D(   14) -> V(    8)
+0.0524	 D(   15) -> V(   22)
+-0.0507	 D(   15) -> V(   13)
+0.0487	 D(   12) -> V(   21)
+0.0479	 D(   14) -> V(   12)
+-0.0476	 D(   13) -> V(   20)
+Oscillator strength (a.u.): 0.000000, 
+
+CIS transition 20/ singlet
+EE: 10.1433 eV.
+Amplitude Transitions between orbitals
+0.5976	 D(   15) -> V(    6)
+0.5510	 D(   12) -> V(    1)
+-0.3797	 D(   14) -> V(    2)
+0.2605	 D(   13) -> V(    5)
+0.2582	 D(   15) -> V(    7)
+0.1121	 D(   14) -> V(    8)
+-0.0933	 D(   11) -> V(    5)
+-0.0882	 D(   15) -> V(    3)
+0.0759	 D(   10) -> V(    5)
+0.0708	 D(    9) -> V(    1)
+-0.0684	 D(   15) -> V(   22)
+-0.0500	 D(   14) -> V(   12)
+Oscillator strength (a.u.): 0.000000, 
+
+CIS transition 25/ singlet
+EE: 10.7758 eV.
+Amplitude Transitions between orbitals
+0.8088	 D(   15) -> V(    7)
+-0.4134	 D(   15) -> V(    6)
+-0.2814	 D(   14) -> V(    4)
+-0.1719	 D(   14) -> V(    8)
+-0.1459	 D(    9) -> V(    1)
+0.1176	 D(   11) -> V(    5)
+-0.0701	 D(   14) -> V(    2)
+0.0628	 D(   12) -> V(    1)
+0.0621	 D(   15) -> V(   10)
+0.0601	 D(   13) -> V(    5)
+0.0523	 D(   15) -> V(   22)
+-0.0479	 D(   15) -> V(   19)
+Oscillator strength (a.u.): 0.000000, 
+
+CIS transition 26/ singlet
+EE: 10.9559 eV.
+Amplitude Transitions between orbitals
+0.9161	 D(   15) -> V(    8)
+0.2443	 D(   14) -> V(    6)
+-0.1691	 D(   15) -> V(    9)
+-0.1288	 D(   14) -> V(    7)
+0.1217	 D(   15) -> V(    2)
+0.0926	 D(   11) -> V(    1)
+-0.0709	 D(   15) -> V(   12)
+0.0637	 D(   15) -> V(    4)
+0.0596	 D(   15) -> V(   11)
+0.0559	 D(   15) -> V(   24)
+0.0553	 D(   14) -> V(   13)
+0.0534	 D(   13) -> V(    1)
+-0.0468	 D(   14) -> V(   22)
+-0.0466	 D(   14) -> V(    3)
+Oscillator strength (a.u.): 0.002006, 
+
+CIS transition 28/ singlet
+EE: 11.3972 eV.
+Amplitude Transitions between orbitals
+-0.6791	 D(    9) -> V(    1)
+0.5687	 D(   11) -> V(    5)
+0.3497	 D(   13) -> V(    5)
+-0.1738	 D(   15) -> V(    7)
+0.1138	 D(    6) -> V(    1)
+-0.1033	 D(   11) -> V(   20)
+0.0808	 D(   15) -> V(    6)
+-0.0687	 D(    9) -> V(   21)
+-0.0683	 D(   10) -> V(    5)
+0.0561	 D(   14) -> V(    4)
+0.0553	 D(   12) -> V(    1)
+-0.0551	 D(   11) -> V(   17)
+-0.0436	 D(    8) -> V(    1)
+0.0431	 D(    7) -> V(    5)
+Oscillator strength (a.u.): 0.000000, 
+
+CIS transition 29/ singlet
+EE: 12.2184 eV.
+Amplitude Transitions between orbitals
+-0.8742	 D(   10) -> V(    1)
+-0.3749	 D(   12) -> V(    5)
+-0.1740	 D(   11) -> V(    1)
+-0.1356	 D(    8) -> V(    5)
+0.1043	 D(    9) -> V(    5)
+-0.0694	 D(   14) -> V(    3)
+-0.0690	 D(   10) -> V(   21)
+0.0620	 D(   13) -> V(    1)
+0.0589	 D(    7) -> V(    1)
+0.0587	 D(   15) -> V(    9)
+0.0495	 D(   12) -> V(   17)
+0.0473	 D(   12) -> V(   20)
+Oscillator strength (a.u.): 0.002370, 
+
+triplet
+CIS transition 1/ triplet
+EE: 2.7860 eV.
+Amplitude Transitions between orbitals
+0.9341	 D(   15) -> V(    1)
+0.3223	 D(   14) -> V(    5)
+0.0894	 D(   15) -> V(   21)
+-0.0863	 D(   14) -> V(   20)
+-0.0439	 D(   14) -> V(   17)
+Oscillator strength (a.u.): 0.000000, 
+
+CIS transition 2/ triplet
+EE: 4.5211 eV.
+Amplitude Transitions between orbitals
+0.7382	 D(   14) -> V(    1)
+0.6509	 D(   15) -> V(    5)
+-0.1146	 D(   15) -> V(   20)
+0.0877	 D(   14) -> V(   21)
+-0.0621	 D(   15) -> V(   17)
+Oscillator strength (a.u.): 0.000000, 
+
+CIS transition 4/ triplet
+EE: 8.2099 eV.
+Amplitude Transitions between orbitals
+0.8280	 D(   15) -> V(    2)
+-0.4072	 D(   13) -> V(    1)
+-0.2111	 D(   15) -> V(    4)
+-0.1713	 D(   14) -> V(    6)
+-0.1257	 D(   14) -> V(    3)
+-0.1132	 D(   12) -> V(    5)
+-0.0938	 D(   14) -> V(    7)
+0.0920	 D(   15) -> V(   12)
+-0.0685	 D(   15) -> V(    8)
+-0.0642	 D(   11) -> V(    1)
+-0.0628	 D(   15) -> V(   23)
+0.0589	 D(   15) -> V(    9)
+0.0486	 D(   14) -> V(   22)
+Oscillator strength (a.u.): 0.000000, 
+
+CIS transition 5/ triplet
+EE: 8.3279 eV.
+Amplitude Transitions between orbitals
+0.8482	 D(   13) -> V(    1)
+0.4049	 D(   15) -> V(    2)
+0.2236	 D(   12) -> V(    5)
+0.1440	 D(   11) -> V(    1)
+-0.0841	 D(   14) -> V(    6)
+-0.0794	 D(   15) -> V(    4)
+0.0658	 D(   13) -> V(   21)
+-0.0516	 D(    8) -> V(    5)
+-0.0491	 D(   14) -> V(    3)
+-0.0475	 D(    9) -> V(    5)
+-0.0466	 D(   14) -> V(    7)
+0.0456	 D(   15) -> V(   12)
+0.0439	 D(    7) -> V(    1)
+Oscillator strength (a.u.): 0.000000, 
+
+CIS transition 6/ triplet
+EE: 8.3960 eV.
+Amplitude Transitions between orbitals
+0.9297	 D(   15) -> V(    3)
+0.2956	 D(   14) -> V(    4)
+-0.1151	 D(   14) -> V(    2)
+0.0975	 D(   15) -> V(    6)
+0.0733	 D(   15) -> V(   10)
+0.0607	 D(   15) -> V(    7)
+0.0573	 D(   15) -> V(   25)
+-0.0483	 D(   14) -> V(   12)
+Oscillator strength (a.u.): 0.000000, 
+
+CIS transition 8/ triplet
+EE: 8.6083 eV.
+Amplitude Transitions between orbitals
+0.8871	 D(   15) -> V(    4)
+0.3059	 D(   14) -> V(    3)
+0.2418	 D(   15) -> V(    2)
+-0.1295	 D(   11) -> V(    1)
+-0.1232	 D(   14) -> V(    7)
+-0.0688	 D(   15) -> V(   11)
+-0.0603	 D(   15) -> V(    8)
+-0.0569	 D(   15) -> V(   18)
+-0.0431	 D(    7) -> V(    1)
+Oscillator strength (a.u.): 0.000000, 
+
+CIS transition 12/ triplet
+EE: 9.1166 eV.
+Amplitude Transitions between orbitals
+0.8805	 D(   11) -> V(    1)
+-0.2896	 D(    9) -> V(    5)
+-0.2032	 D(   12) -> V(    5)
+-0.1580	 D(   10) -> V(    1)
+0.1283	 D(   15) -> V(    4)
+-0.1235	 D(   13) -> V(    1)
+0.0964	 D(   11) -> V(   21)
+0.0758	 D(    9) -> V(   20)
+0.0586	 D(    6) -> V(    5)
+0.0572	 D(   14) -> V(    3)
+0.0503	 D(   15) -> V(    9)
+-0.0450	 D(   15) -> V(    8)
+0.0435	 D(    9) -> V(   17)
+Oscillator strength (a.u.): 0.000000, 
+
+CIS transition 14/ triplet
+EE: 9.1667 eV.
+Amplitude Transitions between orbitals
+0.8378	 D(   12) -> V(    1)
+0.4465	 D(   13) -> V(    5)
+-0.1886	 D(   11) -> V(    5)
+0.1314	 D(    9) -> V(    1)
+0.1155	 D(   10) -> V(    5)
+0.0684	 D(   15) -> V(    6)
+0.0642	 D(   12) -> V(   21)
+-0.0618	 D(   13) -> V(   20)
+Oscillator strength (a.u.): 0.000000, 
+
+CIS transition 15/ triplet
+EE: 9.5250 eV.
+Amplitude Transitions between orbitals
+0.7484	 D(   15) -> V(    5)
+-0.6584	 D(   14) -> V(    1)
+Oscillator strength (a.u.): 0.000000, 
+
+CIS transition 16/ triplet
+EE: 9.6453 eV.
+Amplitude Transitions between orbitals
+0.6654	 D(   15) -> V(    6)
+-0.4975	 D(   14) -> V(    2)
+0.4672	 D(   15) -> V(    7)
+-0.1424	 D(   15) -> V(    3)
+0.1047	 D(   14) -> V(    8)
+-0.0957	 D(   14) -> V(    4)
+-0.0803	 D(   15) -> V(   22)
+0.0772	 D(   11) -> V(    5)
+0.0767	 D(   15) -> V(   13)
+-0.0732	 D(   14) -> V(   12)
+-0.0721	 D(    9) -> V(    1)
+-0.0653	 D(   15) -> V(   19)
+0.0580	 D(   14) -> V(   18)
+0.0502	 D(   15) -> V(   10)
+0.0488	 D(   14) -> V(   23)
+Oscillator strength (a.u.): 0.000000, 
+
+CIS transition 21/ triplet
+EE: 10.4844 eV.
+Amplitude Transitions between orbitals
+0.6924	 D(   15) -> V(    7)
+-0.5065	 D(   15) -> V(    6)
+-0.2654	 D(   14) -> V(    4)
+-0.2102	 D(   14) -> V(    8)
+-0.2002	 D(    9) -> V(    1)
+0.1700	 D(   11) -> V(    5)
+0.1507	 D(   13) -> V(    5)
+0.0968	 D(   15) -> V(   10)
+-0.0757	 D(   15) -> V(   19)
+0.0745	 D(   12) -> V(    1)
+0.0744	 D(   15) -> V(    3)
+0.0738	 D(   15) -> V(   22)
+0.0677	 D(   14) -> V(    9)
+0.0570	 D(    6) -> V(    1)
+0.0529	 D(   14) -> V(   11)
+0.0480	 D(   14) -> V(   18)
+Oscillator strength (a.u.): 0.000000, 
+
+CIS transition 22/ triplet
+EE: 10.6249 eV.
+Amplitude Transitions between orbitals
+0.8940	 D(   15) -> V(    8)
+-0.2324	 D(   15) -> V(    9)
+0.2205	 D(   14) -> V(    6)
+-0.1649	 D(   14) -> V(    7)
+0.1299	 D(   15) -> V(    2)
+-0.0899	 D(   14) -> V(    3)
+-0.0894	 D(   15) -> V(   12)
+0.0833	 D(   10) -> V(    1)
+0.0693	 D(   11) -> V(    1)
+0.0594	 D(   14) -> V(   13)
+-0.0542	 D(   15) -> V(   18)
+-0.0513	 D(   14) -> V(   22)
+0.0491	 D(   15) -> V(   24)
+0.0461	 D(   15) -> V(    4)
+0.0431	 D(   14) -> V(   19)
+Oscillator strength (a.u.): 0.000000, 
+
+CIS transition 23/ triplet
+EE: 10.6331 eV.
+Amplitude Transitions between orbitals
+-0.6859	 D(    9) -> V(    1)
+0.5462	 D(   11) -> V(    5)
+-0.2879	 D(   15) -> V(    7)
+0.2605	 D(   13) -> V(    5)
+0.1173	 D(   15) -> V(    6)
+-0.1090	 D(   11) -> V(   20)
+0.0874	 D(   12) -> V(    1)
+0.0868	 D(   14) -> V(    2)
+0.0730	 D(   14) -> V(    8)
+-0.0717	 D(    9) -> V(   21)
+0.0683	 D(   14) -> V(    4)
+0.0674	 D(    6) -> V(    1)
+-0.0553	 D(   11) -> V(   17)
+-0.0548	 D(    8) -> V(    1)
+Oscillator strength (a.u.): 0.000000, 
+
+CIS transition 24/ triplet
+EE: 10.7426 eV.
+Amplitude Transitions between orbitals
+0.8759	 D(   14) -> V(    5)
+-0.3230	 D(   15) -> V(    1)
+-0.2387	 D(   13) -> V(    2)
+-0.0884	 D(   14) -> V(   20)
+0.0815	 D(   13) -> V(    4)
+0.0758	 D(   11) -> V(    2)
+0.0743	 D(   12) -> V(    3)
+-0.0679	 D(    8) -> V(    3)
+0.0635	 D(   12) -> V(    6)
+0.0572	 D(   15) -> V(   14)
+0.0548	 D(   12) -> V(    7)
+0.0532	 D(   11) -> V(    8)
+-0.0494	 D(    8) -> V(    7)
+Oscillator strength (a.u.): 0.000000, 
+
+CIS transition 27/ triplet
+EE: 10.9701 eV.
+Amplitude Transitions between orbitals
+-0.7117	 D(   13) -> V(    2)
+-0.3127	 D(   14) -> V(    5)
+0.2540	 D(   13) -> V(    4)
+0.2228	 D(   11) -> V(    2)
+0.2042	 D(   12) -> V(    6)
+0.1871	 D(   12) -> V(    3)
+-0.1719	 D(    8) -> V(    3)
+0.1532	 D(   10) -> V(    8)
+0.1518	 D(   12) -> V(    7)
+-0.1218	 D(   13) -> V(    8)
+0.1213	 D(    9) -> V(    7)
+0.1162	 D(   11) -> V(    8)
+-0.1041	 D(    8) -> V(    7)
+0.0897	 D(   15) -> V(    1)
+0.0823	 D(   10) -> V(    2)
+-0.0782	 D(   13) -> V(   12)
+0.0756	 D(   13) -> V(   23)
+-0.0636	 D(    8) -> V(   25)
+-0.0591	 D(   10) -> V(    4)
+-0.0586	 D(    7) -> V(    4)
+0.0554	 D(   13) -> V(   18)
+-0.0517	 D(   12) -> V(   22)
+0.0468	 D(   10) -> V(   24)
+-0.0453	 D(   13) -> V(   16)
+Oscillator strength (a.u.): 0.000000, 
+

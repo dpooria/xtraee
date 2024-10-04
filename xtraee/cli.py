@@ -1,33 +1,77 @@
 import argparse
-from xtraee.parser.qc_ccsd import QCCSDParser
+from xtraee.qc import QCCSDParser, QCISParser
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Extract data from QChem CCSD output file"
     )
-    parser.add_argument("input", type=str, help="Input file")
     parser.add_argument(
-        "--first-kid",
-        "-fk",
+        "--input-ccsd", type=str, help="Input file for CCSD", default=None
+    )
+    parser.add_argument(
+        "--firstkid-ccsd",
         type=str,
-        default="first_kid.txt",
+        default="first_kid_ccsd.txt",
         help="Output file for the complete information",
     )
     parser.add_argument(
-        "--happy-family",
-        "-hf",
+        "--happyfamily-ccsd",
         type=str,
-        default="happy_family.txt",
+        default="happy_family_ccsd.txt",
         help="Output file for the happy family",
+    )
+    parser.add_argument(
+        "--input-cis", type=str, help="Input file for CIS", default=None
+    )
+    parser.add_argument(
+        "--firstkid-cis",
+        type=str,
+        default="first_kid_cis.txt",
+        help="Output file for the complete information",
+    )
+    parser.add_argument(
+        "--happyfamily-cis",
+        type=str,
+        default="happy_family_cis.txt",
+        help="Output file for the happy family",
+    )
+    parser.add_argument(
+        "--threshold",
+        type=float,
+        default=0.2,
+        help="Threshold for filterning out the matching transitions",
+    )
+    parser.add_argument(
+        "--sadfamily",
+        type=str,
+        default="sad-family.txt",
+        help="Output file for the complete information",
     )
     return parser.parse_args()
 
 
 def main() -> int:
     args = parse_args()
-    qccsd = QCCSDParser(args.input, args.first_kid, args.happy_family)
-    qccsd.process_file()
-    qccsd.write_first_kid()
-    qccsd.write_happy_family()
+    if args.input_ccsd is None and args.input_cis is None:
+        print(
+            "Please provide input file for CCSD or CIS or both (type --help for help)"
+        )
+        return 1
+    if args.input_ccsd is not None:
+        qccsd = QCCSDParser(
+            args.threshold, args.input_ccsd, args.firstkid_ccsd, args.happyfamily_ccsd
+        )
+        qccsd.process_file()
+        qccsd.write_first_kid()
+        qccsd.write_happy_family()
+    if args.input_cis is not None:
+        qcis = QCISParser(
+            args.threshold, args.input_cis, args.firstkid_cis, args.happyfamily_cis
+        )
+        qcis.process_file()
+        qcis.write_first_kid()
+        qcis.write_happy_family()
+        if args.input_ccsd is not None:
+            qcis.write_sad_family(qccsd.irreps_dict, args.sadfamily)
     return 0
