@@ -247,7 +247,7 @@ class QCCSDParser(Parser):
 
 class QCISParser(Parser):
     CISEE_BEGIN = "CIS Excitation Energies"
-    MO_BEGIN = "Orbital Energies (a.u.) and Symmetries"
+    MO_BEGIN = "Orbital Energies (a.u.)"
     TRBLOCK_BEGIN_PATTERN = re.compile(
         r"^Excited\s+state\s+(\d+)\s*:\s*excitation\s+energy\s+\(eV\)\s*=\s*([-+]?\d+.\d+)\s*$"
     )
@@ -316,6 +316,7 @@ class QCISParser(Parser):
             "singlet": self.irrep_singlets,
             "triplet": self.irrep_triplets,
         }
+        breakpoint()
 
     def match2ccsd(self, key: str, ccsd_block: EOMEETransitionBlock):
         irrep = self.irreps_dict[key]
