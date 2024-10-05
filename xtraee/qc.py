@@ -316,7 +316,6 @@ class QCISParser(Parser):
             "singlet": self.irrep_singlets,
             "triplet": self.irrep_triplets,
         }
-        breakpoint()
 
     def match2ccsd(self, key: str, ccsd_block: EOMEETransitionBlock):
         irrep = self.irreps_dict[key]
