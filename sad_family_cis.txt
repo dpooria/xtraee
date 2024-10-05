@@ -1,0 +1,19 @@
+---- Sad family ----
+singlet-0/A
+CCSD: singlet-1/A <=>CIS: singlet-3/
+CCSD: singlet-2/A <=>CIS: singlet-13/,CIS: singlet-18/
+CCSD: singlet-3/A <=>CIS: singlet-7/,CIS: singlet-10/,CIS: singlet-17/
+CCSD: singlet-4/A <=>CIS: singlet-7/,CIS: singlet-10/,CIS: singlet-17/,CIS: singlet-26/
+CCSD: singlet-5/A <=>CIS: singlet-9/
+triplet-0/A
+CCSD: triplet-1/A <=>CIS: triplet-1/,CIS: triplet-24/,CIS: triplet-27/
+CCSD: triplet-2/A <=>CIS: triplet-2/,CIS: triplet-15/
+CCSD: triplet-3/A <=>CIS: triplet-4/,CIS: triplet-5/,CIS: triplet-12/
+CCSD: triplet-4/A <=>CIS: triplet-4/,CIS: triplet-5/
+CCSD: triplet-5/A <=>CIS: triplet-6/,CIS: triplet-16/,CIS: triplet-21/
+CCSD: triplet-6/A <=>CIS: triplet-4/,CIS: triplet-5/,CIS: triplet-8/,CIS: triplet-12/,CIS: triplet-22/
+CCSD: triplet-7/A <=>CIS: triplet-2/,CIS: triplet-15/
+CCSD: triplet-8/A <=>CIS: triplet-14/,CIS: triplet-21/,CIS: triplet-23/
+CCSD: triplet-9/A <=>CIS: triplet-5/,CIS: triplet-12/
+CCSD: triplet-10/A <=>CIS: triplet-6/,CIS: triplet-16/,CIS: triplet-23/
+--- End of sad family :( ---

@@ -97,7 +97,7 @@ class Parser:
                             for tr in trblock.transitions:
                                 if s_max.is_equal(tr):
                                     matched_triplets[ss].append(
-                                        f"{trblock.irrep}({trblock.id_number}) {tr.amplitude:.4f} "
+                                        f"{trblock.id_number} {trblock.irrep} {tr.amplitude:.4f} "
                                     )
                                     break
                     # if len(matched_triplets) > 0:
