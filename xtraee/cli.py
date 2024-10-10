@@ -48,9 +48,11 @@ def parse_args() -> argparse.Namespace:
         default="sad-family.txt",
         help="Output file for the complete information",
     )
-    subparsers = parser.add_subparsers(dest="command", default="compare")
-    compare_parser = subparsers.add_parser("compare", help="Compare two different states")
-    compare_parser.add_argument("state1", type=str, help="The first state")
+    subparsers = parser.add_subparsers(dest="command")
+    compare_parser = subparsers.add_parser(
+        "compare", help="Compare two different states")
+    compare_parser.add_argument(
+        "state1", type=str, help="The first state with format {method}:{excitation}-{state-id}/{irrep-id}, e.g. CIS:singlet-1/A")
     compare_parser.add_argument("state2", type=str, help="The second state")
 
     return parser.parse_args()
@@ -63,6 +65,7 @@ def main() -> int:
             "Please provide input file for CCSD or CIS or both (type --help for help)"
         )
         return 1
+    qccsd = None
     if args.input_ccsd is not None:
         qccsd = QCCSDParser(
             args.threshold, args.input_ccsd, args.firstkid_ccsd, args.happyfamily_ccsd
@@ -70,8 +73,7 @@ def main() -> int:
         qccsd.process_file()
         qccsd.write_first_kid()
         qccsd.write_happy_family()
-        if args.command == "compare":
-            qccsd.compare_states(args.state1, args.state2)
+    qcis = None
     if args.input_cis is not None:
         qcis = QCISParser(
             args.threshold, args.input_cis, args.firstkid_cis, args.happyfamily_cis
@@ -81,4 +83,42 @@ def main() -> int:
         qcis.write_happy_family()
         if args.input_ccsd is not None:
             qcis.write_sad_family(qccsd.irreps_dict, args.sadfamily)
+    if args.command == 'compare':
+        state1 = args.state1
+        state2 = args.state2
+        try:
+            method1, state1 = state1.split(':')
+            method2, state2 = state2.split(':')
+        except Exception:
+            print(f"Could not parse states {state1} and {state2} "
+                  "the format required is {method}:{excitation}-{state-id}/{irrep-id}, e.g. CIS:singlet-1/A", file=stderror)
+            return 1
+        state1_trblock = None
+        state2_trblock = None
+        if qccsd is not None:
+            for irrep in qccsd.irreps_dict.values():
+                if method1.lower() == "ccsd" and state1 in irrep.transitions_dict:
+                    state1_trblock = irrep.transitions_dict[state1]
+                if method2.lower() == "ccsd" and state2 in irrep.transitions_dict:
+                    state2_trblock = irrep.transitions_dict[state2]
+        if qcis is not None:
+            for irrep in qcis.irreps_dict.values():
+                if method1.lower() == "cis" and state1 in irrep.transitions_dict:
+                    state1_trblock = irrep.transitions_dict[state1]
+                if method2.lower() == "cis" and state2 in irrep.transitions_dict:
+                    state2_trblock = irrep.transitions_dict[state2]
+        if state1_trblock is None or state2_trblock is None:
+            print("Couldn't find the states, sorry :(")
+            return 1
+        print(f"Comparing {state1} and {state2}")
+        print("acc * percentage matched   | acc   | percentage matched")
+        if method1.lower() == "cis" and method2.lower() == "ccsd":
+            print(state1_trblock.compare_eomee(state2_trblock, homo=qcis.homo))
+        elif method2.lower() == "cis" and method1.lower() == "ccsd":
+            print(state2_trblock.compare_eomee(state1_trblock, homo=qcis.homo))
+        elif method1.lower() == "ccsd" and method2.lower() == "ccsd":
+            print(state1_trblock.compare_eomee(state2_trblock))
+        elif method1.lower() == "cis" and method2.lower() == "cis":
+            print("Not implemented yet")
+
     return 0

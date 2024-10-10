@@ -24,8 +24,11 @@ class TransitionBlock(ABC):
         self.excitation = excitation
         self.completed = False
         self.excitation_energy = excitation_energy
-        self.identifier = f"{self.excitation}-{self.id_number}/{self.irrep}"
         self.oscillator_strength = oscillator_strength
+
+    @property
+    def identifier(self) -> str:
+        return f"{self.excitation}-{self.id_number}/{self.irrep}"
 
     @abstractmethod
     def extras(self, line: str) -> None:
@@ -53,7 +56,8 @@ class TransitionBlock(ABC):
 
 
 class EOMEETransitionBlock(TransitionBlock):
-    EE_PATTERN = re.compile(r"^.*Excitation energy\s*=\s*([-+]?\d*\.?\d+)\s*eV\.\s*$")
+    EE_PATTERN = re.compile(
+        r"^.*Excitation energy\s*=\s*([-+]?\d*\.?\d+)\s*eV\.\s*$")
     R_PATTERN = re.compile(
         r"^.*R0\^2\s*=\s*(\d*.\d+)\s*R1\^2\s*=\s*([-+]?\d*\.?\d+)\s*R2\^2\s*=\s*([-+]?\d*\.?\d+).*$"
     )
@@ -87,6 +91,22 @@ class EOMEETransitionBlock(TransitionBlock):
             f"Oscillator strength (a.u.): {self.oscillator_strength:.6f},"
             f"omega (Mulliken): {self.omega:.4f}\n"
         )
+
+    def compare_eomee(self, other) -> bool:
+        amps = []
+        other_sq_sum = other.squared_sum
+        N_tr = len(other.transitions)
+        my_sq_sum = self.squared_sum
+        for o_tr in other.transitions:
+            for tr in self.transitions:
+                if tr.is_equal(o_tr):
+                    amps.append((o_tr.amplitude**2 / other_sq_sum,
+                                tr.amplitude**2 / my_sq_sum))
+                    break
+        N_pos = len(amps)
+        mse = sum([(o_amp - m_amp)**2 for o_amp, m_amp in amps]) / N_pos
+        acc = 1.0 - mse
+        return N_pos / N_tr * acc, acc, N_pos / N_tr
 
 
 class CISTransitionBlock(TransitionBlock):
@@ -142,7 +162,8 @@ class CISTransitionBlock(TransitionBlock):
         for o_tr in other.transitions:
             for tr in self.transitions_eomee:
                 if tr.is_equal(o_tr):
-                    amps.append((o_tr.amplitude**2 / other_sq_sum, tr.amplitude**2 / my_sq_sum))
+                    amps.append((o_tr.amplitude**2 / other_sq_sum,
+                                tr.amplitude**2 / my_sq_sum))
                     break
         N_pos = len(amps)
         mse = sum([(o_amp - m_amp)**2 for o_amp, m_amp in amps]) / N_pos

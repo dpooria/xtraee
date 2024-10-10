@@ -1,19 +1,70 @@
 ---- Sad family ----
-singlet-0/A
-CCSD: singlet-1/A <=>CIS: singlet-3/
-CCSD: singlet-2/A <=>CIS: singlet-13/,CIS: singlet-18/
-CCSD: singlet-3/A <=>CIS: singlet-7/,CIS: singlet-10/,CIS: singlet-17/
-CCSD: singlet-4/A <=>CIS: singlet-7/,CIS: singlet-10/,CIS: singlet-17/,CIS: singlet-26/
-CCSD: singlet-5/A <=>CIS: singlet-9/
-triplet-0/A
-CCSD: triplet-1/A <=>CIS: triplet-1/,CIS: triplet-24/,CIS: triplet-27/
-CCSD: triplet-2/A <=>CIS: triplet-2/,CIS: triplet-15/
-CCSD: triplet-3/A <=>CIS: triplet-4/,CIS: triplet-5/,CIS: triplet-12/
-CCSD: triplet-4/A <=>CIS: triplet-4/,CIS: triplet-5/
-CCSD: triplet-5/A <=>CIS: triplet-6/,CIS: triplet-16/,CIS: triplet-21/
-CCSD: triplet-6/A <=>CIS: triplet-4/,CIS: triplet-5/,CIS: triplet-8/,CIS: triplet-12/,CIS: triplet-22/
-CCSD: triplet-7/A <=>CIS: triplet-2/,CIS: triplet-15/
-CCSD: triplet-8/A <=>CIS: triplet-14/,CIS: triplet-21/,CIS: triplet-23/
-CCSD: triplet-9/A <=>CIS: triplet-5/,CIS: triplet-12/
-CCSD: triplet-10/A <=>CIS: triplet-6/,CIS: triplet-16/,CIS: triplet-23/
+singlet-0/Ag
+CCSD: singlet-1/Ag <=>
+CCSD: singlet-2/Ag <=>
+CCSD: singlet-3/Ag <=>
+CCSD: singlet-4/Ag <=>
+CCSD: singlet-5/Ag <=>
+singlet-0/Bg
+CCSD: singlet-1/Bg <=>
+CCSD: singlet-2/Bg <=>
+CCSD: singlet-3/Bg <=>
+CCSD: singlet-4/Bg <=>
+CCSD: singlet-5/Bg <=>
+singlet-0/Au
+CCSD: singlet-1/Au <=>
+CCSD: singlet-2/Au <=>
+CCSD: singlet-3/Au <=>
+CCSD: singlet-4/Au <=>
+CCSD: singlet-5/Au <=>
+singlet-0/Bu
+CCSD: singlet-1/Bu <=>
+CCSD: singlet-2/Bu <=>
+CCSD: singlet-3/Bu <=>
+CCSD: singlet-4/Bu <=>
+CCSD: singlet-5/Bu <=>
+triplet-0/Ag
+CCSD: triplet-1/Ag <=>
+CCSD: triplet-2/Ag <=>
+CCSD: triplet-3/Ag <=>
+CCSD: triplet-4/Ag <=>
+CCSD: triplet-5/Ag <=>
+CCSD: triplet-6/Ag <=>
+CCSD: triplet-7/Ag <=>
+CCSD: triplet-8/Ag <=>
+CCSD: triplet-9/Ag <=>
+CCSD: triplet-10/Ag <=>
+triplet-0/Bg
+CCSD: triplet-1/Bg <=>
+CCSD: triplet-2/Bg <=>
+CCSD: triplet-3/Bg <=>
+CCSD: triplet-4/Bg <=>
+CCSD: triplet-5/Bg <=>
+CCSD: triplet-6/Bg <=>
+CCSD: triplet-7/Bg <=>
+CCSD: triplet-8/Bg <=>
+CCSD: triplet-9/Bg <=>
+CCSD: triplet-10/Bg <=>
+triplet-0/Au
+CCSD: triplet-1/Au <=>
+CCSD: triplet-2/Au <=>
+CCSD: triplet-3/Au <=>
+CCSD: triplet-4/Au <=>
+CCSD: triplet-5/Au <=>
+CCSD: triplet-6/Au <=>
+CCSD: triplet-7/Au <=>
+CCSD: triplet-8/Au <=>
+CCSD: triplet-9/Au <=>
+CCSD: triplet-10/Au <=>
+triplet-0/Bu
+CCSD: triplet-1/Bu <=>
+CCSD: triplet-2/Bu <=>
+CCSD: triplet-3/Bu <=>
+CCSD: triplet-4/Bu <=>
+CCSD: triplet-5/Bu <=>
+CCSD: triplet-6/Bu <=>
+CCSD: triplet-7/Bu <=>
+CCSD: triplet-8/Bu <=>
+CCSD: triplet-9/Bu <=>
+CCSD: triplet-10/Bu <=>
 --- End of sad family :( ---
