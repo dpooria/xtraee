@@ -6,6 +6,8 @@ from typing import List, Optional
 
 class TransitionBlock(ABC):
     TrTYPE = Transition
+    END_TRANSITIONBLOCK = "\n"
+    TR_INDICATOR = "->"
 
     def __init__(
         self,
