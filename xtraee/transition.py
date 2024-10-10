@@ -43,7 +43,7 @@ class Transition(ABC):
             self.is_double = False
         return True
 
-    def is_equal(self, other, check_spin=False) -> bool:
+    def is_equal(self, other, check_amp=False, check_spin=False) -> bool:
         if not isinstance(other, Transition):
             return NotImplemented
         if self.is_double != other.is_double:

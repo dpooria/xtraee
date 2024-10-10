@@ -1,7 +1,8 @@
 import re
-from xtraee.transition import CCSDTransition, Transition, CISTransition
-from abc import abstractmethod, ABC
-from typing import List, Optional
+from abc import ABC, abstractmethod
+from typing import List
+
+from xtraee.transition import CCSDTransition, CISTransition, Transition
 
 
 class TransitionBlock(ABC):
@@ -29,6 +30,10 @@ class TransitionBlock(ABC):
     @abstractmethod
     def extras(self, line: str) -> None:
         raise NotImplementedError
+
+    @property
+    def squared_sum(self) -> float:
+        return sum(t.amplitude**2 for t in self.transitions)
 
     def add_data(self, line: str) -> bool:
         if self.END_TRANSITIONBLOCK in line:
@@ -112,12 +117,7 @@ class CISTransitionBlock(TransitionBlock):
         )
 
     def generate_eomee(self, homo: int) -> List[CCSDTransition]:
-        self.transitions_eomee = list(
-            map(
-                lambda t: t.to_ccsd(homo),
-                self.transitions,
-            )
-        )
+        self.transitions_eomee = [tr.to_ccsd(homo) for tr in self.transitions]
         return self.transitions_eomee
 
     def is_equal_eomee(self, other: EOMEETransitionBlock, homo: int) -> bool:
@@ -131,4 +131,20 @@ class CISTransitionBlock(TransitionBlock):
                     break
             if not is_in:
                 return False
-        return True
+
+    def compare_eomee(self, other: EOMEETransitionBlock, homo: int) -> bool:
+        if len(self.transitions_eomee) != len(self.transitions):
+            self.generate_eomee(homo)
+        amps = []
+        other_sq_sum = other.squared_sum
+        N_tr = len(other.transitions)
+        my_sq_sum = self.squared_sum
+        for o_tr in other.transitions:
+            for tr in self.transitions_eomee:
+                if tr.is_equal(o_tr):
+                    amps.append((o_tr.amplitude**2 / other_sq_sum, tr.amplitude**2 / my_sq_sum))
+                    break
+        N_pos = len(amps)
+        mse = sum([(o_amp - m_amp)**2 for o_amp, m_amp in amps]) / N_pos
+        acc = 1.0 - mse
+        return N_pos / N_tr * acc, acc, N_pos / N_tr

@@ -39,7 +39,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--threshold",
         type=float,
-        default=0.2,
+        default=0.0,
         help="Threshold for filterning out the matching transitions",
     )
     parser.add_argument(
@@ -48,6 +48,11 @@ def parse_args() -> argparse.Namespace:
         default="sad-family.txt",
         help="Output file for the complete information",
     )
+    subparsers = parser.add_subparsers(dest="command", default="compare")
+    compare_parser = subparsers.add_parser("compare", help="Compare two different states")
+    compare_parser.add_argument("state1", type=str, help="The first state")
+    compare_parser.add_argument("state2", type=str, help="The second state")
+
     return parser.parse_args()
 
 
@@ -65,6 +70,8 @@ def main() -> int:
         qccsd.process_file()
         qccsd.write_first_kid()
         qccsd.write_happy_family()
+        if args.command == "compare":
+            qccsd.compare_states(args.state1, args.state2)
     if args.input_cis is not None:
         qcis = QCISParser(
             args.threshold, args.input_cis, args.firstkid_cis, args.happyfamily_cis

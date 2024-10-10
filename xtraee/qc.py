@@ -1,10 +1,10 @@
 import pathlib
 import re
-from typing import Any, Dict, List, Optional, Callable
 from abc import abstractmethod
+from typing import Any, Callable, Dict, List, Optional
 
-from xtraee.trblock import EOMEETransitionBlock, TransitionBlock, CISTransitionBlock
 from xtraee.irrep import Irrep
+from xtraee.trblock import CISTransitionBlock, EOMEETransitionBlock, TransitionBlock
 
 
 class Parser:
@@ -200,9 +200,7 @@ class QCCSDParser(Parser):
                     ee_type,
                     n_states,
                 )
-                self.irreps_dict[f"{ee_type}-0/{m.group(1)}"] = (
-                    self.current_irrep
-                )  # noqa
+                self.irreps_dict[f"{ee_type}-0/{m.group(1)}"] = self.current_irrep
                 self.current_excitation = ee_type
         elif self.inside_eomee and self.current_transition is not None:
             if self.current_transition.add_data(line):
