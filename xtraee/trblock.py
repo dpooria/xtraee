@@ -192,6 +192,6 @@ class CISTransitionBlock(TransitionBlock):
         else:
             transitions = self.transitions
         if method == 'acc':
-            return self._compare_acc(other, self.transitions)
+            return self._compare_acc(other, transitions)
         else:
-            return self._compare_err(other, self.transitions)
+            return self._compare_err(other, transitions)
