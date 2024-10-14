@@ -155,15 +155,19 @@ class CISTransitionBlock(TransitionBlock):
             if not is_in:
                 return False
 
-    def compare_eomee(self, other: EOMEETransitionBlock, homo: int) -> bool:
-        if len(self.transitions_eomee) != len(self.transitions):
-            self.generate_eomee(homo)
+    def compare(self, other: EOMEETransitionBlock | CISTransitionBlock, homo: int) -> bool:
+        if isinstance(other, EOMEETransitionBlock):
+            if len(self.transitions_eomee) != len(self.transitions):
+                self.generate_eomee(homo)
+            transitions = self.transitions_eomee
+        else:
+            transitions = self.transitions
         amps = []
         other_sq_sum = other.squared_sum
         N_tr = min(len(other.transitions), len(self.transitions))
         my_sq_sum = self.squared_sum
         for o_tr in other.transitions:
-            for tr in self.transitions_eomee:
+            for tr in transitions:
                 if tr.is_equal(o_tr):
                     amps.append((o_tr.amplitude**2 / other_sq_sum,
                                 tr.amplitude**2 / my_sq_sum))
