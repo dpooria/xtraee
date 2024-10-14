@@ -54,7 +54,7 @@ def parse_args() -> argparse.Namespace:
     compare_parser.add_argument(
         "state1", type=str, help="The first state with format {method}:{excitation}-{state-id}/{irrep-id}, e.g. CIS:singlet-1/A")
     compare_parser.add_argument("state2", type=str, help="The second state")
-    compare_parser.add_argument('--abs-error', type=bool, action='store_true',
+    compare_parser.add_argument('--abs-error', action='store_true',
                                 help="Use absolute error instead of relative accuracy")
 
     return parser.parse_args()
