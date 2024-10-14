@@ -54,6 +54,8 @@ def parse_args() -> argparse.Namespace:
     compare_parser.add_argument(
         "state1", type=str, help="The first state with format {method}:{excitation}-{state-id}/{irrep-id}, e.g. CIS:singlet-1/A")
     compare_parser.add_argument("state2", type=str, help="The second state")
+    compare_parser.add_argument('--abs-error', type=bool, action='store_true',
+                                help="Use absolute error instead of relative accuracy")
 
     return parser.parse_args()
 
@@ -110,7 +112,11 @@ def main() -> int:
         if state1_trblock is None or state2_trblock is None:
             print("Couldn't find the states, sorry :(")
             return 1
+        method = "mae" if args.abs_error else "acc"
         print(f"Comparing {state1} and {state2}")
-        print("acc * percentage matched   | acc   | percentage matched")
-        print(state1_trblock.compare(state2_trblock))
+        if method == "mae":
+            print("(1 / fm) * mae| mean absolute error (mae) | fraction matched (fm)")
+        else:
+            print("acc * fm   | accuracy (acc)  | fraction matched (fm)")
+        print(state1_trblock.compare(state2_trblock, method))
     return 0

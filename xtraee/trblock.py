@@ -58,7 +58,7 @@ class TransitionBlock:
     def compare(self, other) -> bool:
         raise NotImplementedError
 
-    def _compare(self, other, transitions: List[Transition]) -> bool:
+    def _compare_acc(self, other, transitions: List[Transition]) -> bool:
         amps = []
         other_sq_sum = other.squared_sum
         N_tr = min(len(other.transitions), len(self.transitions))
@@ -75,6 +75,21 @@ class TransitionBlock:
         mae = sum([abs(o_amp - m_amp) for o_amp, m_amp in amps]) / N_pos
         acc = 1.0 - mae
         return N_pos / N_tr * acc, acc, N_pos / N_tr
+
+    def _compare_err(self, other, transitions: List[Transition]) -> bool:
+        amps = []
+        N_tr = min(len(other.transitions), len(self.transitions))
+        for o_tr in other.transitions:
+            for tr in transitions:
+                if tr.is_equal(o_tr):
+                    amps.append((o_tr.amplitude**2,
+                                tr.amplitude**2))
+                    break
+        N_pos = len(amps)
+        if N_pos == 0:
+            return (None, None, 0)
+        mae = sum([abs(o_amp - m_amp) for o_amp, m_amp in amps]) / N_pos
+        return N_tr / N_pos * mae, mae, N_pos / N_tr
 
 
 class EOMEETransitionBlock(TransitionBlock):
@@ -114,11 +129,14 @@ class EOMEETransitionBlock(TransitionBlock):
             f"omega (Mulliken): {self.omega:.4f}\n"
         )
 
-    def compare(self, other: TransitionBlock) -> bool:
+    def compare(self, other: TransitionBlock, method: str) -> bool:
         if isinstance(other, CISTransitionBlock):
-            return other.compare(self, other.homo)
+            return other.compare(self, method)
         else:
-            return self._compare(other, self.transitions)
+            if method == 'acc':
+                return self._compare_acc(other, self.transitions)
+            else:
+                return self._compare_err(other, self.transitions)
 
 
 class CISTransitionBlock(TransitionBlock):
@@ -166,11 +184,14 @@ class CISTransitionBlock(TransitionBlock):
             if not is_in:
                 return False
 
-    def compare(self, other: TransitionBlock) -> bool:
+    def compare(self, other: TransitionBlock, method: str) -> bool:
         if isinstance(other, EOMEETransitionBlock):
             if len(self.transitions_eomee) != len(self.transitions):
                 self.generate_eomee()
             transitions = self.transitions_eomee
         else:
             transitions = self.transitions
-        return self._compare(other, transitions)
+        if method == 'acc':
+            return self._compare_acc(other, self.transitions)
+        else:
+            return self._compare_err(other, self.transitions)
