@@ -99,7 +99,7 @@ class EOMEETransitionBlock(TransitionBlock):
         N_tr = min(len(other.transitions), len(self.transitions))
         my_sq_sum = self.squared_sum
         for o_tr in other.transitions:
-            for tr in self.transitions_eomee:
+            for tr in self.transitions:
                 if tr.is_equal(o_tr):
                     amps.append((o_tr.amplitude**2 / other_sq_sum,
                                 tr.amplitude**2 / my_sq_sum))
