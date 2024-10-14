@@ -1,11 +1,11 @@
 import re
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from typing import List
 
 from xtraee.transition import CCSDTransition, CISTransition, Transition
 
 
-class TransitionBlock(ABC):
+class TransitionBlock:
     TrTYPE = Transition
     END_TRANSITIONBLOCK = "\n"
     TR_INDICATOR = "->"
@@ -54,6 +54,28 @@ class TransitionBlock(ABC):
     def __getitem__(self, key) -> Transition:
         return self.transitions[key]
 
+    @abstractmethod
+    def compare(self, other) -> bool:
+        raise NotImplementedError
+
+    def _compare(self, other, transitions: List[Transition]) -> bool:
+        amps = []
+        other_sq_sum = other.squared_sum
+        N_tr = min(len(other.transitions), len(self.transitions))
+        my_sq_sum = self.squared_sum
+        for o_tr in other.transitions:
+            for tr in transitions:
+                if tr.is_equal(o_tr):
+                    amps.append((o_tr.amplitude**2 / other_sq_sum,
+                                tr.amplitude**2 / my_sq_sum))
+                    break
+        N_pos = len(amps)
+        if N_pos == 0:
+            return (0, 0, 0)
+        mae = sum([abs(o_amp - m_amp) for o_amp, m_amp in amps]) / N_pos
+        acc = 1.0 - mae
+        return N_pos / N_tr * acc, acc, N_pos / N_tr
+
 
 class EOMEETransitionBlock(TransitionBlock):
     EE_PATTERN = re.compile(
@@ -92,24 +114,11 @@ class EOMEETransitionBlock(TransitionBlock):
             f"omega (Mulliken): {self.omega:.4f}\n"
         )
 
-    def compare_eomee(self, other) -> bool:
-
-        amps = []
-        other_sq_sum = other.squared_sum
-        N_tr = min(len(other.transitions), len(self.transitions))
-        my_sq_sum = self.squared_sum
-        for o_tr in other.transitions:
-            for tr in self.transitions:
-                if tr.is_equal(o_tr):
-                    amps.append((o_tr.amplitude**2 / other_sq_sum,
-                                tr.amplitude**2 / my_sq_sum))
-                    break
-        N_pos = len(amps)
-        if N_pos == 0:
-            return (0, 0, 0)
-        mae = sum([abs(o_amp - m_amp) for o_amp, m_amp in amps]) / N_pos
-        acc = 1.0 - mae
-        return N_pos / N_tr * acc, acc, N_pos / N_tr
+    def compare(self, other: TransitionBlock) -> bool:
+        if isinstance(other, CISTransitionBlock):
+            return other.compare(self, other.homo)
+        else:
+            return self._compare(other, self.transitions)
 
 
 class CISTransitionBlock(TransitionBlock):
@@ -122,6 +131,7 @@ class CISTransitionBlock(TransitionBlock):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.transitions_eomee: List[CCSDTransition] = []
+        self.homo = 0
 
     def extras(self, line: str):
         if (m := self.OSCILLATOR_PATTERN.match(line)) is not None:
@@ -140,6 +150,7 @@ class CISTransitionBlock(TransitionBlock):
         )
 
     def generate_eomee(self, homo: int) -> List[CCSDTransition]:
+        self.homo = homo
         self.transitions_eomee = [tr.to_ccsd(homo) for tr in self.transitions]
         return self.transitions_eomee
 
@@ -155,26 +166,11 @@ class CISTransitionBlock(TransitionBlock):
             if not is_in:
                 return False
 
-    def compare(self, other: EOMEETransitionBlock | CISTransitionBlock, homo: int) -> bool:
+    def compare(self, other: TransitionBlock, homo: int) -> bool:
         if isinstance(other, EOMEETransitionBlock):
             if len(self.transitions_eomee) != len(self.transitions):
                 self.generate_eomee(homo)
             transitions = self.transitions_eomee
         else:
             transitions = self.transitions
-        amps = []
-        other_sq_sum = other.squared_sum
-        N_tr = min(len(other.transitions), len(self.transitions))
-        my_sq_sum = self.squared_sum
-        for o_tr in other.transitions:
-            for tr in transitions:
-                if tr.is_equal(o_tr):
-                    amps.append((o_tr.amplitude**2 / other_sq_sum,
-                                tr.amplitude**2 / my_sq_sum))
-                    break
-        N_pos = len(amps)
-        if N_pos == 0:
-            return (0, 0, 0)
-        mae = sum([abs(o_amp - m_amp) for o_amp, m_amp in amps]) / N_pos
-        acc = 1.0 - mae
-        return N_pos / N_tr * acc, acc, N_pos / N_tr
+        return self._compare(other, transitions)

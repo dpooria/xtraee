@@ -105,20 +105,14 @@ def main() -> int:
             for irrep in qcis.irreps_dict.values():
                 if method1.lower() == "cis" and state1 in irrep.transitions_dict:
                     state1_trblock = irrep.transitions_dict[state1]
+                    state1_trblock.homo = qcis.homo
                 if method2.lower() == "cis" and state2 in irrep.transitions_dict:
                     state2_trblock = irrep.transitions_dict[state2]
+                    state2_trblock.homo = qcis.homo
         if state1_trblock is None or state2_trblock is None:
             print("Couldn't find the states, sorry :(")
             return 1
         print(f"Comparing {state1} and {state2}")
         print("acc * percentage matched   | acc   | percentage matched")
-        if method1.lower() == "cis" and method2.lower() == "ccsd":
-            print(state1_trblock.compare_eomee(state2_trblock, homo=qcis.homo))
-        elif method2.lower() == "cis" and method1.lower() == "ccsd":
-            print(state2_trblock.compare_eomee(state1_trblock, homo=qcis.homo))
-        elif method1.lower() == "ccsd" and method2.lower() == "ccsd":
-            print(state1_trblock.compare_eomee(state2_trblock))
-        elif method1.lower() == "cis" and method2.lower() == "cis":
-            print("Not implemented yet")
-
+        print(state1_trblock.compare(state2_trblock))
     return 0
