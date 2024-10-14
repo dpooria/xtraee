@@ -93,19 +93,22 @@ class EOMEETransitionBlock(TransitionBlock):
         )
 
     def compare_eomee(self, other) -> bool:
+
         amps = []
         other_sq_sum = other.squared_sum
-        N_tr = len(other.transitions)
+        N_tr = min(len(other.transitions), len(self.transitions))
         my_sq_sum = self.squared_sum
         for o_tr in other.transitions:
-            for tr in self.transitions:
+            for tr in self.transitions_eomee:
                 if tr.is_equal(o_tr):
                     amps.append((o_tr.amplitude**2 / other_sq_sum,
                                 tr.amplitude**2 / my_sq_sum))
                     break
         N_pos = len(amps)
-        mse = sum([(o_amp - m_amp)**2 for o_amp, m_amp in amps]) / N_pos
-        acc = 1.0 - mse
+        if N_pos == 0:
+            return (0, 0, 0)
+        mae = sum([abs(o_amp - m_amp) for o_amp, m_amp in amps]) / N_pos
+        acc = 1.0 - mae
         return N_pos / N_tr * acc, acc, N_pos / N_tr
 
 
@@ -157,7 +160,7 @@ class CISTransitionBlock(TransitionBlock):
             self.generate_eomee(homo)
         amps = []
         other_sq_sum = other.squared_sum
-        N_tr = len(other.transitions)
+        N_tr = min(len(other.transitions), len(self.transitions))
         my_sq_sum = self.squared_sum
         for o_tr in other.transitions:
             for tr in self.transitions_eomee:
@@ -166,6 +169,8 @@ class CISTransitionBlock(TransitionBlock):
                                 tr.amplitude**2 / my_sq_sum))
                     break
         N_pos = len(amps)
-        mse = sum([(o_amp - m_amp)**2 for o_amp, m_amp in amps]) / N_pos
-        acc = 1.0 - mse
+        if N_pos == 0:
+            return (0, 0, 0)
+        mae = sum([abs(o_amp - m_amp) for o_amp, m_amp in amps]) / N_pos
+        acc = 1.0 - mae
         return N_pos / N_tr * acc, acc, N_pos / N_tr
