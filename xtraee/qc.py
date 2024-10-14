@@ -40,7 +40,8 @@ class Parser:
         n_states = [irr.n_states for irr in states]
         lowest_excitations = []
         for i in range(min(n_states)):
-            e_block = min([irr[i] for irr in states], key=lambda t: t.excitation_energy)
+            e_block = min([irr[i] for irr in states],
+                          key=lambda t: t.excitation_energy)
             lowest_excitations.append(e_block)
         return lowest_excitations
 
@@ -174,11 +175,13 @@ class QCCSDParser(Parser):
     def process_input_block(self, line: str) -> None:
         if self.N_singlets == 0:
             if (m := self.EE_SINGLETS_PATTERN.match(line)) is not None:
-                self.ee_singlets = list(map(int, m.group(1).strip().split(",")))
+                self.ee_singlets = list(
+                    map(int, m.group(1).strip().split(",")))
                 self.N_singlets = len(self.ee_singlets)
         if self.N_triplets == 0:
             if (m := self.EE_TRIPLETS_PATTERN.match(line)) is not None:
-                self.ee_triplets = list(map(int, m.group(1).strip().split(",")))
+                self.ee_triplets = list(
+                    map(int, m.group(1).strip().split(",")))
                 self.N_triplets = len(self.ee_triplets)
 
     def process_lambda_block(self, line: str) -> None:
@@ -238,7 +241,8 @@ class QCCSDParser(Parser):
             if (m := self.OSCILLATOR_PATTERN.match(line)) is not None:
                 self.current_transition.oscillator_strength = float(m.group(1))
             elif (m := self.OMEGA_PATTERN.match(line)) is not None:
-                assert isinstance(self.current_transition, EOMEETransitionBlock)
+                assert isinstance(self.current_transition,
+                                  EOMEETransitionBlock)
                 self.current_transition.omega = float(m.group(1))
                 self.current_trprop = ""
 
@@ -288,7 +292,8 @@ class QCISParser(Parser):
                 elif self.current_transition.excitation == "triplet":
                     self.irrep_triplets.append(self.current_transition)
                 else:
-                    raise ValueError(f"Unknown excitation {self.current_transition}")
+                    raise ValueError(
+                        f"Unknown excitation {self.current_transition}")
             self.current_transition = CISTransitionBlock(int(m.group(1)))
             self.current_transition.excitation_energy = float(m.group(2))
         elif self.current_transition is not None:
@@ -304,12 +309,18 @@ class QCISParser(Parser):
         self.homo = 0
         for tr in singlet_trblocks:
             self.homo = max(
-                *[int(id[1]) for tr_ in tr.transitions for id in tr_.id_i], self.homo
+                *[int(id[1])
+                  for tr_ in tr.transitions for id in tr_.id_i], self.homo
             )
         for tr in triplet_trblocks:
             self.homo = max(
-                *[int(id[1]) for tr_ in tr.transitions for id in tr_.id_i], self.homo
+                *[int(id[1])
+                  for tr_ in tr.transitions for id in tr_.id_i], self.homo
             )
+        for tr in singlet_trblocks:
+            tr.homo = self.homo
+        for tr in triplet_trblocks:
+            tr.homo = self.homo
         self.irreps_dict = {
             "singlet": self.irrep_singlets,
             "triplet": self.irrep_triplets,
@@ -320,7 +331,7 @@ class QCISParser(Parser):
         majors = []
         # match all of the states in CCSD to CIS
         for i, trblock in enumerate(irrep.transitions):
-            if trblock.is_equal_eomee(ccsd_block, self.homo):
+            if trblock.is_equal_eomee(ccsd_block):
                 majors.append(trblock)
         return majors
 

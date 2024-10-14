@@ -105,10 +105,8 @@ def main() -> int:
             for irrep in qcis.irreps_dict.values():
                 if method1.lower() == "cis" and state1 in irrep.transitions_dict:
                     state1_trblock = irrep.transitions_dict[state1]
-                    state1_trblock.homo = qcis.homo
                 if method2.lower() == "cis" and state2 in irrep.transitions_dict:
                     state2_trblock = irrep.transitions_dict[state2]
-                    state2_trblock.homo = qcis.homo
         if state1_trblock is None or state2_trblock is None:
             print("Couldn't find the states, sorry :(")
             return 1

@@ -149,14 +149,14 @@ class CISTransitionBlock(TransitionBlock):
             f"Oscillator strength (a.u.): {self.oscillator_strength:.6f}, \n"
         )
 
-    def generate_eomee(self, homo: int) -> List[CCSDTransition]:
-        self.homo = homo
-        self.transitions_eomee = [tr.to_ccsd(homo) for tr in self.transitions]
+    def generate_eomee(self) -> List[CCSDTransition]:
+        self.transitions_eomee = [tr.to_ccsd(
+            self.homo) for tr in self.transitions]
         return self.transitions_eomee
 
-    def is_equal_eomee(self, other: EOMEETransitionBlock, homo: int) -> bool:
+    def is_equal_eomee(self, other: EOMEETransitionBlock) -> bool:
         if len(self.transitions_eomee) != len(self.transitions):
-            self.generate_eomee(homo)
+            self.generate_eomee()
         for o_tr in other.transitions:
             is_in = False
             for tr in self.transitions_eomee:
@@ -166,10 +166,10 @@ class CISTransitionBlock(TransitionBlock):
             if not is_in:
                 return False
 
-    def compare(self, other: TransitionBlock, homo: int) -> bool:
+    def compare(self, other: TransitionBlock) -> bool:
         if isinstance(other, EOMEETransitionBlock):
             if len(self.transitions_eomee) != len(self.transitions):
-                self.generate_eomee(homo)
+                self.generate_eomee()
             transitions = self.transitions_eomee
         else:
             transitions = self.transitions
