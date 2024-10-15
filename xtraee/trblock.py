@@ -1,6 +1,6 @@
 import re
 from abc import abstractmethod
-from typing import List
+from typing import List, Tuple
 
 from xtraee.transition import CCSDTransition, CISTransition, Transition
 
@@ -58,7 +58,9 @@ class TransitionBlock:
     def compare(self, other) -> bool:
         raise NotImplementedError
 
-    def _compare_acc(self, other, transitions: List[Transition]) -> bool:
+    def _compare_acc(
+        self, other, transitions: List[Transition]
+    ) -> Tuple[float, float, float]:
         amps = []
         other_sq_sum = other.squared_sum
         N_tr = min(len(other.transitions), len(self.transitions))
@@ -66,8 +68,9 @@ class TransitionBlock:
         for o_tr in other.transitions:
             for tr in transitions:
                 if tr.is_equal(o_tr):
-                    amps.append((o_tr.amplitude**2 / other_sq_sum,
-                                tr.amplitude**2 / my_sq_sum))
+                    amps.append(
+                        (o_tr.amplitude**2 / other_sq_sum, tr.amplitude**2 / my_sq_sum)
+                    )
                     break
         N_pos = len(amps)
         if N_pos == 0:
@@ -76,14 +79,15 @@ class TransitionBlock:
         acc = 1.0 - mae
         return N_pos / N_tr * acc, acc, N_pos / N_tr
 
-    def _compare_err(self, other, transitions: List[Transition]) -> bool:
+    def _compare_err(
+        self, other, transitions: List[Transition]
+    ) -> Tuple[float, float, float]:
         amps = []
         N_tr = min(len(other.transitions), len(self.transitions))
         for o_tr in other.transitions:
             for tr in transitions:
                 if tr.is_equal(o_tr):
-                    amps.append((o_tr.amplitude**2,
-                                tr.amplitude**2))
+                    amps.append((o_tr.amplitude**2, tr.amplitude**2))
                     break
         N_pos = len(amps)
         if N_pos == 0:
@@ -91,10 +95,32 @@ class TransitionBlock:
         mae = sum([abs(o_amp - m_amp) for o_amp, m_amp in amps]) / N_pos
         return N_tr / N_pos * mae, mae, N_pos / N_tr
 
+    def _compare_error_self_ref(
+        self, other, transitions: List[Transition]
+    ) -> Tuple[float, float, float]:
+        amps = []
+        N_tr = len(transitions)
+        N_pos = 0
+        my_sq_sum = self.squared_sum
+        # I am the reference :)
+        for tr in transitions:
+            matched = False
+            for o_tr in other.transitions:
+                if tr.is_equal(o_tr):
+                    amps.append((tr.amplitude**2, o_tr.amplitude**2))
+                    matched = True
+                    N_pos += 1
+                    break
+            if not matched:
+                amps.append((tr.amplitude**2, 0))
+
+        mae = sum([m_amp * abs(m_amp - o_amp) / my_sq_sum for m_amp, o_amp in amps])
+        acc = 1.0 - mae
+        return acc, mae, N_pos / N_tr
+
 
 class EOMEETransitionBlock(TransitionBlock):
-    EE_PATTERN = re.compile(
-        r"^.*Excitation energy\s*=\s*([-+]?\d*\.?\d+)\s*eV\.\s*$")
+    EE_PATTERN = re.compile(r"^.*Excitation energy\s*=\s*([-+]?\d*\.?\d+)\s*eV\.\s*$")
     R_PATTERN = re.compile(
         r"^.*R0\^2\s*=\s*(\d*.\d+)\s*R1\^2\s*=\s*([-+]?\d*\.?\d+)\s*R2\^2\s*=\s*([-+]?\d*\.?\d+).*$"
     )
@@ -129,14 +155,20 @@ class EOMEETransitionBlock(TransitionBlock):
             f"omega (Mulliken): {self.omega:.4f}\n"
         )
 
-    def compare(self, other: TransitionBlock, method: str) -> bool:
+    def compare(
+        self, other: TransitionBlock, method: str
+    ) -> Tuple[float, float, float]:
         if isinstance(other, CISTransitionBlock):
             return other.compare(self, method)
         else:
-            if method == 'acc':
+            if method == "acc":
                 return self._compare_acc(other, self.transitions)
-            else:
+            elif method == "err":
                 return self._compare_err(other, self.transitions)
+            elif method == "err_self_ref":
+                return self._compare_error_self_ref(other, self.transitions)
+            else:
+                raise ValueError(f"Method not recognized {method}")
 
 
 class CISTransitionBlock(TransitionBlock):
@@ -168,8 +200,7 @@ class CISTransitionBlock(TransitionBlock):
         )
 
     def generate_eomee(self) -> List[CCSDTransition]:
-        self.transitions_eomee = [tr.to_ccsd(
-            self.homo) for tr in self.transitions]
+        self.transitions_eomee = [tr.to_ccsd(self.homo) for tr in self.transitions]
         return self.transitions_eomee
 
     def is_equal_eomee(self, other: EOMEETransitionBlock) -> bool:
@@ -184,14 +215,27 @@ class CISTransitionBlock(TransitionBlock):
             if not is_in:
                 return False
 
-    def compare(self, other: TransitionBlock, method: str) -> bool:
+    def compare(
+        self, other: TransitionBlock, method: str
+    ) -> Tuple[float, float, float]:
         if isinstance(other, EOMEETransitionBlock):
             if len(self.transitions_eomee) != len(self.transitions):
                 self.generate_eomee()
             transitions = self.transitions_eomee
+            if method == "err_self_ref":
+                tr_bkp = self.transitions.copy()
+                self.transitions = transitions
+                res = other._compare_error_self_ref(self, other.transitions)
+                self.transitions = tr_bkp
+                return res
+
         else:
             transitions = self.transitions
-        if method == 'acc':
+        if method == "acc":
             return self._compare_acc(other, transitions)
-        else:
+        elif method == "err":
             return self._compare_err(other, transitions)
+        elif method == "err_self_ref":
+            return self._compare_error_self_ref(other, transitions)
+        else:
+            raise ValueError(f"Method not recognized {method}")
