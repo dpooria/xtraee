@@ -139,5 +139,5 @@ def main() -> int:
             print("acc * fm   | accuracy (acc)  | fraction matched (fm)")
         elif method == "err_self_ref":
             print("accuracy  | error | fraction matched")
-        print("|\t".join(state1_trblock.compare(state2_trblock, method)))
+        print("|\t".join(map(str, state1_trblock.compare(state2_trblock, method))))
     return 0
