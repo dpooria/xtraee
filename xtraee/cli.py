@@ -68,8 +68,11 @@ def parse_args() -> argparse.Namespace:
     group.add_argument(
         "--accuracy", action="store_true", help="Use legacy accuracy [legacy]"
     )
+    group.add_argument("--tot", action="store_true", help="Use total error [new]")
     group.add_argument(
-        "--tot", action="store_true", help="Use total error [new]"
+        "--self-ref",
+        action="store_true",
+        help="Take the state1 as the reference [default]",
     )
 
     return parser.parse_args()
