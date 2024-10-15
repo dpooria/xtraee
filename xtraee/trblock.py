@@ -99,7 +99,7 @@ class TransitionBlock:
         self, other, transitions: List[Transition]
     ) -> Tuple[float, float, float]:
         amps = []
-        N_tr = transitions
+        N_tr = len(transitions)
         N_pos = 0
         other_sq_sum = other.squared_sum
         my_sq_sum = self.squared_sum
@@ -247,10 +247,16 @@ class CISTransitionBlock(TransitionBlock):
             if len(self.transitions_eomee) != len(self.transitions):
                 self.generate_eomee()
             transitions = self.transitions_eomee
-            if method == "err_self_ref" or method == "err_tot":
+            if method == "err_self_ref":
                 tr_bkp = self.transitions.copy()
                 self.transitions = transitions
                 res = other._compare_error_self_ref(self, other.transitions)
+                self.transitions = tr_bkp
+                return res
+            if method == "err_tot":
+                tr_bkp = self.transitions.copy()
+                self.transitions = transitions
+                res = other._compare_err_tot(self, other.transitions)
                 self.transitions = tr_bkp
                 return res
 
