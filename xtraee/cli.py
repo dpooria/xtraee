@@ -68,6 +68,9 @@ def parse_args() -> argparse.Namespace:
     group.add_argument(
         "--accuracy", action="store_true", help="Use legacy accuracy [legacy]"
     )
+    group.add_argument(
+        "--tot", action="store_true", help="Use total error [new]"
+    )
 
     return parser.parse_args()
 
@@ -130,6 +133,8 @@ def main() -> int:
             method = "err"
         elif args.accuracy:
             method = "acc"
+        elif args.tot:
+            method = "err_tot"
         else:
             method = "err_self_ref"
         print(f"Comparing {state1} and {state2}")
@@ -137,7 +142,7 @@ def main() -> int:
             print("(1 / fm) * mae| mean absolute error (mae) | fraction matched (fm)")
         elif method == "acc":
             print("acc * fm   | accuracy (acc)  | fraction matched (fm)")
-        elif method == "err_self_ref":
+        elif method == "err_self_ref" or method == "err_tot":
             print("accuracy  | error | fraction matched")
         print("|\t".join(map(str, state1_trblock.compare(state2_trblock, method))))
     return 0

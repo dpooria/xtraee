@@ -63,8 +63,8 @@ class TransitionBlock:
     ) -> Tuple[float, float, float]:
         amps = []
         other_sq_sum = other.squared_sum
-        N_tr = min(len(other.transitions), len(self.transitions))
         my_sq_sum = self.squared_sum
+        N_tr = min(len(other.transitions), len(self.transitions))
         for o_tr in other.transitions:
             for tr in transitions:
                 if tr.is_equal(o_tr):
@@ -94,6 +94,29 @@ class TransitionBlock:
             return (None, None, 0)
         mae = sum([abs(o_amp - m_amp) for o_amp, m_amp in amps]) / N_pos
         return N_tr / N_pos * mae, mae, N_pos / N_tr
+
+    def _compare_err_tot(
+        self, other, transitions: List[Transition]
+    ) -> Tuple[float, float, float]:
+        amps = []
+        N_tr = transitions
+        N_pos = 0
+        other_sq_sum = other.squared_sum
+        my_sq_sum = self.squared_sum
+        for tr in transitions:
+            matched = False
+            for o_tr in other.transitions:
+                if tr.is_equal(o_tr):
+                    amps.append((tr.amplitude**2 / my_sq_sum, o_tr.amplitude**2 / other_sq_sum))
+                    matched = True
+                    N_pos += 1
+                    break
+            if not matched:
+                amps.append((tr.amplitude**2 / my_sq_sum, 0))
+
+        mae = sum([abs(m_amp - o_amp) for m_amp, o_amp in amps]) / N_tr
+        acc = 1 - mae
+        return acc, mae, N_pos / N_tr
 
     def _compare_error_self_ref(
         self, other, transitions: List[Transition]
@@ -163,6 +186,8 @@ class EOMEETransitionBlock(TransitionBlock):
         else:
             if method == "acc":
                 return self._compare_acc(other, self.transitions)
+            elif method == "err_tot":
+                return self._compare_err_tot(other, self.transitions)
             elif method == "err":
                 return self._compare_err(other, self.transitions)
             elif method == "err_self_ref":
@@ -222,7 +247,7 @@ class CISTransitionBlock(TransitionBlock):
             if len(self.transitions_eomee) != len(self.transitions):
                 self.generate_eomee()
             transitions = self.transitions_eomee
-            if method == "err_self_ref":
+            if method == "err_self_ref" or method == "err_tot":
                 tr_bkp = self.transitions.copy()
                 self.transitions = transitions
                 res = other._compare_error_self_ref(self, other.transitions)
@@ -237,5 +262,7 @@ class CISTransitionBlock(TransitionBlock):
             return self._compare_err(other, transitions)
         elif method == "err_self_ref":
             return self._compare_error_self_ref(other, transitions)
+        elif method == "err_tot":
+            return self._compare_err_tot(other, transitions)
         else:
             raise ValueError(f"Method not recognized {method}")
