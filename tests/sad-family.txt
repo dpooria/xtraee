@@ -1,0 +1,19 @@
+---- Sad family ----
+singlet-0/A
+CCSD: singlet-1/A <=>
+CCSD: singlet-2/A <=>
+CCSD: singlet-3/A <=>
+CCSD: singlet-4/A <=>
+CCSD: singlet-5/A <=>
+triplet-0/A
+CCSD: triplet-1/A <=>
+CCSD: triplet-2/A <=>
+CCSD: triplet-3/A <=>
+CCSD: triplet-4/A <=>
+CCSD: triplet-5/A <=>
+CCSD: triplet-6/A <=>
+CCSD: triplet-7/A <=>
+CCSD: triplet-8/A <=>
+CCSD: triplet-9/A <=>
+CCSD: triplet-10/A <=>
+--- End of sad family :( ---
