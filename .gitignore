@@ -3,6 +3,8 @@
 /*.egg-info/
 /.pytest_cache/
 /.mypy_cache/
+**/.ipynb_checkpoints/
+**/.virtual_documents/
 
 
 # Editor backup files:

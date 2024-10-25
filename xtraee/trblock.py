@@ -30,13 +30,20 @@ class TransitionBlock:
     def identifier(self) -> str:
         return f"{self.excitation}-{self.id_number}/{self.irrep}"
 
+    @property
+    def utrs(self) -> List[Transition]:
+        ut = []
+        for tr in self.transitions:
+            if tr not in ut:
+                ut.append(tr)
+            else:
+                breakpoint()
+                ut[ut.index(tr)].probability += tr.probability
+        return ut
+
     @abstractmethod
     def extras(self, line: str) -> None:
         raise NotImplementedError
-
-    @property
-    def squared_sum(self) -> float:
-        return sum(t.amplitude**2 for t in self.transitions)
 
     def add_data(self, line: str) -> bool:
         if self.END_TRANSITIONBLOCK in line:
@@ -55,89 +62,31 @@ class TransitionBlock:
         return self.transitions[key]
 
     @abstractmethod
-    def compare(self, other) -> bool:
+    def compare(self, other, method: str) -> bool:
         raise NotImplementedError
 
     def _compare_acc(
-        self, other, transitions: List[Transition]
-    ) -> Tuple[float, float, float]:
-        amps = []
-        other_sq_sum = other.squared_sum
-        my_sq_sum = self.squared_sum
-        N_tr = min(len(other.transitions), len(self.transitions))
-        for o_tr in other.transitions:
-            for tr in transitions:
-                if tr.is_equal(o_tr):
-                    amps.append(
-                        (o_tr.amplitude**2 / other_sq_sum, tr.amplitude**2 / my_sq_sum)
-                    )
-                    break
-        N_pos = len(amps)
-        if N_pos == 0:
-            return (0, 0, 0)
-        mae = sum([abs(o_amp - m_amp) for o_amp, m_amp in amps]) / N_pos
-        acc = 1.0 - mae
-        return N_pos / N_tr * acc, acc, N_pos / N_tr
-
-    def _compare_err(
-        self, other, transitions: List[Transition]
-    ) -> Tuple[float, float, float]:
-        amps = []
-        N_tr = min(len(other.transitions), len(self.transitions))
-        for o_tr in other.transitions:
-            for tr in transitions:
-                if tr.is_equal(o_tr):
-                    amps.append((o_tr.amplitude**2, tr.amplitude**2))
-                    break
-        N_pos = len(amps)
-        if N_pos == 0:
-            return (None, None, 0)
-        mae = sum([abs(o_amp - m_amp) for o_amp, m_amp in amps]) / N_pos
-        return N_tr / N_pos * mae, mae, N_pos / N_tr
-
-    def _compare_err_tot(
-        self, other, transitions: List[Transition]
+        self,
+        transitions: List[Transition],
+        other_transitions: List[Transition],
     ) -> Tuple[float, float, float]:
         amps = []
         N_tr = len(transitions)
         N_pos = 0
-        other_sq_sum = other.squared_sum
-        my_sq_sum = self.squared_sum
-        for tr in transitions:
-            matched = False
-            for o_tr in other.transitions:
-                if tr.is_equal(o_tr):
-                    amps.append((tr.amplitude**2 / my_sq_sum, o_tr.amplitude**2 / other_sq_sum))
-                    matched = True
-                    N_pos += 1
-                    break
-            if not matched:
-                amps.append((tr.amplitude**2 / my_sq_sum, 0))
-
-        mae = sum([abs(m_amp - o_amp) for m_amp, o_amp in amps]) / N_tr
-        acc = 1 - mae
-        return acc, mae, N_pos / N_tr
-
-    def _compare_error_self_ref(
-        self, other, transitions: List[Transition]
-    ) -> Tuple[float, float, float]:
-        amps = []
-        N_tr = len(transitions)
-        N_pos = 0
-        my_sq_sum = self.squared_sum
+        my_sum = sum([tr.probability for tr in transitions])
         # I am the reference :)
         for tr in transitions:
             matched = False
-            for o_tr in other.transitions:
+            for o_tr in other_transitions:
                 if tr.is_equal(o_tr):
-                    amps.append((tr.amplitude**2, o_tr.amplitude**2))
+                    amps.append((tr.probability, o_tr.probability))
                     matched = True
                     N_pos += 1
                     break
             if not matched:
-                amps.append((tr.amplitude**2, 0))
+                amps.append((tr.probability, 0))
 
-        mae = sum([m_amp * abs(m_amp - o_amp) / my_sq_sum for m_amp, o_amp in amps])
+        mae = sum([m_amp * abs(m_amp - o_amp) / my_sum for m_amp, o_amp in amps])
         acc = 1.0 - mae
         return acc, mae, N_pos / N_tr
 
@@ -184,14 +133,8 @@ class EOMEETransitionBlock(TransitionBlock):
         if isinstance(other, CISTransitionBlock):
             return other.compare(self, method)
         else:
-            if method == "acc":
-                return self._compare_acc(other, self.transitions)
-            elif method == "err_tot":
-                return self._compare_err_tot(other, self.transitions)
-            elif method == "err":
-                return self._compare_err(other, self.transitions)
-            elif method == "err_self_ref":
-                return self._compare_error_self_ref(other, self.transitions)
+            if method == "1":
+                return self._compare_acc(self.utrs, other.utrs)
             else:
                 raise ValueError(f"Method not recognized {method}")
 
@@ -247,28 +190,9 @@ class CISTransitionBlock(TransitionBlock):
             if len(self.transitions_eomee) != len(self.transitions):
                 self.generate_eomee()
             transitions = self.transitions_eomee
-            if method == "err_self_ref":
-                tr_bkp = self.transitions.copy()
-                self.transitions = transitions
-                res = other._compare_error_self_ref(self, other.transitions)
-                self.transitions = tr_bkp
-                return res
-            if method == "err_tot":
-                tr_bkp = self.transitions.copy()
-                self.transitions = transitions
-                res = other._compare_err_tot(self, other.transitions)
-                self.transitions = tr_bkp
-                return res
-
         else:
             transitions = self.transitions
-        if method == "acc":
-            return self._compare_acc(other, transitions)
-        elif method == "err":
-            return self._compare_err(other, transitions)
-        elif method == "err_self_ref":
-            return self._compare_error_self_ref(other, transitions)
-        elif method == "err_tot":
-            return self._compare_err_tot(other, transitions)
+        if method == "1":
+            return self._compare_acc(transitions, other.utrs)
         else:
             raise ValueError(f"Method not recognized {method}")

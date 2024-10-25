@@ -1,9 +1,8 @@
 import re
-from abc import ABC
 from typing import List, Tuple
 
 
-class Transition(ABC):
+class Transition:
     PATTERN = re.compile(r".+")
 
     def __init__(
@@ -13,6 +12,7 @@ class Transition(ABC):
         final: str,
     ):
         self.amplitude = amplitude
+        self.probability = amplitude ** 2
         self.initial = initial.strip()
         self.final = final.strip()
         self.id_i: List[Tuple[str]] = []
@@ -64,7 +64,7 @@ class Transition(ABC):
                     return False
         return True
 
-    def __and__(self, other) -> bool:
+    def __eq__(self, other) -> bool:
         return self.is_equal(other, check_spin=True)
 
     def __repr__(self) -> str:

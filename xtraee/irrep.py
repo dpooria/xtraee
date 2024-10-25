@@ -1,5 +1,8 @@
-from xtraee.trblock import TransitionBlock, EOMEETransitionBlock
-from typing import List, Dict
+from typing import Dict, List
+
+import pandas as pd
+
+from xtraee.trblock import TransitionBlock
 
 
 class Irrep:
@@ -31,3 +34,16 @@ class Irrep:
 
     def __getitem__(self, key) -> TransitionBlock:
         return self.transitions[key]
+
+    def compare(self, other, method: str) -> pd.DataFrame:
+        scores = []
+        rows = []
+        for tr in self.transitions:
+            rows.append(tr.identifier)
+            score_tr = []
+            columns = []
+            for o_tr in other.transitions:
+                columns.append(o_tr.identifier)
+                score_tr.append(tr.compare(o_tr, method))
+            scores.append(score_tr)
+        return pd.DataFrame(scores, columns=columns, index=rows)

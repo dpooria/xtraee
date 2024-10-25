@@ -61,19 +61,23 @@ def parse_args() -> argparse.Namespace:
         help="The first state with format {method}:{excitation}-{state-id}/{irrep-id}, e.g. CIS:singlet-1/A",
     )
     compare_parser.add_argument("state2", type=str, help="The second state")
-    group = compare_parser.add_mutually_exclusive_group()
-    group.add_argument(
-        "--abs-error", action="store_true", help="Use absolute error [legacy]"
+    compare_parser.add_argument("--acc-method", type=str, default="1")
+    compareall_parser = subparsers.add_parser(
+        "compareall", help="Compare all different states. "
     )
-    group.add_argument(
-        "--accuracy", action="store_true", help="Use legacy accuracy [legacy]"
+    compareall_parser.add_argument(
+        "--output-ccsd",
+        type=str,
+        default="compare_ccsd.csv",
+        help="output file format for comparison of all of the CCCSD states",
     )
-    group.add_argument("--tot", action="store_true", help="Use total error [new]")
-    group.add_argument(
-        "--self-ref",
-        action="store_true",
-        help="Take the state1 as the reference [default]",
+    compareall_parser.add_argument(
+        "--output-cis",
+        type=str,
+        default="compare_cis.csv",
+        help="output file format for comparison of all of the CIS states",
     )
+    compareall_parser.add_argument("--acc-method", type=str, default="1")
 
     return parser.parse_args()
 
@@ -85,7 +89,6 @@ def main() -> int:
             "Please provide input file for CCSD or CIS or both (type --help for help)"
         )
         return 1
-    qccsd = None
     if args.input_ccsd is not None:
         qccsd = QCCSDParser(
             args.threshold, args.input_ccsd, args.firstkid_ccsd, args.happyfamily_ccsd
@@ -93,7 +96,10 @@ def main() -> int:
         qccsd.process_file()
         qccsd.write_first_kid()
         qccsd.write_happy_family()
-    qcis = None
+        breakpoint()
+    else:
+        qccsd = None
+
     if args.input_cis is not None:
         qcis = QCISParser(
             args.threshold, args.input_cis, args.firstkid_cis, args.happyfamily_cis
@@ -103,6 +109,8 @@ def main() -> int:
         qcis.write_happy_family()
         if args.input_ccsd is not None:
             qcis.write_sad_family(qccsd.irreps_dict, args.sadfamily)
+    else:
+        qcis = None
     if args.command == "compare":
         state1 = args.state1
         state2 = args.state2
@@ -132,20 +140,27 @@ def main() -> int:
         if state1_trblock is None or state2_trblock is None:
             print("Couldn't find the states, sorry :(")
             return 1
-        if args.abs_error:
-            method = "err"
-        elif args.accuracy:
-            method = "acc"
-        elif args.tot:
-            method = "err_tot"
-        else:
-            method = "err_self_ref"
         print(f"Comparing {state1} and {state2}")
-        if method == "err":
-            print("(1 / fm) * mae| mean absolute error (mae) | fraction matched (fm)")
-        elif method == "acc":
-            print("acc * fm   | accuracy (acc)  | fraction matched (fm)")
-        elif method == "err_self_ref" or method == "err_tot":
-            print("accuracy  | error | fraction matched")
-        print("|\t".join(map(str, state1_trblock.compare(state2_trblock, method))))
+        print("accuracy  | error | fraction matched")
+        print(
+            "|\t".join(
+                map(str, state1_trblock.compare(state2_trblock, args.acc_method))
+            )
+        )
+    elif args.command == "compareall":
+        # ccsd
+        if qccsd is not None:
+            data = qccsd.compare_all(args.acc_method)
+            for key, df in data.items():
+                df.to_csv(f"{key}_{args.output_ccsd}")
+        if qcis is not None:
+            data = qcis.compare_all(args.acc_method)
+            for key, df in data.items():
+                df.to_csv(f"{key}_{args.output_cis}")
+
+        # if qccsd is not None and qcis is not None:
+        #     data = qcis.compare_eomee(qccsd.irreps_dict, args.acc_method)
+        #     for key, df in data.items():
+        #         df.to_csv(f"{key}_{args.output_mix}.csv")
+
     return 0
