@@ -44,6 +44,7 @@ class Irrep:
             columns = []
             for o_tr in other.transitions:
                 columns.append(o_tr.identifier)
-                score_tr.append(tr.compare(o_tr, method))
+                score, *_ = tr.compare(o_tr, method)
+                score_tr.append(score)
             scores.append(score_tr)
         return pd.DataFrame(scores, columns=columns, index=rows)
