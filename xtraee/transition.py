@@ -65,7 +65,7 @@ class Transition:
         return True
 
     def __eq__(self, other) -> bool:
-        return self.is_equal(other, check_spin=True)
+        return self.is_equal(other, check_spin=False)
 
     def __repr__(self) -> str:
         return f"{self.amplitude:.4f}\t {self.initial} -> {self.final}"

@@ -34,11 +34,10 @@ class TransitionBlock:
     def utrs(self) -> List[Transition]:
         ut = []
         for tr in self.transitions:
-            if tr not in ut:
-                ut.append(tr)
-            else:
-                breakpoint()
+            if tr in ut:
                 ut[ut.index(tr)].probability += tr.probability
+            else:
+                ut.append(tr)
         return ut
 
     @abstractmethod

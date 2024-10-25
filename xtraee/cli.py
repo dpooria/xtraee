@@ -96,7 +96,6 @@ def main() -> int:
         qccsd.process_file()
         qccsd.write_first_kid()
         qccsd.write_happy_family()
-        breakpoint()
     else:
         qccsd = None
 
