@@ -56,10 +56,10 @@ class Transition:
                 if id_f != other_id_f:
                     return False
         else:
-            for id_i, other_id_i in zip(self.id_i, other.id_i):
+            for id_i, other_id_i, id_f, other_id_f in zip(self.id_i, other.id_i,
+                                                          self.id_f, other.id_f):
                 if id_i[:2] != other_id_i[:2]:
                     return False
-            for id_f, other_id_f in zip(self.id_f, other.id_f):
                 if id_f[:2] != other_id_f[:2]:
                     return False
         return True
@@ -107,7 +107,7 @@ class CISTransition(Transition):
         lhs = s[0].strip()
         rhs = s[1].strip()
         idx = rhs.index("=")
-        amplitude = float(rhs[idx + 1 :])
+        amplitude = float(rhs[idx + 1:])
         idx = rhs.find("amplitude")
         rhs = rhs[:idx]
         return cls(amplitude, lhs, rhs)

@@ -2,6 +2,7 @@ import re
 from abc import abstractmethod
 from typing import List, Tuple
 
+from copy import copy
 from xtraee.transition import CCSDTransition, CISTransition, Transition
 
 
@@ -35,7 +36,10 @@ class TransitionBlock:
         ut = []
         for tr in self.transitions:
             if tr in ut:
-                ut[ut.index(tr)].probability += tr.probability
+                new_tr = copy(ut[ut.index(tr)])
+                new_tr.probability += tr.probability
+                new_tr.amplitude += new_tr.probability**0.5
+                ut[ut.index(tr)] = new_tr
             else:
                 ut.append(tr)
         return ut
@@ -85,13 +89,15 @@ class TransitionBlock:
             if not matched:
                 amps.append((tr.probability, 0))
 
-        mae = sum([m_amp * abs(m_amp - o_amp) / my_sum for m_amp, o_amp in amps])
+        mae = sum([m_amp * abs(m_amp - o_amp) /
+                  my_sum for m_amp, o_amp in amps])
         acc = 1.0 - mae
         return acc, mae, N_pos / N_tr
 
 
 class EOMEETransitionBlock(TransitionBlock):
-    EE_PATTERN = re.compile(r"^.*Excitation energy\s*=\s*([-+]?\d*\.?\d+)\s*eV\.\s*$")
+    EE_PATTERN = re.compile(
+        r"^.*Excitation energy\s*=\s*([-+]?\d*\.?\d+)\s*eV\.\s*$")
     R_PATTERN = re.compile(
         r"^.*R0\^2\s*=\s*(\d*.\d+)\s*R1\^2\s*=\s*([-+]?\d*\.?\d+)\s*R2\^2\s*=\s*([-+]?\d*\.?\d+).*$"
     )
@@ -167,7 +173,8 @@ class CISTransitionBlock(TransitionBlock):
         )
 
     def generate_eomee(self) -> List[CCSDTransition]:
-        self.transitions_eomee = [tr.to_ccsd(self.homo) for tr in self.transitions]
+        self.transitions_eomee = [tr.to_ccsd(
+            self.homo) for tr in self.transitions]
         return self.transitions_eomee
 
     def is_equal_eomee(self, other: EOMEETransitionBlock) -> bool:
@@ -185,13 +192,17 @@ class CISTransitionBlock(TransitionBlock):
     def compare(
         self, other: TransitionBlock, method: str
     ) -> Tuple[float, float, float]:
-        if isinstance(other, EOMEETransitionBlock):
+        is_eomee = isinstance(other, EOMEETransitionBlock)
+        if is_eomee:
             if len(self.transitions_eomee) != len(self.transitions):
                 self.generate_eomee()
             transitions = self.transitions_eomee
         else:
             transitions = self.transitions
         if method == "1":
-            return self._compare_acc(transitions, other.utrs)
+            if is_eomee:
+                return self._compare_acc(other.utrs, transitions, )
+            else:
+                return self._compare_acc(transitions, other.utrs)
         else:
             raise ValueError(f"Method not recognized {method}")
