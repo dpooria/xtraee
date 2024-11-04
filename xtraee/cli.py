@@ -77,6 +77,12 @@ def parse_args() -> argparse.Namespace:
         default="compare_cis.csv",
         help="output file format for comparison of all of the CIS states",
     )
+    compareall_parser.add_argument(
+        "--output-mix",
+        type=str,
+        default="compare_ccsd_vs_cis.csv",
+        help="output file format for comparison of all of the CIS and CCSD states",
+    )
     compareall_parser.add_argument("--acc-method", type=str, default="1")
 
     return parser.parse_args()
@@ -157,9 +163,9 @@ def main() -> int:
             for key, df in data.items():
                 df.to_csv(f"{key}_{args.output_cis}")
 
-        # if qccsd is not None and qcis is not None:
-        #     data = qcis.compare_eomee(qccsd.irreps_dict, args.acc_method)
-        #     for key, df in data.items():
-        #         df.to_csv(f"{key}_{args.output_mix}.csv")
+        if qccsd is not None and qcis is not None:
+            data = qcis.compare_eomee(qccsd.irreps_dict, args.acc_method)
+            for key, df in data.items():
+                df.to_csv(f"{key}_{args.output_mix}.csv")
 
     return 0

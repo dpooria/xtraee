@@ -397,8 +397,13 @@ class QCISParser(Parser):
         ]
         scores = {}
         for irrep_singlet in irreps_singlets:
-            for irrep_triplet in irreps_triplets:
-                scores[irrep_singlet.name + "_" + irrep_triplet.name] = (
-                    irrep_singlet.compare(irrep_triplet, method)
+            for oirr_singlet in oirr_singlets:
+                scores["CIS_" + irrep_singlet.name + "_CCSD_" + oirr_singlet.name] = (
+                    irrep_singlet.compare(oirr_singlet, method)
+                )
+        for irrep_triplet in irreps_triplets:
+            for oirr_triplet in oirr_triplets:
+                scores["CIS_" + irrep_triplet.name + "_CCSD_" + oirr_triplet.name] = (
+                    irrep_triplet.compare(oirr_triplet, method)
                 )
         return scores
