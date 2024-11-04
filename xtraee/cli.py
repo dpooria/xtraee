@@ -166,6 +166,6 @@ def main() -> int:
         if qccsd is not None and qcis is not None:
             data = qcis.compare_eomee(qccsd.irreps_dict, args.acc_method)
             for key, df in data.items():
-                df.to_csv(f"{key}_{args.output_mix}.csv")
+                df.to_csv(f"{key}_{args.output_mix}")
 
     return 0
