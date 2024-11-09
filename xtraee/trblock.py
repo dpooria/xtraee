@@ -38,7 +38,7 @@ class TransitionBlock:
             if tr in ut:
                 new_tr = copy(ut[ut.index(tr)])
                 new_tr.probability += tr.probability
-                new_tr.amplitude += new_tr.probability**0.5
+                new_tr.amplitude = new_tr.probability**0.5
                 ut[ut.index(tr)] = new_tr
             else:
                 ut.append(tr)
@@ -104,6 +104,9 @@ class TransitionBlock:
         # I am the reference :)
         for tr in transitions:
             matched = False
+            if tr.amplitude**2 > 1.0:
+                print(f"Amplitude squared is {tr.amplitude**2}")
+                breakpoint()
             for o_tr in other_transitions:
                 if tr.is_equal(o_tr):
                     amps.append((tr.amplitude, o_tr.amplitude))
