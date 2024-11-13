@@ -1,9 +1,44 @@
+import logging
 import re
 from abc import abstractmethod
 from copy import copy
 from typing import List, Tuple
 
 from xtraee.transition import CCSDTransition, CISTransition, Transition
+
+
+def lsq_fit(transitions, other_transitions, amps):
+    import numpy as np
+    from scipy.optimize import minimize
+
+    residu = 1.0 - sum(
+        [tr.probability for tr in transitions]
+    )  # the residual transitions
+    o_nm_amps = []  # not matched amplitudes
+    for o_tr in other_transitions:
+        if o_tr not in transitions:
+            o_nm_amps.append(abs(o_tr.amplitude))
+    o_nm_amp = np.asarray(o_nm_amps)
+
+    # maximize dot product
+    def objective(V):
+        return -np.dot(o_nm_amp, np.abs(V))
+
+    def constraint(V):
+        return np.dot(V, V) - residu
+
+    con = {"type": "eq", "fun": constraint}
+    result = minimize(
+        objective,
+        np.zeros_like(o_nm_amps),
+        constraints=con,
+        method="SLSQP",
+    )
+    if not result.success:
+        logging.debug("Unable to retrieve the missing transitions", result)
+        return
+    for m_amp, o_amps in zip(result.x, o_nm_amps):
+        amps.append((abs(m_amp), o_amps))
 
 
 class TransitionBlock:
@@ -97,16 +132,14 @@ class TransitionBlock:
         self,
         transitions: List[Transition],
         other_transitions: List[Transition],
+        retreive: bool = False,
     ) -> Tuple[float, float, float]:
         amps = []
         N_tr = len(transitions)
         N_pos = 0
-        # I am the reference :)
+        # I am the reference
         for tr in transitions:
             matched = False
-            if tr.amplitude**2 > 1.0:
-                print(f"Amplitude squared is {tr.amplitude**2}")
-                breakpoint()
             for o_tr in other_transitions:
                 if tr.is_equal(o_tr):
                     amps.append((tr.amplitude, o_tr.amplitude))
@@ -115,6 +148,10 @@ class TransitionBlock:
                     break
             if not matched:
                 amps.append((tr.amplitude, 0.0))
+
+        if retreive and len(transitions) < len(other_transitions):
+            # construct the missing transitions that maximize the accuracy
+            lsq_fit(transitions, other_transitions, amps)
 
         acc = sum([abs(m_amp) * abs(o_amp) for m_amp, o_amp in amps])
         mae = 1.0 - acc
@@ -167,6 +204,8 @@ class EOMEETransitionBlock(TransitionBlock):
                 return self._compare_acc(self.utrs, other.utrs)
             elif method == "2":
                 return self._compare_innerprod(self.utrs, other.utrs)
+            elif method == "3":
+                return self._compare_innerprod(self.utrs, other.utrs, True)
             else:
                 raise ValueError(f"Method not recognized {method}")
 
@@ -229,6 +268,8 @@ class CISTransitionBlock(TransitionBlock):
             comp = self._compare_acc
         elif method == "2":
             comp = self._compare_innerprod
+        elif method == "3":
+            comp = lambda tr, o_tr: self._compare_innerprod(tr, o_tr, True)
         else:
             raise ValueError(f"Method not recognized {method}")
         if is_eomee:

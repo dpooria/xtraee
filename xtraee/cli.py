@@ -1,4 +1,5 @@
 import argparse
+import logging
 
 from rich import print
 
@@ -51,6 +52,7 @@ def parse_args() -> argparse.Namespace:
         default="sad-family.txt",
         help="Output file for the complete information",
     )
+    parser.add_argument("--debug", action="store_true", help="Debug mode")
     subparsers = parser.add_subparsers(dest="command")
     compare_parser = subparsers.add_parser(
         "compare", help="Compare two different states"
@@ -90,6 +92,8 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> int:
     args = parse_args()
+    if args.debug:
+        logging.basicConfig(level=logging.DEBUG)
     if args.input_ccsd is None and args.input_cis is None:
         print(
             "Please provide input file for CCSD or CIS or both (type --help for help)"
