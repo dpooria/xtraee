@@ -15,8 +15,8 @@ class Transition:
         self.probability = amplitude ** 2
         self.initial = initial.strip()
         self.final = final.strip()
-        self.id_i: List[Tuple[str]] = []
-        self.id_f: List[Tuple[str]] = []
+        self.id_i: List[Tuple[str, ...]] = []
+        self.id_f: List[Tuple[str, ...]] = []
         self.is_double = False
         if not self.parse():
             raise ValueError(f"Cannot parse {initial} -> {final}")
@@ -100,7 +100,7 @@ class CISTransition(Transition):
     NAME = "CISTransition"
 
     @classmethod
-    def from_str(cls, line):
+    def from_str(cls, line: str):
         s = line.split("-->")
         if len(s) != 2:
             raise ValueError(f"cannot match {line}")

@@ -7,7 +7,11 @@ from typing import List, Tuple
 from xtraee.transition import CCSDTransition, CISTransition, Transition
 
 
-def lsq_fit(transitions, other_transitions, amps):
+def lsq_fit(
+    transitions: List[Transition],
+    other_transitions: List[Transition],
+    amps: List[Tuple[float, float]],
+) -> None:
     import numpy as np
     from scipy.optimize import minimize
 
@@ -24,6 +28,7 @@ def lsq_fit(transitions, other_transitions, amps):
     def objective(V):
         return -np.dot(o_nm_amp, np.abs(V))
 
+    # the remaining probabilities should be equal to the residual
     def constraint(V):
         return np.dot(V, V) - residu
 
@@ -68,7 +73,7 @@ class TransitionBlock:
 
     @property
     def utrs(self) -> List[Transition]:
-        ut = []
+        ut: List[Transition] = []
         for tr in self.transitions:
             if tr in ut:
                 new_tr = copy(ut[ut.index(tr)])
@@ -100,7 +105,7 @@ class TransitionBlock:
         return self.transitions[key]
 
     @abstractmethod
-    def compare(self, other, method: str) -> bool:
+    def compare(self, other, method: str) -> Tuple[float, float, float]:
         raise NotImplementedError
 
     def _compare_acc(
@@ -169,6 +174,7 @@ class EOMEETransitionBlock(TransitionBlock):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.transitions: List[CCSDTransition] = []
         self.R0 = 0.0
         self.R1 = 0.0
         self.R2 = 0.0
@@ -220,6 +226,7 @@ class CISTransitionBlock(TransitionBlock):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.transitions_eomee: List[CCSDTransition] = []
+        self.transitions: List[CISTransition] = []
         self.homo = 0
 
     def extras(self, line: str):
@@ -253,6 +260,7 @@ class CISTransitionBlock(TransitionBlock):
                     break
             if not is_in:
                 return False
+        return True
 
     def compare(
         self, other: TransitionBlock, method: str
