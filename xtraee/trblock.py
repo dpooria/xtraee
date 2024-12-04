@@ -1,9 +1,10 @@
 import logging
 import re
 from abc import abstractmethod
-from copy import copy
+from copy import deepcopy
 from typing import List, Tuple
 
+from xtraee.config import debug
 from xtraee.transition import CCSDTransition, CISTransition, Transition
 
 
@@ -76,12 +77,19 @@ class TransitionBlock:
         ut: List[Transition] = []
         for tr in self.transitions:
             if tr in ut:
-                new_tr = copy(ut[ut.index(tr)])
+                new_tr = deepcopy(ut[ut.index(tr)])
                 new_tr.probability += tr.probability
                 new_tr.amplitude = new_tr.probability**0.5
                 ut[ut.index(tr)] = new_tr
             else:
                 ut.append(tr)
+
+        if debug:
+            for tr in ut:
+                assert tr.probability >= 0.0
+                assert tr.probability <= 1.0
+                assert abs(tr.amplitude - tr.probability**0.5) < 1e-6
+            assert sum([tr.probability for tr in ut]) <= 1.0
         return ut
 
     @abstractmethod
