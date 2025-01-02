@@ -4,7 +4,9 @@ XtraEE is a quantum chemistry tool designed to analyze excited-state calculation
 
 $$Accuracy = \sum_i{a_i b_i}$$
 
-<img src="notebooks/logo_1.jpeg" alt="Alt Text" width=1000>
+<div align="center">
+  <img src="notebooks/logo_1.jpeg" alt="Alt Text" width="600">
+</div>
 
 Table of Contents
 =================
@@ -37,7 +39,7 @@ Table of Contents
 
 ## What is necessary to use it?
 
-The excited-state calculations must be performed using the **QChem** quantum chemistry software for EOM-CCSD and CIS methodology (without symmetry), and the output file must be in the format with a `.log` extension.
+The excited-state calculations must be performed using the **QChem** quantum chemistry software for EOM-CCSD and CIS methodology, and the output file must be in the format with a `.log` extension.
 
 ## How to install it?
 
@@ -84,19 +86,8 @@ Navigate to the xtraee directory and install the package:
   - **`sad_family.txt`:** Combines matched states from both methods, pairing CCSD singlets with all possible matched CIS singlets, and CCSD triplets with all possible matched CIS triplets, using CCSD states as the reference.
     
   ### Example:
- * For comparing the first singlet of CCSD with first triplet of CCSD
-
-    `xtraee  --input-cis /../address_to_cis_file/cis_output.log --input-ccsd /../address_to_ccsd_file/ccsd_output.log compare CCSD:singlet-1/A CCSD:triplet-1/A`
-
-    This will output the following:
   
-    Comparing singlet-1/A and triplet-1/A
-  
-    accuracy  | error | fraction matched
-  
-    0.9680794185544374|     0.03192058144556266|    0.5
-
-* For comparing the first singlet of CCSD with third singlet of CIS
+  For comparing the first singlet of CCSD with third singlet of CIS
 
   `xtraee  --input-cis /../address_to_cis_file/cis_output.log --input-ccsd /../address_to_ccsd_file/ccsd_output.log compare CCSD:singlet-1/A CIS:singlet-3/`
 
