@@ -1,6 +1,6 @@
-# xtraee
+# XtraEE
 
-A CLI tool for extracting data from EOM-CCSD and CIS excited-state calculations (e.g, from QChem) and quantifying the accuracy of the match between two excited states.
+XtraEE is a quantum chemistry tool designed to analyze excited-state calculations, providing a comprehensive comparison between different methods such as CCSD and CIS. It calculates transition amplitudes, accuracy, and provides insights into the similarity between excited states.
 
 $$Accuracy = \sum_i{a_i b_i}$$
 
@@ -61,7 +61,7 @@ Navigate to the xtraee directory and install the package:
       - For `CCSD`, use the `state_number/A`
       - For `CIS`, use the `state_number/`
 
-  The program outputs three key values to the terminal:
+3. The program outputs three key values to the terminal:
 
   - **Accuracy:** Quantifies the similarity between the two states, representing the extent to which they correspond to each other.
     
@@ -69,7 +69,7 @@ Navigate to the xtraee directory and install the package:
     
   - **Fraction Matched:** Indicates the fraction of transitions in State 1 that are matched to those in State 2, using State 1 as the reference.
 
-  It generates the following output files:
+4. It generates five key output files::
   
   - **`first_kid_cis.txt`:** Contains the data described above for all states calculated using the CIS method.
   
@@ -82,7 +82,7 @@ Navigate to the xtraee directory and install the package:
   - **`sad_family.txt`:** Combines matched states from both methods, pairing CCSD singlets with all possible matched CIS singlets, and CCSD triplets with all possible matched CIS triplets, using CCSD states as the reference.
     
   ### Example:
-  For comparing the first singlet of CCSD with first triplet of CCSD
+ * For comparing the first singlet of CCSD with first triplet of CCSD
 
   `xtraee  --input-cis /../address_to_cis_file/cis_output.log --input-ccsd /../address_to_ccsd_file/ccsd_output.log compare CCSD:singlet-1/A CCSD:triplet-1/A`
 
@@ -94,7 +94,7 @@ Navigate to the xtraee directory and install the package:
   
   0.9680794185544374|     0.03192058144556266|    0.5
 
-  For comparing the first singlet of CCSD with third singlet of CIS
+* For comparing the first singlet of CCSD with third singlet of CIS
 
   `xtraee  --input-cis /../address_to_cis_file/cis_output.log --input-ccsd /../address_to_ccsd_file/ccsd_output.log compare CCSD:singlet-1/A CIS:singlet-3/`
 
@@ -106,16 +106,18 @@ Navigate to the xtraee directory and install the package:
   
   0.9660054368892956|     0.033994563110704416|   1.0
 
-3. To compare all the states together, execute the following command in the terminal:
+5. To perform a comprehensive comparison of all states, run the following command in the terminal:
 
    `xtraee  --input-cis /../address_to_cis_file/cis_output.log --input-ccsd /../address_to_ccsd_file/ccsd_output.log compareall`
 
-   It will generates the four additional files alongside the previous files.
+   This will generate four additional output files, alongside the existing ones:
 
-   - **`singlet_triplet_compare_cis.csv`:** Write down the accuracy value of all the states of CIS by taking CIS'singlet as state 1 and CIS'triplets as state 2.
+   - **`singlet_triplet_compare_cis.csv`:** Contains the accuracy values for all CIS states, where the CIS singlet is designated as state 1 and the CIS triplets as state 2.
   
-   - **`A_A_compare_ccsd.csv`:** Write down the accuracy value of all the states of CCSD by taking CCSD'singlet as state 1 and CCSD'triplets as state 2.
+   - **`A_A_compare_ccsd.csv`:** Contains the accuracy values for all CCSD states, where the CCSD singlet is designated as state 1 and the CCSD triplets as state 2.
   
-   - **`CIS_singlet_CCSD_A_compare_ccsd_vs_cis.csv`:** Write down the accuracy value of all the singlet states by taking CCSD'singlet as state 1 and CIS'singlet as state 2.
+   - **`CIS_singlet_CCSD_A_compare_ccsd_vs_cis.csv`:** Contains the accuracy values for all singlet states, comparing CCSD's singlet (state 1) with CIS's singlet (state 2).
   
-   - **`CIS_triplet_CCSD_A_compare_ccsd_vs_cis.csv`:** Write down the accuracy value of all the triplet states by taking CCSD'triplet as state 1 and CIS'triplet as state 2.
+   - **`CIS_triplet_CCSD_A_compare_ccsd_vs_cis.csv`:** Contains the accuracy values for all triplet states, comparing CCSD's triplet (state 1) with CIS's triplet (state 2).
+
+
