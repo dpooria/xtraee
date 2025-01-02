@@ -55,19 +55,19 @@ Navigate to the xtraee directory and install the package:
    
    `xtraee  --input-cis /../address_to_cis_file/cis_output.log --input-ccsd /../address_to_ccsd_file/ccsd_output.log compare method_name:1_state_name-1_state_number method_name:2_state_name-2_state_number`
 
-  - method_name: Specify the method (e.g, `CCSD` or `CIS`).
-  - state_name: Specify the state type (e.g, `singlet` or `triplet`).
-  - state_number: Use the state numbering convention from the `.log` file.
-      - For `CCSD`, use the `state_number/A`
-      - For `CIS`, use the `state_number/`
+    - method_name: Specify the method (e.g, `CCSD` or `CIS`).
+    - state_name: Specify the state type (e.g, `singlet` or `triplet`).
+    - state_number: Use the state numbering convention from the `.log` file.
+      * For `CCSD`, use the `state_number/A`
+      * For `CIS`, use the `state_number/`
 
 3. The program outputs three key values to the terminal:
 
-  - **Accuracy:** Quantifies the similarity between the two states, representing the extent to which they correspond to each other.
+    - **Accuracy:** Quantifies the similarity between the two states, representing the extent to which they correspond to each other.
     
-  - **Error:** Represents the degree of dissimilarity between the two states.
+    - **Error:** Represents the degree of dissimilarity between the two states.
     
-  - **Fraction Matched:** Indicates the fraction of transitions in State 1 that are matched to those in State 2, using State 1 as the reference.
+    - **Fraction Matched:** Indicates the fraction of transitions in State 1 that are matched to those in State 2, using State 1 as the reference.
 
 4. It generates five key output files::
   
@@ -84,15 +84,15 @@ Navigate to the xtraee directory and install the package:
   ### Example:
  * For comparing the first singlet of CCSD with first triplet of CCSD
 
-  `xtraee  --input-cis /../address_to_cis_file/cis_output.log --input-ccsd /../address_to_ccsd_file/ccsd_output.log compare CCSD:singlet-1/A CCSD:triplet-1/A`
+    `xtraee  --input-cis /../address_to_cis_file/cis_output.log --input-ccsd /../address_to_ccsd_file/ccsd_output.log compare CCSD:singlet-1/A CCSD:triplet-1/A`
 
-  This will output the following:
+    This will output the following:
   
-  Comparing singlet-1/A and triplet-1/A
+    Comparing singlet-1/A and triplet-1/A
   
-  accuracy  | error | fraction matched
+    accuracy  | error | fraction matched
   
-  0.9680794185544374|     0.03192058144556266|    0.5
+    0.9680794185544374|     0.03192058144556266|    0.5
 
 * For comparing the first singlet of CCSD with third singlet of CIS
 
