@@ -4,6 +4,8 @@ XtraEE is a quantum chemistry tool designed to analyze excited-state calculation
 
 $$Accuracy = \sum_i{a_i b_i}$$
 
+<img src="notebooks/logo.png">
+
 Table of Contents
 =================
 <!--ts-->
