@@ -57,7 +57,9 @@ Navigate to the xtraee directory and install the package:
 
 2. To compare two specific states, execute the following command in the terminal:
    
-   `xtraee  --input-cis /../address_to_cis_file/cis_output.log --input-ccsd /../address_to_ccsd_file/ccsd_output.log compare method_name:1_state_name-1_state_number method_name:2_state_name-2_state_number`
+   ```bash
+   xtraee  --input-cis /../address_to_cis_file/cis_output.log --input-ccsd /../address_to_ccsd_file/ccsd_output.log compare method_name:1_state_name-1_state_number method_name:2_state_name-2_state_number
+   ```
 
     - method_name: Specify the method (e.g, `CCSD` or `CIS`).
     - state_name: Specify the state type (e.g, `singlet` or `triplet`).
@@ -65,7 +67,7 @@ Navigate to the xtraee directory and install the package:
       * For `CCSD`, use the `state_number/A`
       * For `CIS`, use the `state_number/`
 
-3. The program outputs three key values to the terminal:
+4. The program outputs three key values to the terminal:
 
     - **Accuracy:** Quantifies the similarity between the two states, representing the extent to which they correspond to each other.
     
@@ -73,7 +75,7 @@ Navigate to the xtraee directory and install the package:
     
     - **Fraction Matched:** Indicates the fraction of transitions in State 1 that are matched to those in State 2, using State 1 as the reference.
 
-4. It generates five key output files::
+5. It generates five key output files::
   
   - **`first_kid_cis.txt`:** Contains the data described above for all states calculated using the CIS method.
   
@@ -89,19 +91,25 @@ Navigate to the xtraee directory and install the package:
   
   For comparing the first singlet of CCSD with third singlet of CIS
 
-  `xtraee  --input-cis /../address_to_cis_file/cis_output.log --input-ccsd /../address_to_ccsd_file/ccsd_output.log compare CCSD:singlet-1/A CIS:singlet-3/`
+  ```bash
+  xtraee  --input-cis /../address_to_cis_file/cis_output.log --input-ccsd /../address_to_ccsd_file/ccsd_output.log compare CCSD:singlet-1/A CIS:singlet-3/
+```
 
   This will output the following:
   
-  Comparing singlet-1/A and singlet-3/
+  ```log
+Comparing singlet-1/A and singlet-3/
   
   accuracy  | error | fraction matched
   
   0.9660054368892956|     0.033994563110704416|   1.0
+```
 
 5. To perform a comprehensive comparison of all states, run the following command in the terminal:
 
-   `xtraee  --input-cis /../address_to_cis_file/cis_output.log --input-ccsd /../address_to_ccsd_file/ccsd_output.log compareall`
+   ```bash
+   xtraee  --input-cis /../address_to_cis_file/cis_output.log --input-ccsd /../address_to_ccsd_file/ccsd_output.log compareall
+   ```
 
    This will generate four additional output files, alongside the existing ones:
 
