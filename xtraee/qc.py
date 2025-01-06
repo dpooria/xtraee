@@ -12,10 +12,10 @@ class Parser:
 
     def __init__(
         self,
-        threshold: float,
         input_file: str | pathlib.Path,
-        first_kid: str | pathlib.Path,
-        happy_family: str | pathlib.Path,
+        threshold: float = 0.0,
+        first_kid: str | pathlib.Path = "first_kid.txt",
+        happy_family: str | pathlib.Path = "happy_family.txt",
     ):
         self.threshold = threshold
         self.input_file = input_file
@@ -151,10 +151,10 @@ class QCCSDParser(Parser):
 
     def __init__(
         self,
-        threshold: float,
         input_file: str | pathlib.Path,
-        first_kid: str | pathlib.Path,
-        happy_family: str | pathlib.Path,
+        threshold: float = 0.0,
+        first_kid: str | pathlib.Path = "first_kid.txt",
+        happy_family: str | pathlib.Path = "happy_family.txt",
     ):
         super().__init__(threshold, input_file, first_kid, happy_family)
         self.parser = {
@@ -267,10 +267,10 @@ class QCISParser(Parser):
 
     def __init__(
         self,
-        threshold: float,
         input_file: str | pathlib.Path,
-        first_kid: str | pathlib.Path,
-        happy_family: str | pathlib.Path,
+        threshold: float = 0.0,
+        first_kid: str | pathlib.Path = "first_kid.txt",
+        happy_family: str | pathlib.Path = "happy_family.txt",
     ):
         super().__init__(threshold, input_file, first_kid, happy_family)
         self.parser = {

@@ -101,7 +101,10 @@ def main() -> int:
         return 1
     if args.input_ccsd is not None:
         qccsd = QCCSDParser(
-            args.threshold, args.input_ccsd, args.firstkid_ccsd, args.happyfamily_ccsd
+            args.input_ccsd,
+            args.threshold,
+            args.firstkid_ccsd,
+            args.happyfamily_ccsd,
         )
         qccsd.process_file()
         qccsd.write_first_kid()
@@ -111,7 +114,10 @@ def main() -> int:
 
     if args.input_cis is not None:
         qcis = QCISParser(
-            args.threshold, args.input_cis, args.firstkid_cis, args.happyfamily_cis
+            args.input_cis,
+            args.threshold,
+            args.firstkid_cis,
+            args.happyfamily_cis,
         )
         qcis.process_file()
         qcis.write_first_kid()
