@@ -45,11 +45,15 @@ The excited-state calculations must be performed using the **QChem** quantum che
 
 Clone the repository to your local machine using the following command:
 
-`git clone git@github.com:dpooria/xtraee`
+```bash
+git clone git@github.com:dpooria/xtraee
+```
 
 Navigate to the xtraee directory and install the package:
 
-`pip install .`
+```bash
+pip install .
+```
 
 ## How to use it?
 
