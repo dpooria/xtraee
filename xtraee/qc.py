@@ -156,7 +156,7 @@ class QCCSDParser(Parser):
         first_kid: str | pathlib.Path = "first_kid.txt",
         happy_family: str | pathlib.Path = "happy_family.txt",
     ):
-        super().__init__(threshold, input_file, first_kid, happy_family)
+        super().__init__(input_file, threshold, first_kid, happy_family)
         self.parser = {
             self.NULL_BLOCK: lambda line: None,
             self.INPUT_BLOCK: self.process_input_block,
@@ -272,7 +272,7 @@ class QCISParser(Parser):
         first_kid: str | pathlib.Path = "first_kid.txt",
         happy_family: str | pathlib.Path = "happy_family.txt",
     ):
-        super().__init__(threshold, input_file, first_kid, happy_family)
+        super().__init__(input_file, threshold, first_kid, happy_family)
         self.parser = {
             self.NULL_BLOCK: lambda line: None,
             self.EE_BLOCK: self.process_trblock,
