@@ -2,7 +2,6 @@
 
 XtraEE is a quantum chemistry tool designed to analyze excited-state calculations, providing a comprehensive comparison between different methods such as CCSD and CIS. It calculates transition amplitudes, accuracy, and provides insights into the similarity between excited states.
 
-$$Accuracy = \sum_i{a_i b_i}$$
 
 <div align="center">
   <img src="notebooks/logo_1.jpeg" alt="Alt Text" width="600">
@@ -33,7 +32,9 @@ Table of Contents
 |     $R_0^2$, $R_1^2$, and $R_2^2$ values       |                                            |
 |               Omega or Mulliken value                    |                                            |
 
-2. It matches the transitions between orbitals of the two states and utilizes the matched transition's amplitudes (denoted as $a_i$ for State 1 and $b_i$ for State 2) in the aforementioned equation to calculate an accuracy value. This accuracy value, ranging between 0 and 1, provides a quantitative measure of the degree of correspondence between the two states.
+2. It matches the transitions between orbitals of the two states and utilizes the matched transition's amplitudes (denoted as $a_i$ for State 1 and $b_i$ for State 2) in the equation below to calculate an accuracy value. This accuracy value, ranging between 0 and 1, provides a quantitative measure of the degree of correspondence between the two states.
+
+$$Accuracy = \sum_i{a_i b_i}$$
   
 3. It prints the relevant data into separate files for further analysis.
 
