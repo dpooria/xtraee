@@ -16,7 +16,7 @@ def test_happy_family(inputfile, expected_output, tmp_path):
     inputfile_path = test_dir / inputfile
     expected_output_path = test_dir / expected_output
     outputfile = tmp_path / ("test_" + expected_output)
-    qccsd = QCISParser(0.2, inputfile_path, ".tmp", outputfile)
+    qccsd = QCISParser(inputfile_path, 0.2, ".tmp", outputfile)
     qccsd.process_file()
     qccsd.write_happy_family()
     assert filecmp.cmp(
@@ -31,6 +31,6 @@ if __name__ == "__main__":
         test_dir = Path(__file__).parent
         inputfile_path = test_dir / inputfile
         outputfile = test_dir / output
-        qccsd = QCISParser(0.2, inputfile_path, ".tmp", outputfile)
+        qccsd = QCISParser(inputfile_path, 0.2, ".tmp", outputfile)
         qccsd.process_file()
         qccsd.write_happy_family()
