@@ -7,7 +7,9 @@ name = "xtraee"
 description = "CLI tool to extract data from excited state calculations with qchem output files"
 version = "0.0.1"
 authors = [
-    { name = "P. Dabbaghi" }
+    { name = "P. Dabbaghi" },
+    { name = "Divya" },
+
 ]
 requires-python = ">=3.8"
 license = { text = "MIT License" }
@@ -30,6 +32,9 @@ dependencies = [
 
 [project.scripts]
 xtraee = "xtraee.cli:main"
+
+[tool.setuptools.data-files]
+"share/xtraee" = ["scripts/*"]
 
 [tool.pytest.ini_options]
 testpaths = [

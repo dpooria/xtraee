@@ -5,7 +5,7 @@
 /.mypy_cache/
 **/.ipynb_checkpoints/
 **/.virtual_documents/
-
+build/
 
 # Editor backup files:
 *~
