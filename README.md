@@ -39,7 +39,7 @@ Table of Contents
 
 ## What is necessary to use it?
 
-The excited-state calculations must be performed using the **QChem** quantum chemistry software for EOM-CCSD and CIS methodology, and the output file must be in the format with a `.log` extension.
+The excited-state calculations must be performed using the **QChem** quantum chemistry software for EOM-CCSD and CIS methodology.
 
 ## How to install it?
 
