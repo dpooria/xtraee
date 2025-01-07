@@ -57,7 +57,7 @@ class Parser:
         with open(self.first_kid, "w") as f:
             for irrep in self.irreps_dict.values():
                 f.write(f"{irrep.name}\n")
-                for tr in irrep.transitions:
+                for tr in irrep.trblocks:
                     f.write(f"{tr}\n")
 
     def write_happy_family(self) -> None:
@@ -93,7 +93,7 @@ class Parser:
                     ss = str(s_max).strip()
                     matched_triplets[ss] = []
                     for triplet in triplets:
-                        for trblock in triplet.transitions:
+                        for trblock in triplet.trblocks:
                             for tr in trblock.transitions:
                                 if s_max.is_equal(tr):
                                     matched_triplets[ss].append(
@@ -244,7 +244,7 @@ class QCCSDParser(Parser):
             self.current_trprop = f"{ee_type}-{id_number}/{irrep}"
             self.current_irrep = self.irreps_dict[f"{ee_type}-0/{irrep}"]
             self.current_irrep.update_transitions()
-            self.current_transition = self.current_irrep.transitions_dict[
+            self.current_transition = self.current_irrep.trblocks_dict[
                 self.current_trprop
             ]
         elif self.current_trprop != "" and self.current_transition is not None:
@@ -312,8 +312,8 @@ class QCISParser(Parser):
         self.irrep_triplets.sort()
         self.irrep_singlets.n_states = len(self.irrep_singlets)
         self.irrep_triplets.n_states = len(self.irrep_triplets)
-        singlet_trblocks = self.irrep_singlets.transitions
-        triplet_trblocks = self.irrep_triplets.transitions
+        singlet_trblocks = self.irrep_singlets.trblocks
+        triplet_trblocks = self.irrep_triplets.trblocks
         self.homo = 0
         for tr in singlet_trblocks:
             self.homo = max(
@@ -336,7 +336,7 @@ class QCISParser(Parser):
         irrep = self.irreps_dict[key]
         majors = []
         # match all of the states in CCSD to CIS
-        for i, trblock in enumerate(irrep.transitions):
+        for i, trblock in enumerate(irrep.trblocks):
             if trblock.is_equal_eomee(ccsd_block):
                 majors.append(trblock)
         return majors
@@ -348,7 +348,7 @@ class QCISParser(Parser):
         data = {}
         for key_irrep_ccsd, irrep_ccsd in ccsd_irrep_dict.items():
             data[key_irrep_ccsd] = []
-            for trblock_ccsd in irrep_ccsd.transitions:
+            for trblock_ccsd in irrep_ccsd.trblocks:
                 result = {
                     "CCSD": trblock_ccsd,
                     "CIS": self.match2ccsd(trblock_ccsd.excitation, trblock_ccsd),

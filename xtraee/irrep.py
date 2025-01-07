@@ -14,35 +14,35 @@ class Irrep:
     ):
         self.name = name
         self.n_states = n_states
-        self.transitions: List[TransitionBlock] = []
-        self.transitions_dict: Dict[str, TransitionBlock] = {}
+        self.trblocks: List[TransitionBlock] = []
+        self.trblocks_dict: Dict[str, TransitionBlock] = {}
         self.ee_type = ee_type
 
     def sort(self) -> None:
-        self.transitions.sort(key=lambda t: t.excitation_energy)
+        self.trblocks.sort(key=lambda t: t.excitation_energy)
         self.update_transitions()
 
     def update_transitions(self) -> None:
-        for t in self.transitions:
-            self.transitions_dict[t.identifier] = t
+        for t in self.trblocks:
+            self.trblocks_dict[t.identifier] = t
 
     def append(self, transition: TransitionBlock) -> None:
-        self.transitions.append(transition)
+        self.trblocks.append(transition)
 
     def __len__(self) -> int:
-        return len(self.transitions)
+        return len(self.trblocks)
 
     def __getitem__(self, key) -> TransitionBlock:
-        return self.transitions[key]
+        return self.trblocks[key]
 
     def compare(self, other, method: str) -> pd.DataFrame:
         scores = []
         rows = []
-        for tr in self.transitions:
+        for tr in self.trblocks:
             rows.append(tr.identifier)
             score_tr = []
             columns = []
-            for o_tr in other.transitions:
+            for o_tr in other.trblocks:
                 columns.append(o_tr.identifier)
                 score, *_ = tr.compare(o_tr, method)
                 score_tr.append(score)
