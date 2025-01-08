@@ -3,6 +3,7 @@ import re
 from abc import abstractmethod
 from copy import deepcopy
 from typing import List, Tuple
+from functools import partial
 
 from xtraee.config import debug
 from xtraee.transition import CCSDTransition, CISTransition, Transition
@@ -141,6 +142,31 @@ class TransitionBlock:
         acc = 1.0 - mae
         return acc, mae, N_pos / N_tr
 
+    def _compare_pearson(
+        self,
+        transitions: List[Transition],
+        other_transitions: List[Transition],
+    ) -> Tuple[float, float, float]:
+        import numpy as np
+
+        probs = []
+        N_tr = len(transitions)
+        N_pos = 0
+        for tr in transitions:
+            for o_tr in other_transitions:
+                if tr.is_equal(o_tr):
+                    probs.append((tr.probability, o_tr.probability))
+                    N_pos += 1
+                    break
+            else:
+                probs.append((tr.probability, 0.0))
+        probs = np.array(probs)
+        if np.sum(probs[:, 1]) == 0.0:
+            acc = 0.0
+        else:
+            acc = np.corrcoef(probs.T)[0, 1]
+        return acc, 1 - acc**2, N_pos / N_tr
+
     def _compare_innerprod(
         self,
         transitions: List[Transition],
@@ -220,6 +246,8 @@ class EOMEETransitionBlock(TransitionBlock):
                 return self._compare_innerprod(self.utrs, other.utrs)
             elif method == "3":
                 return self._compare_innerprod(self.utrs, other.utrs, True)
+            elif method == "4":
+                return self._compare_pearson(self.utrs, other.utrs)
             else:
                 raise ValueError(f"Method not recognized {method}")
 
@@ -285,7 +313,9 @@ class CISTransitionBlock(TransitionBlock):
         elif method == "2":
             comp = self._compare_innerprod
         elif method == "3":
-            comp = lambda tr, o_tr: self._compare_innerprod(tr, o_tr, True)
+            comp = partial(self._compare_innerprod, retreive=True)
+        elif method == "4":
+            comp = self._compare_pearson
         else:
             raise ValueError(f"Method not recognized {method}")
         if is_eomee:

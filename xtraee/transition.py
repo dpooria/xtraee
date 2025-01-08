@@ -4,6 +4,7 @@ from typing import List, Tuple
 
 class Transition:
     PATTERN = re.compile(r".+")
+    NAME = "Transition"
 
     def __init__(
         self,
