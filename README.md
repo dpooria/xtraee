@@ -19,7 +19,7 @@ Table of Contents
     
 ## What does this program do?
 
-1. This program collects data from excited-state calculations:
+1. This package collects data from excited-state calculations:
 
 | **From EOM-CCSD**                                | **From CIS**                                     |
 | :----------------------------------------: | :----------------------------------------: |
@@ -72,7 +72,7 @@ pip install .
       * For `CCSD`, use the `state_number/A`
       * For `CIS`, use the `state_number/`
 
-4. The program outputs three key values to the terminal:
+4. The package outputs three key values to the terminal:
 
     - **Accuracy:** Quantifies the similarity between the two states, representing the extent to which they correspond to each other.
     
