@@ -66,6 +66,7 @@ class TransitionBlock:
         self.irrep = irrep
         self.excitation = excitation
         self.completed = False
+        self.completed_extras = False
         self.excitation_energy = excitation_energy
         self.oscillator_strength = oscillator_strength
 
@@ -202,8 +203,20 @@ class EOMEETransitionBlock(TransitionBlock):
     R_PATTERN = re.compile(
         r"^.*R0\^2\s*=\s*(\d*.\d+)\s*R1\^2\s*=\s*([-+]?\d*\.?\d+)\s*R2\^2\s*=\s*([-+]?\d*\.?\d+).*$"
     )
+
     END_TRANSITIONBLOCK = "Summary of significant orbitals:"
     TR_INDICATOR = "->"
+    OCCUPATION_FRONTIER_NO = "Occupation of frontier NOs:"
+    FRONTIER_NO_PATTERN = re.compile(r"^\s*([0-9]+\.[0-9]+)\s+([0-9]+\.[0-9]+)\s*$")
+    UNPAIRED_NO_PATTERN = re.compile(
+        r"^\s*Number of unpaired electrons:\s*n_u\s*=\s*([0-9]+\.[0-9]+),\s*n_u,nl\s*=\s*([0-9]+\.[0-9]+)\s*$"
+    )
+    UNPAIRED_NO = "Number of unpaired electrons:"
+    PARTICIPATION_RATIO_NO = "NO participation ratio (PR_NO):"
+    PRNO_PATTERN = re.compile(
+        r"^\s*NO participation ratio \(PR_NO\):\s*([0-9]+\.[0-9]+)\s*$"
+    )
+
     TrTYPE = CCSDTransition
 
     def __init__(self, *args, **kwargs):
@@ -212,15 +225,54 @@ class EOMEETransitionBlock(TransitionBlock):
         self.R0 = 0.0
         self.R1 = 0.0
         self.R2 = 0.0
+        self.gamma = 0.0
         self.omega = 0.0
+        self.loc = 0.0
+        self.alphabeta = 0.0
+        self.corr_coef = 0.0
+        self.froniter_no = []
+        self.wait_frontier_no = False
+        self.nu = 0.0
+        self.nl = 0.0
+        self.prno = 0.0
 
     def extras(self, line: str) -> None:
-        if (m := self.R_PATTERN.match(line)) is not None:
-            self.R0 = float(m.group(1))
-            self.R1 = float(m.group(2))
-            self.R2 = float(m.group(3))
-        elif (m := self.EE_PATTERN.match(line)) is not None:
-            self.excitation_energy = float(m.group(1))
+        if not self.completed:
+            if (m := self.R_PATTERN.match(line)) is not None:
+                self.R0 = float(m.group(1))
+                self.R1 = float(m.group(2))
+                self.R2 = float(m.group(3))
+            elif (m := self.EE_PATTERN.match(line)) is not None:
+                self.excitation_energy = float(m.group(1))
+        elif not self.completed_extras:
+            if self.OCCUPATION_FRONTIER_NO in line:
+                self.wait_frontier_no = True
+            elif self.wait_frontier_no:
+                if (m := self.FRONTIER_NO_PATTERN.match(line)) is not None:
+                    self.wait_frontier_no = False
+                    self.froniter_no = [float(m.group(1)), float(m.group(2))]
+                else:
+                    raise ValueError(
+                        f"Could not match the Occupations of the frontier NO for {self}"
+                    )
+            elif self.UNPAIRED_NO in line:
+                if m := self.UNPAIRED_NO_PATTERN.match(line):
+                    self.nu = m.group(1)
+                    self.nl = m.group(2)
+                else:
+                    raise ValueError(
+                        f"Could not match the number of unpaired electrons for {self}"
+                    )
+            elif self.PARTICIPATION_RATIO_NO in line:
+                if (m := self.PRNO_PATTERN.match(line)) is not None:
+                    self.prno = m.group(1)
+                else:
+                    raise ValueError(
+                        f"Could not match the participation number for {self}"
+                    )
+                self.completed_extras = True
+        else:
+            raise ValueError(f"Transition {self} is already completed!")
 
     def __repr__(self) -> str:
         line = "\n".join(map(str, self.transitions))

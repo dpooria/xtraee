@@ -86,6 +86,12 @@ def parse_args() -> argparse.Namespace:
         help="output file format for comparison of all of the CIS and CCSD states",
     )
     compareall_parser.add_argument("--acc-method", type=str, default="1")
+    # excited state properties
+    dsc_parser = subparsers.add_parser(
+        "descriptors",
+        help="Extract the descriptors from the input file and write to csv",
+    )
+    dsc_parser.add_argument("--descriptors-file", type=str, default="descriptors.csv")
 
     return parser.parse_args()
 
@@ -177,5 +183,14 @@ def main() -> int:
             data = qcis.compare_eomee(qccsd.irreps_dict, args.acc_method)
             for key, df in data.items():
                 df.to_csv(f"{key}_{args.output_mix}")
+    elif args.command == "descriptors":
+        if qccsd is None:
+            print("descriptor only works for ccsd")
+            return 1
+        else:
+            import pandas as pd
+
+            data = pd.DataFrame(qccsd.gather_descriptors())
+            data.to_csv(args.descriptors_file)
 
     return 0

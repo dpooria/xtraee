@@ -17,16 +17,23 @@ class Irrep:
         self.trblocks: List[TransitionBlock] = []
         self.trblocks_dict: Dict[str, TransitionBlock] = {}
         self.ee_type = ee_type
+        self.sorted = False
+        self.updated = True
 
     def sort(self) -> None:
+        self.sorted = True
         self.trblocks.sort(key=lambda t: t.excitation_energy)
         self.update_transitions()
 
     def update_transitions(self) -> None:
+        if self.updated:
+            return
+        self.updated = True
         for t in self.trblocks:
             self.trblocks_dict[t.identifier] = t
 
     def append(self, transition: TransitionBlock) -> None:
+        self.updated = False
         self.trblocks.append(transition)
 
     def __len__(self) -> int:

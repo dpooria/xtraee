@@ -70,7 +70,7 @@ class Parser:
                 f.write("Matched triplets: " + "\n")  # noqa
                 for tr, triplet in d["matched_triplets"].items():
                     f.write(f'{tr} <==> {",        ".join(triplet)}\n')
-            f.write("--- End of happy family :) ---")
+            f.write("--- End of the happy family :) ---")
 
     def create_happy_family(self) -> Dict[str, Dict[str, Any]]:
         for irr in self.irreps_dict.values():
@@ -136,7 +136,16 @@ class QCCSDParser(Parser):
     OSCILLATOR_PATTERN = re.compile(
         r"^\s*Oscillator strength \(a\.u\.\):\s+([-+]?\d+\.\d+)\s*$"
     )
+    GAMMA_PATTERN = re.compile(
+        r"^\s*\|\|gamma\^AB\|\|\*\|\|gamma\^BA\|\|:\s*([0-9]+\.[0-9]+)\s*$"
+    )
     OMEGA_PATTERN = re.compile(r"^\s*omega\s+=\s+([-+]?\d+\.\d+)\s*$")
+    ALPHA_BETA_PATTERN = re.compile(r"^\s*2\<alpha\|beta\>\s+=\s+([-+]?\d+\.\d+)\s*$")
+    LOC_PATTERN = re.compile(r"^\s*LOC\s+=\s+([-+]?\d+\.\d+)\s*$")
+    CORRC_PATTERN = re.compile(r"^\s*Correlation coefficient:\s*([0-9]+\.[0-9]+)\s*$")
+    EEPROP_PATTERN = re.compile(
+        r"^\s*Excited state properties for\s+EOMEE-CCSD transition\s+(\d+)/(.+)\s*$"
+    )
 
     IRREPSOLV_BEGIN = "Solving for EOMEE-CCSD"
     INPUT_BLOCK_BEGIN = "$rem"
@@ -144,6 +153,7 @@ class QCCSDParser(Parser):
     LAMBDA_BLOCK_BEGIN = "CCSD Lambda converged."
     LAMBDA_BLOCK_END = "Start computing the transition properties"
     TRPROP_BLOCK_END = "All requested transition properties have been computed."
+    EEPROP_BEGIN = "Excited state properties for  EOMEE-CCSD transition"
 
     INPUT_BLOCK = 1
     LAMBDA_BLOCK = 2
@@ -164,6 +174,7 @@ class QCCSDParser(Parser):
             self.TRPROPS_BLOCK: self.process_trprops_block,
         }
         self.inside_eomee = False
+        self.inside_eeprop = False
         self.current_transition: Optional[TransitionBlock] = None
         self.current_irrep: Optional[Irrep] = None
         self.singlet_irrep_counter = 0
@@ -221,6 +232,11 @@ class QCCSDParser(Parser):
                 self.inside_eomee = False
                 if self.current_irrep is not None:
                     self.current_irrep.append(self.current_transition)
+        elif self.inside_eeprop:
+            if not self.current_transition.completed_extras:
+                self.current_transition.add_data(line)
+            else:
+                self.inside_eeprop = False
         else:
             if (m := self.EOMEE_PATTERN.match(line)) is not None:
                 self.inside_eomee = True
@@ -237,6 +253,29 @@ class QCCSDParser(Parser):
                 self.current_transition = EOMEETransitionBlock(
                     int(m.group(1)), irrep, self.current_excitation
                 )
+            elif self.EEPROP_BEGIN in line:
+                if (m := self.EEPROP_PATTERN.match(line)) is not None:
+                    self.inside_eeprop = True
+                    irrep = m.group(2)
+                    if self.current_irrep is not None:
+                        if self.current_irrep.name != irrep:
+                            raise ValueError(
+                                "Transition block irrep mismatch {} != {}".format(
+                                    irrep, self.current_irrep
+                                )
+                            )
+                    else:
+                        raise ValueError("No current irreducible representation")
+                    self.current_irrep.update_transitions()
+                    ee_type, id_number, irrep = (
+                        self.current_irrep.ee_type,
+                        m.group(1),
+                        m.group(2),
+                    )
+                    self.current_trprop = f"{ee_type}-{id_number}/{irrep}"
+                    self.current_transition = self.current_irrep.trblocks_dict[
+                        self.current_trprop
+                    ]
 
     def process_trprops_block(self, line: str) -> None:
         if (m := self.TRPROP_PATTERN.match(line)) is not None:
@@ -250,10 +289,46 @@ class QCCSDParser(Parser):
         elif self.current_trprop != "" and self.current_transition is not None:
             if (m := self.OSCILLATOR_PATTERN.match(line)) is not None:
                 self.current_transition.oscillator_strength = float(m.group(1))
+            elif (m := self.GAMMA_PATTERN.match(line)) is not None:
+                assert isinstance(self.current_transition, EOMEETransitionBlock)
+                self.current_transition.gamma = float(m.group(1))
             elif (m := self.OMEGA_PATTERN.match(line)) is not None:
                 assert isinstance(self.current_transition, EOMEETransitionBlock)
                 self.current_transition.omega = float(m.group(1))
+            elif (m := self.ALPHA_BETA_PATTERN.match(line)) is not None:
+                assert isinstance(self.current_transition, EOMEETransitionBlock)
+                self.current_transition.alphabeta = float(m.group(1))
+            elif (m := self.LOC_PATTERN.match(line)) is not None:
+                assert isinstance(self.current_transition, EOMEETransitionBlock)
+                self.current_transition.loc = float(m.group(1))
+            elif (m := self.CORRC_PATTERN.match(line)) is not None:
+                self.current_transition.corr_coef = float(m.group(1))
+                # change this if you are going to extract more data from trprop
+                # end the current transition this is the last value we extract from trprop
                 self.current_trprop = ""
+
+    def gather_descriptors(self, extra_id=""):
+        data = []
+        for irr in self.irreps_dict.values():
+            irr.sort()
+            for trblock in irr.trblocks:
+                data.append(
+                    {
+                        "id": extra_id + trblock.identifier,
+                        "R2": trblock.R2,
+                        "gamma": trblock.gamma,
+                        "omega": trblock.omega,
+                        "loc": trblock.loc,
+                        "alphabeta": trblock.alphabeta,
+                        "corr_coef": trblock.corr_coef,
+                        "froniter_no_1": trblock.froniter_no[0],
+                        "froniter_no_2": trblock.froniter_no[1],
+                        "nu": trblock.nu,
+                        "nl": trblock.nl,
+                        "prno": trblock.prno,
+                    }
+                )
+        return data
 
 
 class QCISParser(Parser):
