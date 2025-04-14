@@ -34,7 +34,7 @@ def process_file(file_path: Path):
     qccsd = QCCSDParser(file_path)
     qccsd.process_file()
     return qccsd.gather_descriptors(
-        extra_id=file_path.parent.parent.relative_to(Path.cwd()).as_posix()
+        extra_id=file_path.parent.parent.parent.relative_to(Path.cwd()).as_posix() + "|"
     )
 
 
