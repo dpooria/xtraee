@@ -51,7 +51,7 @@ def main():
         help="The directory to search in (defaults to current working directory).",
     )
     parser.add_argument(
-        "output",
+        "--output",
         type=str,
         default="descriptors.csv",
         help="The output file (defaults to descriptors.csv)",
