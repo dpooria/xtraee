@@ -73,7 +73,8 @@ def main():
         data = []
         for log_file in log_files:
             print(f"  {log_file}")
-            data.append(process_file(log_file))
+            for d in process_file(log_file):
+                data.append(d)
         pd.DataFrame(data).to_csv(args.output, index=False)
     else:
         print("No 'CCSD/tda_opt.log' files found.")
