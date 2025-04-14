@@ -207,14 +207,16 @@ class EOMEETransitionBlock(TransitionBlock):
     END_TRANSITIONBLOCK = "Summary of significant orbitals:"
     TR_INDICATOR = "->"
     OCCUPATION_FRONTIER_NO = "Occupation of frontier NOs:"
-    FRONTIER_NO_PATTERN = re.compile(r"^\s*([0-9]+\.[0-9]+)\s+([0-9]+\.[0-9]+)\s*$")
+    FRONTIER_NO_PATTERN = re.compile(
+        r"^\s*([-+]?[0-9]+\.[0-9]+)\s+([-+]?[0-9]+\.[0-9]+)\s*$"
+    )
     UNPAIRED_NO_PATTERN = re.compile(
-        r"^\s*Number of unpaired electrons:\s*n_u\s*=\s*([0-9]+\.[0-9]+),\s*n_u,nl\s*=\s*([0-9]+\.[0-9]+)\s*$"
+        r"^\s*Number of unpaired electrons:\s*n_u\s*=\s*([-+]?[0-9]+\.[0-9]+),\s*n_u,nl\s*=\s*([-+]?[0-9]+\.[0-9]+)\s*$"
     )
     UNPAIRED_NO = "Number of unpaired electrons:"
     PARTICIPATION_RATIO_NO = "NO participation ratio (PR_NO):"
     PRNO_PATTERN = re.compile(
-        r"^\s*NO participation ratio \(PR_NO\):\s*([0-9]+\.[0-9]+)\s*$"
+        r"^\s*NO participation ratio \(PR_NO\):\s*([-+]?[0-9]+\.[0-9]+)\s*$"
     )
 
     TrTYPE = CCSDTransition
