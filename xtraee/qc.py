@@ -142,7 +142,9 @@ class QCCSDParser(Parser):
     OMEGA_PATTERN = re.compile(r"^\s*omega\s+=\s+([-+]?\d+\.\d+)\s*$")
     ALPHA_BETA_PATTERN = re.compile(r"^\s*2\<alpha\|beta\>\s+=\s+([-+]?\d+\.\d+)\s*$")
     LOC_PATTERN = re.compile(r"^\s*LOC\s+=\s+([-+]?\d+\.\d+)\s*$")
-    CORRC_PATTERN = re.compile(r"^\s*Correlation coefficient:\s*([0-9]+\.[0-9]+)\s*$")
+    CORRC_PATTERN = re.compile(
+        r"^\s*Correlation coefficient:\s*([-+]?[0-9]+\.[0-9]+)\s*$"
+    )
     EEPROP_PATTERN = re.compile(
         r"^\s*Excited state properties for\s+EOMEE-CCSD transition\s+(\d+)/(.+)\s*$"
     )
