@@ -230,6 +230,8 @@ class EOMEETransitionBlock(TransitionBlock):
         self.gamma = 0.0
         self.omega = 0.0
         self.loc = 0.0
+        self.phe = 0.0
+        self.rhre = 0.0
         self.alphabeta = 0.0
         self.corr_coef = 0.0
         self.froniter_no = []

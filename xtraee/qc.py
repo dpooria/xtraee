@@ -142,6 +142,8 @@ class QCCSDParser(Parser):
     OMEGA_PATTERN = re.compile(r"^\s*omega\s+=\s+([-+]?\d+\.\d+)\s*$")
     ALPHA_BETA_PATTERN = re.compile(r"^\s*2\<alpha\|beta\>\s+=\s+([-+]?\d+\.\d+)\s*$")
     LOC_PATTERN = re.compile(r"^\s*LOC\s+=\s+([-+]?\d+\.\d+)\s*$")
+    Phe_PATTERN = re.compile(r"^\s*\<Phe\>\s+=\s+([-+]?\d+\.\d+)\s*$")
+    RHRE_PATTERN = re.compile(r"^\s*\|<r_e - r_h>\|\s*\[Ang\]:\s*(\d+\.\d+)$")
     CORRC_PATTERN = re.compile(
         r"^\s*Correlation coefficient:\s*([-+]?[0-9]+\.[0-9]+)\s*$"
     )
@@ -292,17 +294,17 @@ class QCCSDParser(Parser):
             if (m := self.OSCILLATOR_PATTERN.match(line)) is not None:
                 self.current_transition.oscillator_strength = float(m.group(1))
             elif (m := self.GAMMA_PATTERN.match(line)) is not None:
-                assert isinstance(self.current_transition, EOMEETransitionBlock)
                 self.current_transition.gamma = float(m.group(1))
             elif (m := self.OMEGA_PATTERN.match(line)) is not None:
-                assert isinstance(self.current_transition, EOMEETransitionBlock)
                 self.current_transition.omega = float(m.group(1))
             elif (m := self.ALPHA_BETA_PATTERN.match(line)) is not None:
-                assert isinstance(self.current_transition, EOMEETransitionBlock)
                 self.current_transition.alphabeta = float(m.group(1))
             elif (m := self.LOC_PATTERN.match(line)) is not None:
-                assert isinstance(self.current_transition, EOMEETransitionBlock)
                 self.current_transition.loc = float(m.group(1))
+            elif (m := self.Phe_PATTERN.match(line)) is not None:
+                self.current_transition.phe = float(m.group(1))
+            elif (m := self.RHRE_PATTERN.match(line)) is not None:
+                self.current_transition.rhre = float(m.group(1))
             elif (m := self.CORRC_PATTERN.match(line)) is not None:
                 self.current_transition.corr_coef = float(m.group(1))
                 # change this if you are going to extract more data from trprop
@@ -321,7 +323,9 @@ class QCCSDParser(Parser):
                         "gamma": trblock.gamma,
                         "omega": trblock.omega,
                         "loc": trblock.loc,
+                        "phe": trblock.phe,
                         "alphabeta": trblock.alphabeta,
+                        "|r_e-r_h|": trblock.rhre,
                         "corr_coef": trblock.corr_coef,
                         "froniter_no_1": trblock.froniter_no[0],
                         "froniter_no_2": trblock.froniter_no[1],
