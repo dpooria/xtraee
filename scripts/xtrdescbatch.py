@@ -3,7 +3,7 @@ import argparse
 from pathlib import Path
 
 import pandas as pd
-from xtraee.qc import QCCSDParser
+from xtraee.parser import QCCSDParser
 
 
 def find_log_files(start_dir: Path):

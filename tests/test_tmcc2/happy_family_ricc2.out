@@ -1,0 +1,68 @@
+---- Happy family ----
+------------S1------------
+CC2 transition 1/a singlet,
+EE: 5.3888 eV,
+%t1: 90.36, %t2: 9.64.
+Amplitude Transitions between orbitals
+0.6933	 21 a       21 -> 23 a       23
+
+Matched triplets: 
+0.6933	 21 a       21 -> 23 a       23 <==> 3 a 0.6068 ,        2 a 0.3678 ,        4 a 0.6942 
+------------S2------------
+CC2 transition 2/a singlet,
+EE: 6.8003 eV,
+%t1: 93.8, %t2: 6.2.
+Amplitude Transitions between orbitals
+0.6903	 21 a       21 -> 22 a       22
+0.6893	 20 a       20 -> 23 a       23
+
+Matched triplets: 
+0.6903	 21 a       21 -> 22 a       22 <==> 1 a 0.6800 ,        3 a 0.3553 
+0.6893	 20 a       20 -> 23 a       23 <==> 1 a 0.6788 ,        2 a 0.5997 
+------------S3------------
+CC2 transition 3/a singlet,
+EE: 7.6358 eV,
+%t1: 92.32, %t2: 7.68.
+Amplitude Transitions between orbitals
+0.6595	 20 a       20 -> 23 a       23
+0.2017	 20 a       20 -> 22 a       22
+0.2015	 21 a       21 -> 23 a       23
+
+Matched triplets: 
+0.6595	 20 a       20 -> 23 a       23 <==> 1 a 0.6788 ,        2 a 0.5997 
+0.2017	 20 a       20 -> 22 a       22 <==> 3 a 0.6064 ,        2 a 0.3680 
+0.2015	 21 a       21 -> 23 a       23 <==> 3 a 0.6068 ,        2 a 0.3678 ,        4 a 0.6942 
+------------S4------------
+CC2 transition 4/a singlet,
+EE: 7.6359 eV,
+%t1: 92.33, %t2: 7.67.
+Amplitude Transitions between orbitals
+0.6572	 20 a       20 -> 22 a       22
+0.6571	 21 a       21 -> 23 a       23
+0.2073	 21 a       21 -> 22 a       22
+0.0703	 18 a       18 -> 33 a       33
+
+Matched triplets: 
+0.6572	 20 a       20 -> 22 a       22 <==> 3 a 0.6064 ,        2 a 0.3680 
+0.6571	 21 a       21 -> 23 a       23 <==> 3 a 0.6068 ,        2 a 0.3678 ,        4 a 0.6942 
+0.2073	 21 a       21 -> 22 a       22 <==> 1 a 0.6800 ,        3 a 0.3553 
+0.0703	 18 a       18 -> 33 a       33 <==> 
+------------S5------------
+CC2 transition 5/a singlet,
+EE: 8.1431 eV,
+%t1: 92.72, %t2: 7.28.
+Amplitude Transitions between orbitals
+0.9876	 21 a       21 -> 24 a       24
+
+Matched triplets: 
+0.9876	 21 a       21 -> 24 a       24 <==> 5 a 0.9807 
+------------S6------------
+CC2 transition 6/a singlet,
+EE: 8.1442 eV,
+%t1: 92.72, %t2: 7.28.
+Amplitude Transitions between orbitals
+0.9875	 20 a       20 -> 24 a       24
+
+Matched triplets: 
+0.9875	 20 a       20 -> 24 a       24 <==> 6 a 0.9807 
+--- End of the happy family :) ---

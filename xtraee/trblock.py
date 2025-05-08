@@ -6,7 +6,7 @@ from typing import List, Tuple
 from functools import partial
 
 from xtraee.config import debug
-from xtraee.transition import CCSDTransition, CISTransition, Transition
+from xtraee.transition import CCSDTransition, CISTransition, Transition, CC2Transition
 
 
 def lsq_fit(
@@ -102,7 +102,10 @@ class TransitionBlock:
         if self.END_TRANSITIONBLOCK in line:
             self.completed = True
             return True
-        if self.TR_INDICATOR in line:
+        if isinstance(self.TR_INDICATOR, re.Pattern):
+            if self.TR_INDICATOR.search(line):
+                self.transitions.append(self.TrTYPE.from_str(line))
+        elif self.TR_INDICATOR in line:
             self.transitions.append(self.TrTYPE.from_str(line))
         else:
             self.extras(line)
@@ -113,10 +116,6 @@ class TransitionBlock:
 
     def __getitem__(self, key) -> Transition:
         return self.transitions[key]
-
-    @abstractmethod
-    def compare(self, other, method: str) -> Tuple[float, float, float]:
-        raise NotImplementedError
 
     def _compare_acc(
         self,
@@ -196,6 +195,20 @@ class TransitionBlock:
         acc = sum([abs(m_amp) * abs(o_amp) for m_amp, o_amp in amps])
         mae = 1.0 - acc
         return acc, mae, N_pos / N_tr
+
+    def compare(
+        self, other: "TransitionBlock", method: str
+    ) -> Tuple[float, float, float]:
+        if method == "1":
+            return self._compare_acc(self.utrs, other.utrs)
+        elif method == "2":
+            return self._compare_innerprod(self.utrs, other.utrs)
+        elif method == "3":
+            return self._compare_innerprod(self.utrs, other.utrs, True)
+        elif method == "4":
+            return self._compare_pearson(self.utrs, other.utrs)
+        else:
+            raise ValueError(f"Method not recognized {method}")
 
 
 class EOMEETransitionBlock(TransitionBlock):
@@ -293,19 +306,10 @@ class EOMEETransitionBlock(TransitionBlock):
     def compare(
         self, other: TransitionBlock, method: str
     ) -> Tuple[float, float, float]:
-        if isinstance(other, CISTransitionBlock):
-            return other.compare(self, method)
+        if isinstance(other, EOMEETransitionBlock):
+            return super().compare(other, method)
         else:
-            if method == "1":
-                return self._compare_acc(self.utrs, other.utrs)
-            elif method == "2":
-                return self._compare_innerprod(self.utrs, other.utrs)
-            elif method == "3":
-                return self._compare_innerprod(self.utrs, other.utrs, True)
-            elif method == "4":
-                return self._compare_pearson(self.utrs, other.utrs)
-            else:
-                raise ValueError(f"Method not recognized {method}")
+            return other.compare(self, method)
 
 
 class CISTransitionBlock(TransitionBlock):
@@ -381,3 +385,45 @@ class CISTransitionBlock(TransitionBlock):
             )
         else:
             return comp(transitions, other.utrs)
+
+
+class CC2TransitionBlock(TransitionBlock):
+    END_TRANSITIONBLOCK = "norm of printed elements:"
+    TR_INDICATOR = re.compile(
+        r"^\s*\|\s*\d+\s+\w\s+\d+\s*\|\s*\d+\s+\w\s+\d+\s*\|\s*[+-]?\d+\.\d+\s+[+-]?\d+\.\d+\s*\|$"
+    )
+    TrTYPE = CC2Transition
+
+    def __init__(
+        self,
+        id_number: int,
+        irrep: str = "",
+        excitation: str = "",
+        excitation_energy: float = 0.0,
+        t1: float = 0.0,
+        t2: float = 0.0,
+    ):
+        super().__init__(id_number, irrep, excitation, excitation_energy)
+        self.t1 = t1
+        self.t2 = t2
+        self.transitions: List[CC2Transition] = []
+        self.homo = 0
+
+    def extras(self, line: str):
+        pass
+
+    def __repr__(self) -> str:
+        line = "\n".join(map(str, self.transitions))
+        return (
+            f"CC2 transition {self.id_number}/{self.irrep} {self.excitation},\n"  # noqa
+            f"EE: {self.excitation_energy:.4f} eV,\n"
+            f"%t1: {self.t1}, %t2: {self.t2}.\n"
+            "Amplitude Transitions between orbitals\n"
+            f"{line}\n"
+        )
+
+    def compare(
+        self, other: TransitionBlock, method: str
+    ) -> Tuple[float, float, float]:
+        assert isinstance(other, CC2TransitionBlock), "Not implemented"
+        return super().compare(other, method)

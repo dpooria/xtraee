@@ -13,7 +13,7 @@ class Transition:
         final: str,
     ):
         self.amplitude = amplitude
-        self.probability = amplitude ** 2
+        self.probability = amplitude**2
         self.initial = initial.strip()
         self.final = final.strip()
         self.id_i: List[Tuple[str, ...]] = []
@@ -57,8 +57,9 @@ class Transition:
                 if id_f != other_id_f:
                     return False
         else:
-            for id_i, other_id_i, id_f, other_id_f in zip(self.id_i, other.id_i,
-                                                          self.id_f, other.id_f):
+            for id_i, other_id_i, id_f, other_id_f in zip(
+                self.id_i, other.id_i, self.id_f, other.id_f
+            ):
                 if id_i[:2] != other_id_i[:2]:
                     return False
                 if id_f[:2] != other_id_f[:2]:
@@ -108,7 +109,7 @@ class CISTransition(Transition):
         lhs = s[0].strip()
         rhs = s[1].strip()
         idx = rhs.index("=")
-        amplitude = float(rhs[idx + 1:])
+        amplitude = float(rhs[idx + 1 :])
         idx = rhs.find("amplitude")
         rhs = rhs[:idx]
         return cls(amplitude, lhs, rhs)
@@ -121,3 +122,22 @@ class CISTransition(Transition):
             initial,
             final,
         )
+
+
+class CC2Transition(Transition):
+    PATTERN = re.compile(r"^\s*\d+\s+[ab]\s+(\d+)\s*$")
+    AMPPATTERN = re.compile(r"\s*([+-]?\d+\.\d+)\s+[+-]?\d+\.\d+\s*")
+    NAME = "CC2Transition"
+
+    @classmethod
+    def from_str(cls, line: str):
+        s = line.split("|")
+        if len(s) < 4:
+            raise ValueError(f"cannot match {line}")
+        lhs = s[1].strip()
+        rhs = s[2].strip()
+        if (m := CC2Transition.AMPPATTERN.match(s[3].strip())) is not None:
+            amplitude = float(m.group(1))
+        else:
+            raise ValueError(f"could not match the amplitude {line}")
+        return cls(amplitude, lhs, rhs)

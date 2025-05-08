@@ -1,5 +1,5 @@
 import pathlib
-from xtraee.qc import QCCSDParser, QCISParser
+from xtraee.parser import QCCSDParser, QCISParser
 
 
 def test_sad_family():

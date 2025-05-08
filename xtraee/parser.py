@@ -4,7 +4,12 @@ from abc import abstractmethod
 from typing import Any, Callable, Dict, List, Optional
 
 from xtraee.irrep import Irrep
-from xtraee.trblock import CISTransitionBlock, EOMEETransitionBlock, TransitionBlock
+from xtraee.trblock import (
+    CISTransitionBlock,
+    EOMEETransitionBlock,
+    TransitionBlock,
+    CC2TransitionBlock,
+)
 
 
 class Parser:
@@ -481,3 +486,103 @@ class QCISParser(Parser):
                     irrep_triplet.compare(oirr_triplet, method)
                 )
         return scores
+
+
+class TMCC2Parser(Parser):
+    """
+    Parser for Turbomole CC2 output files.
+    """
+
+    TRBLOCK_BEGIN_PATTERN = re.compile(
+        r"^\s*\|\s*type:\s*\S+\s+symmetry:\s*(\S+)\s+state:\s*(\d+)\s*\|$"
+    )
+    TABLE_PATTERN = re.compile(
+        r"^\s*\|\s*(\w+)\s*\|\s*(\d+)\s*\|\s*(\d+)\s*\|\s*[+-]?\d+\.\d+\s*\|\s*([+-]?\d+\.\d+)\s*\|\s*[+-]?\d+\.\d+\s*\|\s*([+-]?\d+\.\d+)\s*\|\s*([+-]?\d+\.\d+)\s*\|$"
+    )
+    EE_TABLE = "| sym | multi | state |          CC2 excitation energies       |  %t1   |  %t2   |"
+    TABLE_END = "Energy:"
+    EE_BLOCK = 1
+    TR_BLOCK = 2
+
+    def __init__(
+        self,
+        input_file: str | pathlib.Path,
+        threshold: float = 0.0,
+        first_kid: str | pathlib.Path = "first_kid.txt",
+        happy_family: str | pathlib.Path = "happy_family.txt",
+    ):
+        super().__init__(input_file, threshold, first_kid, happy_family)
+        self.parser = {
+            self.NULL_BLOCK: lambda line: None,
+            self.EE_BLOCK: self.process_table,
+            self.TR_BLOCK: self.process_trblocks,
+        }
+        self.singlets_processed = 0
+        self.triplets_processed = 0
+        self.current_trblock: Optional[TransitionBlock] = None
+
+    def detect_block(self, line):
+        if self.EE_TABLE in line:
+            self.block = self.EE_BLOCK
+
+    def process_table(self, line):
+        if self.TABLE_END in line:
+            self.block = self.TR_BLOCK
+            self.irrep_singlets = [
+                irrep
+                for irrep in self.irreps_dict.values()
+                if irrep.ee_type == "singlet"
+            ]
+            self.irrep_triplets = [
+                irrep
+                for irrep in self.irreps_dict.values()
+                if irrep.ee_type == "triplet"
+            ]
+            for irrep in self.irrep_singlets:
+                irrep.n_states = len(irrep.trblocks)
+                # irrep.sort()
+                self.N_singlets += irrep.n_states
+            for irrep in self.irrep_triplets:
+                irrep.n_states = len(irrep.trblocks)
+                # irrep.sort()
+                self.N_triplets += irrep.n_states
+
+        elif (m := self.TABLE_PATTERN.match(line)) is not None:
+            irrep = m.group(1)
+            multi = int(m.group(2))
+            if multi == 1:
+                multi = "singlet"
+            elif multi == 3:
+                multi = "triplet"
+            else:
+                raise ValueError(f"Unknown multiplicity {multi}")
+            id_number = int(m.group(3))
+            cc2_energy = float(m.group(4))
+            t1 = float(m.group(5))
+            t2 = float(m.group(6))
+            transition_block = CC2TransitionBlock(
+                id_number, irrep, multi, cc2_energy, t1, t2
+            )
+            k = f"{multi}-{irrep}"
+            if k not in self.irreps_dict:
+                self.irreps_dict[k] = Irrep(irrep, multi, 0)
+            self.irreps_dict[k].append(transition_block)
+
+    def process_trblocks(self, line):
+        if (m := self.TRBLOCK_BEGIN_PATTERN.match(line)) is not None:
+            if self.singlets_processed < self.N_singlets:
+                multi = "singlet"
+                self.singlets_processed += 1
+            else:
+                multi = "triplet"
+                self.triplets_processed += 1
+            irrep = m.group(1)
+            state = int(m.group(2))
+            self.current_trblock = self.irreps_dict[f"{multi}-{irrep}"].trblocks[
+                state - 1
+            ]
+        elif self.current_trblock is not None:
+            self.current_trblock.add_data(line)
+            # if self.current_trblock.add_data(line):
+            #     # self.current_trblock.sort()
+            #     self.current_trblock = None

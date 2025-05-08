@@ -3,7 +3,7 @@ import logging
 
 from rich import print
 
-from xtraee.qc import QCCSDParser, QCISParser
+from xtraee.parser import QCCSDParser, QCISParser, TMCC2Parser
 
 
 def parse_args() -> argparse.Namespace:
@@ -41,6 +41,21 @@ def parse_args() -> argparse.Namespace:
         help="Output file for the happy family",
     )
     parser.add_argument(
+        "--input-cc2", type=str, help="Input file for cc2", default=None
+    )
+    parser.add_argument(
+        "--firstkid-cc2",
+        type=str,
+        default="first_kid_cc2.txt",
+        help="Output file for the complete information",
+    )
+    parser.add_argument(
+        "--happyfamily-cc2",
+        type=str,
+        default="happy_family_cc2.txt",
+        help="Output file for the happy family",
+    )
+    parser.add_argument(
         "--threshold",
         type=float,
         default=0.0,
@@ -74,6 +89,12 @@ def parse_args() -> argparse.Namespace:
         help="output file format for comparison of all of the CCCSD states",
     )
     compareall_parser.add_argument(
+        "--output-cc2",
+        type=str,
+        default="compare_cc2.csv",
+        help="output file format for comparison of all of the CC2 states",
+    )
+    compareall_parser.add_argument(
         "--output-cis",
         type=str,
         default="compare_cis.csv",
@@ -100,7 +121,7 @@ def main() -> int:
     args = parse_args()
     if args.debug:
         logging.basicConfig(level=logging.DEBUG)
-    if args.input_ccsd is None and args.input_cis is None:
+    if args.input_ccsd is None and args.input_cis is None and args.input_cc2 is None:
         print(
             "Please provide input file for CCSD or CIS or both (type --help for help)"
         )
@@ -132,6 +153,19 @@ def main() -> int:
             qcis.write_sad_family(qccsd.irreps_dict, args.sadfamily)
     else:
         qcis = None
+    if args.input_cc2 is not None:
+        tmcc2 = TMCC2Parser(
+            args.input_cc2,
+            args.threshold,
+            args.firstkid_cc2,
+            args.happyfamily_cc2,
+        )
+        tmcc2.process_file()
+        tmcc2.write_first_kid()
+        tmcc2.write_happy_family()
+    else:
+        tmcc2 = None
+
     if args.command == "compare":
         state1 = args.state1
         state2 = args.state2
@@ -158,6 +192,12 @@ def main() -> int:
                     state1_trblock = irrep.transitions_dict[state1]
                 if method2.lower() == "cis" and state2 in irrep.transitions_dict:
                     state2_trblock = irrep.transitions_dict[state2]
+        if tmcc2 is not None:
+            for irrep in tmcc2.irreps_dict.values():
+                if method1.lower() == "cc2" and state1 in irrep.transitions_dict:
+                    state1_trblock = irrep.transitions_dict[state1]
+                if method2.lower() == "cc2" and state2 in irrep.transitions_dict:
+                    state2_trblock = irrep.transitions_dict[state2]
         if state1_trblock is None or state2_trblock is None:
             print("Couldn't find the states, sorry :(")
             return 1
@@ -178,6 +218,10 @@ def main() -> int:
             data = qcis.compare_all(args.acc_method)
             for key, df in data.items():
                 df.to_csv(f"{key}_{args.output_cis}")
+        if tmcc2 is not None:
+            data = tmcc2.compare_all(args.acc_method)
+            for key, df in data.items():
+                df.to_csv(f"{key}_{args.output_cc2}")
 
         if qccsd is not None and qcis is not None:
             data = qcis.compare_eomee(qccsd.irreps_dict, args.acc_method)

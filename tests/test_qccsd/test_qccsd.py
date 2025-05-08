@@ -1,6 +1,6 @@
 import filecmp
 import pytest
-from xtraee.qc import QCCSDParser
+from xtraee.parser import QCCSDParser
 from pathlib import Path
 
 
