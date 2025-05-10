@@ -141,3 +141,7 @@ class CC2Transition(Transition):
         else:
             raise ValueError(f"could not match the amplitude {line}")
         return cls(amplitude, lhs, rhs)
+
+    # for cc2 we have to have check_spin=True
+    def is_equal(self, other, check_amp=False, check_spin=True) -> bool:
+        return super().is_equal(other, check_amp, check_spin)

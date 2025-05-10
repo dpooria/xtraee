@@ -121,6 +121,7 @@ class TransitionBlock:
         self,
         transitions: List[Transition],
         other_transitions: List[Transition],
+        check_spin: bool = False,
     ) -> Tuple[float, float, float]:
         probs = []
         N_tr = len(transitions)
@@ -130,7 +131,7 @@ class TransitionBlock:
         for tr in transitions:
             matched = False
             for o_tr in other_transitions:
-                if tr.is_equal(o_tr):
+                if tr.is_equal(o_tr, check_spin=check_spin):
                     probs.append((tr.probability, o_tr.probability))
                     matched = True
                     N_pos += 1
@@ -146,6 +147,7 @@ class TransitionBlock:
         self,
         transitions: List[Transition],
         other_transitions: List[Transition],
+        check_spin: bool = False,
     ) -> Tuple[float, float, float]:
         import numpy as np
 
@@ -154,7 +156,7 @@ class TransitionBlock:
         N_pos = 0
         for tr in transitions:
             for o_tr in other_transitions:
-                if tr.is_equal(o_tr):
+                if tr.is_equal(o_tr, check_spin=check_spin):
                     probs.append((tr.probability, o_tr.probability))
                     N_pos += 1
                     break
@@ -172,6 +174,7 @@ class TransitionBlock:
         transitions: List[Transition],
         other_transitions: List[Transition],
         retreive: bool = False,
+        check_spin: bool = False,
     ) -> Tuple[float, float, float]:
         amps = []
         N_tr = len(transitions)
@@ -180,7 +183,7 @@ class TransitionBlock:
         for tr in transitions:
             matched = False
             for o_tr in other_transitions:
-                if tr.is_equal(o_tr):
+                if tr.is_equal(o_tr, check_spin=check_spin):
                     amps.append((tr.amplitude, o_tr.amplitude))
                     matched = True
                     N_pos += 1
@@ -197,16 +200,18 @@ class TransitionBlock:
         return acc, mae, N_pos / N_tr
 
     def compare(
-        self, other: "TransitionBlock", method: str
+        self, other: "TransitionBlock", method: str, check_spin: bool = False
     ) -> Tuple[float, float, float]:
         if method == "1":
-            return self._compare_acc(self.utrs, other.utrs)
+            return self._compare_acc(self.utrs, other.utrs, check_spin=check_spin)
         elif method == "2":
-            return self._compare_innerprod(self.utrs, other.utrs)
+            return self._compare_innerprod(self.utrs, other.utrs, check_spin=check_spin)
         elif method == "3":
-            return self._compare_innerprod(self.utrs, other.utrs, True)
+            return self._compare_innerprod(
+                self.utrs, other.utrs, True, check_spin=check_spin
+            )
         elif method == "4":
-            return self._compare_pearson(self.utrs, other.utrs)
+            return self._compare_pearson(self.utrs, other.utrs, check_spin=check_spin)
         else:
             raise ValueError(f"Method not recognized {method}")
 
@@ -423,7 +428,10 @@ class CC2TransitionBlock(TransitionBlock):
         )
 
     def compare(
-        self, other: TransitionBlock, method: str
+        self,
+        other: TransitionBlock,
+        method: str,
+        check_spin=True,
     ) -> Tuple[float, float, float]:
         assert isinstance(other, CC2TransitionBlock), "Not implemented"
-        return super().compare(other, method)
+        return super().compare(other, method, check_spin)
