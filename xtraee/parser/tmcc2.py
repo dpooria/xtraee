@@ -1,12 +1,11 @@
+import logging
 import re
 from enum import Enum
-from pathlib import Path
 from typing import Optional
 
 from xtraee.irrep import Irrep
+from xtraee.parser.base import BaseParser, DatasetType, PathType
 from xtraee.trblock import CC2TransitionBlock, TransitionBlock
-
-from xtraee.parser.base import Parser
 
 meta_patterns = {
     "trblock": re.compile(
@@ -29,19 +28,15 @@ class Block(Enum):
     tr = 2
 
 
-class TMCC2Parser(Parser):
-    """
-    Parser for Turbomole CC2 output files.
-    """
+class TMCC2Parser(BaseParser):
+    name = "CC2TM"
 
     def __init__(
         self,
-        input_file: str | Path,
+        input_file: str | PathType,
         threshold: float = 0.0,
-        first_kid: str | Path = "first_kid.txt",
-        happy_family: str | Path = "happy_family.txt",
     ):
-        super().__init__(input_file, threshold, first_kid, happy_family)
+        super().__init__(input_file, threshold)
         self.block = Block.null
         self.parser = {
             Block.null: lambda line: None,

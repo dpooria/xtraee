@@ -1,12 +1,11 @@
 import re
 from enum import Enum
-from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Dict, Optional
 
+from pandas.core.frame import DataFrame
 from xtraee.irrep import Irrep
+from xtraee.parser.base import BaseParser, DatasetType, PathType
 from xtraee.trblock import CISTransitionBlock, EOMEETransitionBlock, TransitionBlock
-
-from xtraee.parser.base import Parser
 
 start_indicators = {"cisee": "CIS Excitation Energies", "mo": "Orbital Energies (a.u.)"}
 
@@ -21,22 +20,22 @@ class Block(Enum):
     mo = 2
 
 
-class QCISParser(Parser):
+class QCISParser(BaseParser):
+    name = "CIS"
+
     def __init__(
         self,
-        input_file: str | Path,
+        input_file: PathType,
         threshold: float = 0.0,
-        first_kid: str | Path = "first_kid.txt",
-        happy_family: str | Path = "happy_family.txt",
     ):
-        super().__init__(input_file, threshold, first_kid, happy_family)
+        super().__init__(input_file, threshold)
         self.block = Block.null
         self.parser = {
             Block.null: lambda line: None,
             Block.ee: self.process_trblock,
             Block.mo: lambda line: None,
         }
-        self.sad_family: Dict[str, Dict[str, Any]] = {}
+        self.vsccsd: DatasetType = {}
         self._inside_eomee = False
         self._current_transition: Optional[TransitionBlock] = None
         self.irrep_singlets = Irrep("singlet", "singlet", 0)
@@ -99,10 +98,10 @@ class QCISParser(Parser):
                 majors.append(trblock)
         return majors
 
-    def create_sad_family(
+    def compare_with_ccsd(
         self,
-        ccsd_irrep_dict: Dict[str, Dict[str, Any]],
-    ) -> Dict[str, Dict[str, Any]]:
+        ccsd_irrep_dict: DatasetType,
+    ) -> DatasetType:
         data = {}
         for key_irrep_ccsd, irrep_ccsd in ccsd_irrep_dict.items():
             data[key_irrep_ccsd] = []
@@ -114,8 +113,8 @@ class QCISParser(Parser):
                 data[key_irrep_ccsd].append(result)
         return data
 
-    def write_sad_family(self, ccsd_irrep_dict: Dict[str, Dict[str, Any]], path: str):
-        self.sad_family = data = self.create_sad_family(ccsd_irrep_dict)
+    def write_vsccsd(self, path: str, ccsd_irrep_dict: DatasetType) -> None:
+        self.vsccsd = data = self.compare_with_ccsd(ccsd_irrep_dict)
         with open(path, "w") as f:
             f.write("---- Sad family ----\n")
             for k, v in data.items():
@@ -133,7 +132,9 @@ class QCISParser(Parser):
                     f.write(line + "\n")
             f.write("--- End of sad family :( ---")
 
-    def compare_eomee(self, irreps_dict: Dict[str, Irrep], method: str):
+    def compare_eomee(
+        self, irreps_dict: Dict[str, Irrep], method: str
+    ) -> Dict[str, DataFrame]:
         irreps_singlets = [
             irrep for irrep in self.irreps_dict.values() if irrep.ee_type == "singlet"
         ]

@@ -1,12 +1,11 @@
 import re
 from enum import Enum
-from pathlib import Path
 from typing import Optional
 
 from xtraee.irrep import Irrep
 from xtraee.trblock import EOMEETransitionBlock, TransitionBlock
 
-from xtraee.parser.base import Parser
+from xtraee.parser.base import BaseParser, PathType
 
 meta_patterns = dict(
     ee_singlets=re.compile(r"^EE_SINGLETS\s+\[(.*)\]\s*"),
@@ -57,15 +56,15 @@ class Block(Enum):
     trprops = 3
 
 
-class QCCSDParser(Parser):
+class QCCSDParser(BaseParser):
+    name = "EOM-CCSD"
+
     def __init__(
         self,
-        input_file: str | Path,
+        input_file: PathType,
         threshold: float = 0.0,
-        first_kid: str | Path = "first_kid.txt",
-        happy_family: str | Path = "happy_family.txt",
     ):
-        super().__init__(input_file, threshold, first_kid, happy_family)
+        super().__init__(input_file, threshold)
         self.block = Block.null
         self.parser = {
             Block.null: lambda line: None,
@@ -197,14 +196,14 @@ class QCCSDParser(Parser):
                         self._current_trprop = ""  # end the current trprop state
                     break
 
-    def gather_descriptors(self, extra_id=""):
+    def gather_descriptors(self, id_prefix: str = ""):
         data = []
         for irr in self.irreps_dict.values():
             irr.sort()
             for trblock in irr.trblocks:
                 data.append(
                     {
-                        "id": extra_id + trblock.identifier,
+                        "id": id_prefix + trblock.identifier,
                         "R2": trblock.R2,
                         "gamma": trblock.gamma,
                         "omega": trblock.omega,

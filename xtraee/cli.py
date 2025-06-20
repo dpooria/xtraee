@@ -1,240 +1,219 @@
+#!/usr/bin/env python3
+import sys
 import argparse
 import logging
+from contextlib import chdir
+from pathlib import Path
 
+import pandas as pd
 from rich import print
 
-from xtraee.parser import QCCSDParser, QCISParser, TMCC2Parser
+from xtraee.parser import BaseParser, Parser
+
+
+def extract_and_write(args) -> dict[str, BaseParser]:
+    """Process inputs and write full/overview/vsccsd outputs."""
+    outdir = Path(args.outdir)
+    outdir.mkdir(parents=True, exist_ok=True)
+
+    if args.debug:
+        logging.basicConfig(level=logging.DEBUG)
+
+    parsers: dict[str, BaseParser] = {}
+    for infile in args.input:
+        p = Parser(infile, args.threshold)
+        p.process_file()
+        parsers[p.name] = p
+
+    with chdir(outdir):
+        for name, p in parsers.items():
+            if args.full:
+                p.write_full(f"{args.out_fdata}_{name}.txt")
+            p.write_dataset(f"{args.out_data}_{name}.txt")
+
+    eom = parsers.get("EOM-CCSD")
+    if eom:
+        with chdir(outdir):
+            for name, p in parsers.items():
+                if name != "EOM-CCSD":
+                    p.write_vsccsd(f"{args.out_vsccsd}_{name}.txt", eom.irreps_dict)
+
+    return parsers
+
+
+def do_compare(args, parsers: dict[str, BaseParser]) -> int:
+    """Compare two individual states."""
+    try:
+        m1, s1 = args.state1.split(":", 1)
+        m2, s2 = args.state2.split(":", 1)
+        m1 = "EOM-CCSD" if m1.upper() == "CCSD" else m1
+        m2 = "EOM-CCSD" if m2.upper() == "CCSD" else m2
+    except ValueError:
+        logging.error(
+            "Could not parse %r and %r; format is "
+            "{method}:{excitation}-{state-id}/{irrep-id}, e.g. CIS:singlet-1/A",
+            args.state1,
+            args.state2,
+        )
+        return 1
+
+    p1, p2 = parsers.get(m1), parsers.get(m2)
+    if not p1 or not p2:
+        logging.error("Parser for %s or %s not found!", m1, m2)
+        return 1
+
+    tb1 = p1.get_transition_block(s1)
+    tb2 = p2.get_transition_block(s2)
+    if tb1 is None or tb2 is None:
+        logging.error("State %r or %r not found!", s1, s2)
+        return 1
+
+    print(f"Comparing {s1} and {s2}")
+    print("accuracy  | error | fraction matched")
+    print("|\t".join(map(str, tb1.compare(tb2, args.acc_method))))
+    return 0
+
+
+def do_compare_all(args, parsers: dict[str, BaseParser]) -> None:
+    """Compare every state (and vs CCSD if available)."""
+    outdir = Path(args.outdir)
+    eom = parsers.get("EOM-CCSD")
+
+    for name, p in parsers.items():
+        data = p.compare_all(args.acc_method)
+        for key, df in data.items():
+            with chdir(outdir):
+                df.to_csv(f"{key}_{args.output}_{name}.csv")
+
+        if eom and name != "EOM-CCSD":
+            data_vs = p.compare_eomee(eom.irreps_dict, args.acc_method)
+            for key, df in data_vs.items():
+                with chdir(outdir):
+                    df.to_csv(f"{key}_{args.output}_{name}_vsccsd.csv")
+
+
+def do_descriptors(args, parsers: dict[str, BaseParser]) -> int:
+    """Gather descriptors for EOM-CCSD and dump to CSV."""
+    eom = parsers.get("EOM-CCSD")
+    if not eom:
+        logging.error("Descriptors are only implemented for EOM-CCSD")
+        return 1
+
+    df = pd.DataFrame(eom.gather_descriptors())
+    df.to_csv(args.descriptors_file, index=False)
+    return 0
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(
-        description="Extract data from QChem CCSD output file"
+    # If the first non-option token isn't a known sub-command, inject "extract"
+    commands = ("extract", "compare", "compareall", "descriptors")
+    if not any(arg in ("-h", "--help") for arg in sys.argv[1:]):
+        for i, tok in enumerate(sys.argv[1:], start=1):
+            if tok.startswith("-"):
+                continue
+            if tok in commands:
+                break
+            # insert default command at this position
+            sys.argv.insert(i, "extract")
+            break
+        else:
+            # no non-option token at all
+            sys.argv.append("extract")
+
+    parent = argparse.ArgumentParser(add_help=False)
+    parent.add_argument("input", nargs="+", help="Input file(s)")
+    parent.add_argument(
+        "--full", action="store_true", help="Write the full data to file"
     )
-    parser.add_argument(
-        "--input-ccsd", type=str, help="Input file for CCSD", default=None
-    )
-    parser.add_argument(
-        "--firstkid-ccsd",
+    parent.add_argument(
+        "--out-fdata",
         type=str,
-        default="first_kid_ccsd.txt",
-        help="Output file for the complete information",
+        default="fulldata",
+        help="Filename format for the full data",
     )
-    parser.add_argument(
-        "--happyfamily-ccsd",
+    parent.add_argument("--outdir", type=str, default=".", help="Output directory")
+    parent.add_argument(
+        "--out-data",
         type=str,
-        default="happy_family_ccsd.txt",
-        help="Output file for the happy family",
+        default="data",
+        help="Filename format for the overview data",
     )
-    parser.add_argument(
-        "--input-cis", type=str, help="Input file for CIS", default=None
-    )
-    parser.add_argument(
-        "--firstkid-cis",
-        type=str,
-        default="first_kid_cis.txt",
-        help="Output file for the complete information",
-    )
-    parser.add_argument(
-        "--happyfamily-cis",
-        type=str,
-        default="happy_family_cis.txt",
-        help="Output file for the happy family",
-    )
-    parser.add_argument(
-        "--input-cc2", type=str, help="Input file for cc2", default=None
-    )
-    parser.add_argument(
-        "--firstkid-cc2",
-        type=str,
-        default="first_kid_cc2.txt",
-        help="Output file for the complete information",
-    )
-    parser.add_argument(
-        "--happyfamily-cc2",
-        type=str,
-        default="happy_family_cc2.txt",
-        help="Output file for the happy family",
-    )
-    parser.add_argument(
+    parent.add_argument(
         "--threshold",
         type=float,
         default=0.0,
-        help="Threshold for filterning out the matching transitions",
+        help="Threshold for filtering out matching transitions",
     )
-    parser.add_argument(
-        "--sadfamily",
+    parent.add_argument(
+        "--out-vsccsd",
         type=str,
-        default="sad-family.txt",
-        help="Output file for the complete information",
+        default="vsccsd",
+        help="Filename format for the comparison with EOM-CCSD",
     )
-    parser.add_argument("--debug", action="store_true", help="Debug mode")
-    subparsers = parser.add_subparsers(dest="command")
-    compare_parser = subparsers.add_parser(
-        "compare", help="Compare two different states"
+    parent.add_argument("--debug", action="store_true", help="Debug mode")
+
+    parser = argparse.ArgumentParser(
+        description="Extract data from QChem CCSD output file"
     )
-    compare_parser.add_argument(
-        "state1",
+    sub = parser.add_subparsers(dest="command", required=True)
+
+    # default extract mode (hidden in help)
+    _ext = sub.add_parser(
+        "extract",
+        parents=[parent],
+        help=argparse.SUPPRESS,
+        description="Extract data from QChem CCSD output file",
+    )
+
+    # compare
+    cmp = sub.add_parser(
+        "compare", parents=[parent], help="Compare two different states"
+    )
+    cmp.add_argument("state1", type=str, help="The first state, e.g. CIS:singlet-1/A")
+    cmp.add_argument("state2", type=str, help="The second state")
+    cmp.add_argument("--acc-method", type=str, default="1")
+    # compareall
+    cpa = sub.add_parser(
+        "compareall", parents=[parent], help="Compare all different states."
+    )
+    cpa.add_argument(
+        "--output",
         type=str,
-        help="The first state with format {method}:{excitation}-{state-id}/{irrep-id}, e.g. CIS:singlet-1/A",
+        default="compare",
+        help="Output file format for all-state comparison",
     )
-    compare_parser.add_argument("state2", type=str, help="The second state")
-    compare_parser.add_argument("--acc-method", type=str, default="1")
-    compareall_parser = subparsers.add_parser(
-        "compareall", help="Compare all different states. "
+    cpa.add_argument("--acc-method", type=str, default="1")
+    # descriptors
+    dsc = sub.add_parser(
+        "descriptors", parents=[parent], help="Extract descriptors and write to CSV"
     )
-    compareall_parser.add_argument(
-        "--output-ccsd",
+    dsc.add_argument(
+        "--descriptors-file",
         type=str,
-        default="compare_ccsd.csv",
-        help="output file format for comparison of all of the CCCSD states",
+        default="descriptors.csv",
+        help="CSV filename for descriptors",
     )
-    compareall_parser.add_argument(
-        "--output-cc2",
-        type=str,
-        default="compare_cc2.csv",
-        help="output file format for comparison of all of the CC2 states",
-    )
-    compareall_parser.add_argument(
-        "--output-cis",
-        type=str,
-        default="compare_cis.csv",
-        help="output file format for comparison of all of the CIS states",
-    )
-    compareall_parser.add_argument(
-        "--output-mix",
-        type=str,
-        default="compare_ccsd_vs_cis.csv",
-        help="output file format for comparison of all of the CIS and CCSD states",
-    )
-    compareall_parser.add_argument("--acc-method", type=str, default="1")
-    # excited state properties
-    dsc_parser = subparsers.add_parser(
-        "descriptors",
-        help="Extract the descriptors from the input file and write to csv",
-    )
-    dsc_parser.add_argument("--descriptors-file", type=str, default="descriptors.csv")
 
     return parser.parse_args()
 
 
 def main() -> int:
     args = parse_args()
-    if args.debug:
-        logging.basicConfig(level=logging.DEBUG)
-    if args.input_ccsd is None and args.input_cis is None and args.input_cc2 is None:
-        print(
-            "Please provide input file for CCSD or CIS or both (type --help for help)"
-        )
-        return 1
-    if args.input_ccsd is not None:
-        qccsd = QCCSDParser(
-            args.input_ccsd,
-            args.threshold,
-            args.firstkid_ccsd,
-            args.happyfamily_ccsd,
-        )
-        qccsd.process_file()
-        qccsd.write_first_kid()
-        qccsd.write_happy_family()
-    else:
-        qccsd = None
 
-    if args.input_cis is not None:
-        qcis = QCISParser(
-            args.input_cis,
-            args.threshold,
-            args.firstkid_cis,
-            args.happyfamily_cis,
-        )
-        qcis.process_file()
-        qcis.write_first_kid()
-        qcis.write_happy_family()
-        if args.input_ccsd is not None:
-            qcis.write_sad_family(qccsd.irreps_dict, args.sadfamily)
-    else:
-        qcis = None
-    if args.input_cc2 is not None:
-        tmcc2 = TMCC2Parser(
-            args.input_cc2,
-            args.threshold,
-            args.firstkid_cc2,
-            args.happyfamily_cc2,
-        )
-        tmcc2.process_file()
-        tmcc2.write_first_kid()
-        tmcc2.write_happy_family()
-    else:
-        tmcc2 = None
+    # always do the extraction step first
+    parsers = extract_and_write(args)
 
+    # then dispatch
     if args.command == "compare":
-        state1 = args.state1
-        state2 = args.state2
-        try:
-            method1, state1 = state1.split(":")
-            method2, state2 = state2.split(":")
-        except Exception:
-            print(
-                f"Could not parse states {state1} and {state2} "
-                "the format required is {method}:{excitation}-{state-id}/{irrep-id}, e.g. CIS:singlet-1/A",
-            )
-            return 1
-        state1_trblock = None
-        state2_trblock = None
-        if qccsd is not None:
-            for irrep in qccsd.irreps_dict.values():
-                if method1.lower() == "ccsd" and state1 in irrep.transitions_dict:
-                    state1_trblock = irrep.transitions_dict[state1]
-                if method2.lower() == "ccsd" and state2 in irrep.transitions_dict:
-                    state2_trblock = irrep.transitions_dict[state2]
-        if qcis is not None:
-            for irrep in qcis.irreps_dict.values():
-                if method1.lower() == "cis" and state1 in irrep.transitions_dict:
-                    state1_trblock = irrep.transitions_dict[state1]
-                if method2.lower() == "cis" and state2 in irrep.transitions_dict:
-                    state2_trblock = irrep.transitions_dict[state2]
-        if tmcc2 is not None:
-            for irrep in tmcc2.irreps_dict.values():
-                if method1.lower() == "cc2" and state1 in irrep.transitions_dict:
-                    state1_trblock = irrep.transitions_dict[state1]
-                if method2.lower() == "cc2" and state2 in irrep.transitions_dict:
-                    state2_trblock = irrep.transitions_dict[state2]
-        if state1_trblock is None or state2_trblock is None:
-            print("Couldn't find the states, sorry :(")
-            return 1
-        print(f"Comparing {state1} and {state2}")
-        print("accuracy  | error | fraction matched")
-        print(
-            "|\t".join(
-                map(str, state1_trblock.compare(state2_trblock, args.acc_method))
-            )
-        )
-    elif args.command == "compareall":
-        # ccsd
-        if qccsd is not None:
-            data = qccsd.compare_all(args.acc_method)
-            for key, df in data.items():
-                df.to_csv(f"{key}_{args.output_ccsd}")
-        if qcis is not None:
-            data = qcis.compare_all(args.acc_method)
-            for key, df in data.items():
-                df.to_csv(f"{key}_{args.output_cis}")
-        if tmcc2 is not None:
-            data = tmcc2.compare_all(args.acc_method)
-            for key, df in data.items():
-                df.to_csv(f"{key}_{args.output_cc2}")
-
-        if qccsd is not None and qcis is not None:
-            data = qcis.compare_eomee(qccsd.irreps_dict, args.acc_method)
-            for key, df in data.items():
-                df.to_csv(f"{key}_{args.output_mix}")
-    elif args.command == "descriptors":
-        if qccsd is None:
-            print("descriptor only works for ccsd")
-            return 1
-        else:
-            import pandas as pd
-
-            data = pd.DataFrame(qccsd.gather_descriptors())
-            data.to_csv(args.descriptors_file)
-
+        return do_compare(args, parsers)
+    if args.command == "compareall":
+        do_compare_all(args, parsers)
+        return 0
+    if args.command == "descriptors":
+        return do_descriptors(args, parsers)
+    # "extract" → nothing more
     return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

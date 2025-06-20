@@ -1,28 +1,31 @@
-from pathlib import Path
+import logging
 from abc import abstractmethod
-from typing import Any, Callable, Dict, List
 from enum import Enum
+from pathlib import Path
+from typing import Any, Callable, Dict, List
 
+from pandas.core.frame import DataFrame
 from xtraee.irrep import Irrep
 from xtraee.trblock import TransitionBlock
+
+DatasetType = Dict[str, Dict[str, Any]]
+PathType = str | Path
 
 
 class Block(Enum):
     null = 0
 
 
-class Parser:
+class BaseParser:
+    name = "base"
+
     def __init__(
         self,
-        input_file: str | Path,
+        input_file: PathType,
         threshold: float = 0.0,
-        first_kid: str | Path = "first_kid.txt",
-        happy_family: str | Path = "happy_family.txt",
     ):
         self.threshold = threshold
         self.input_file = input_file
-        self.first_kid = first_kid
-        self.happy_family_path = happy_family
         self.parser: Dict[int, Callable[[str], None]] = {Block.null: lambda line: None}
         self.block = Block.null  # remember to change this in the inherited classes
         self.ee_singlets: List[int] = []
@@ -30,6 +33,7 @@ class Parser:
         self.ee_triplets: List[int] = []
         self.N_triplets = 0
         self.irreps_dict: Dict[str, Irrep] = {}
+        self.data: DatasetType = {}
 
     @abstractmethod
     def detect_block(self, line: str) -> None:
@@ -44,6 +48,23 @@ class Parser:
             lowest_excitations.append(e_block)
         return lowest_excitations
 
+    def compare_with_ccsd(self, ccsd_irrep_dict: DatasetType) -> DatasetType:
+        logging.warning(
+            f"Comparison with CCSD is not implemented for {self.name} parser."
+        )
+        return {}
+
+    def write_vsccsd(self, fname: PathType, ccsd_irrep_dict: DatasetType) -> None:
+        logging.warning(f"Writing vsCCSD is not implemented for {self.name} parser.")
+
+    def compare_eomee(
+        self, irreps_dict: Dict[str, Irrep], method: str
+    ) -> Dict[str, DataFrame]:
+        logging.warning(
+            f"Comparison with EOM-CCSD is not implemented for {self.name} parser."
+        )
+        return DataFrame()
+
     def process_file(self) -> None:
         with open(self.input_file, "r") as f:
             for line in f:
@@ -53,16 +74,17 @@ class Parser:
         self.detect_block(line)
         self.parser[self.block](line)
 
-    def write_first_kid(self) -> None:
-        with open(self.first_kid, "w") as f:
+    def write_full(self, fname: PathType) -> None:
+        with open(fname, "w") as f:
             for irrep in self.irreps_dict.values():
                 f.write(f"{irrep.name}\n")
                 for tr in irrep.trblocks:
                     f.write(f"{tr}\n")
 
-    def write_happy_family(self) -> None:
-        self.happy_family = data = self.create_happy_family()
-        with open(self.happy_family_path, "w") as f:
+    def write_dataset(self, fname: PathType) -> None:
+        if len(self.data) == 0:
+            self.data = data = self.create_dataset()
+        with open(fname, "w") as f:
             f.write("---- Happy family ----\n")
             for s, d in data.items():
                 f.write(f"------------{s}------------\n")
@@ -72,7 +94,7 @@ class Parser:
                     f.write(f'{tr} <==> {",        ".join(triplet)}\n')
             f.write("--- End of the happy family :) ---")
 
-    def create_happy_family(self) -> Dict[str, Dict[str, Any]]:
+    def create_dataset(self) -> DatasetType:
         for irr in self.irreps_dict.values():
             irr.sort()
         singlets = []
@@ -84,7 +106,7 @@ class Parser:
                 triplets.append(irr)
             else:
                 raise ValueError(f"Unknown excitation type {irr.ee_type}")
-        lowest_singlets = Parser.select_lowest_excitations(singlets)
+        lowest_singlets = BaseParser.select_lowest_excitations(singlets)
         data = {}
         for i, singlet in enumerate(lowest_singlets):
             matched_triplets = {}
@@ -107,7 +129,7 @@ class Parser:
             }
         return data
 
-    def compare_all(self, method: str):
+    def compare_all(self, method: str) -> Dict[str, DataFrame]:
         irreps_singlets = [
             irrep for irrep in self.irreps_dict.values() if irrep.ee_type == "singlet"
         ]
