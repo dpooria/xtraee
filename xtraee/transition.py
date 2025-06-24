@@ -3,8 +3,8 @@ from typing import List, Tuple
 
 
 class Transition:
-    PATTERN = re.compile(r".+")
-    NAME = "Transition"
+    name = "Transition"
+    pattern = re.compile(r".+")
 
     def __init__(
         self,
@@ -18,6 +18,7 @@ class Transition:
         self.final = final.strip()
         self.id_i: List[Tuple[str, ...]] = []
         self.id_f: List[Tuple[str, ...]] = []
+        self._spin_ind = 2
         self.is_double = False
         if not self.parse():
             raise ValueError(f"Cannot parse {initial} -> {final}")
@@ -29,12 +30,12 @@ class Transition:
     def parse(
         self,
     ) -> bool:
-        if m_l := self.PATTERN.findall(self.initial):
+        if m_l := self.pattern.findall(self.initial):
             self.id_i = m_l
         else:
             return False
 
-        if m_l := self.PATTERN.findall(self.final):
+        if m_l := self.pattern.findall(self.final):
             self.id_f = m_l
         else:
             return False
@@ -60,11 +61,14 @@ class Transition:
             for id_i, other_id_i, id_f, other_id_f in zip(
                 self.id_i, other.id_i, self.id_f, other.id_f
             ):
-                if id_i[:2] != other_id_i[:2]:
+                if id_i[: self._spin_ind] != other_id_i[: self._spin_ind]:
                     return False
-                if id_f[:2] != other_id_f[:2]:
+                if id_f[: self._spin_ind] != other_id_f[: self._spin_ind]:
                     return False
         return True
+
+    def to_std(self, homo: int = 0) -> "CCSDTransition":
+        return self
 
     def __eq__(self, other) -> bool:
         return self.is_equal(other)
@@ -73,9 +77,12 @@ class Transition:
         return f"{self.amplitude:.4f}\t {self.initial} -> {self.final}"
 
 
+# CCSDTransition is the standard format
 class CCSDTransition(Transition):
-    PATTERN = re.compile(r"\s*(\d+)\s*\(([^\s]+)\)\s*(\w*)\s*")
-    NAME = "CCSDTransition"
+    def __init__(self, amplitude: float, initial: str, final: str):
+        self.name = "CCSDTransition"
+        self.pattern = re.compile(r"\s*(\d+)\s*\(([^\s]+)\)\s*(\w*)\s*")
+        super().__init__(amplitude, initial, final)
 
     @classmethod
     def from_str(cls, line: str):
@@ -98,8 +105,10 @@ class CCSDTransition(Transition):
 
 
 class CISTransition(Transition):
-    PATTERN = re.compile(r"\s*([^\s]+)\s*\(\s*(\d+)\s*\)\s*")
-    NAME = "CISTransition"
+    def __init__(self, amplitude: float, initial: str, final: str):
+        self.name = "CISTransition"
+        self.pattern = re.compile(r"\s*([^\s]+)\s*\(\s*(\d+)\s*\)\s*")
+        super().__init__(amplitude, initial, final)
 
     @classmethod
     def from_str(cls, line: str):
@@ -114,20 +123,70 @@ class CISTransition(Transition):
         rhs = rhs[:idx]
         return cls(amplitude, lhs, rhs)
 
-    def to_ccsd(self, homo: int) -> CCSDTransition:
+    def to_std(self, homo: int) -> CCSDTransition:
+        # not considering symmetry and there is no double excitation
         initial = f"{int(self.id_i[0][1])} (A)"
         final = f"{int(self.id_f[0][1]) + homo} (A)"
-        return CCSDTransition(
-            self.amplitude,
-            initial,
-            final,
+        return CCSDTransition(self.amplitude, initial, final)
+
+
+class CISDTransition(Transition):
+    def __init__(self, amplitude: float, initial: str, final: str):
+        self.name = "CISDTransition"
+        self.pattern = re.compile(r"\s*(\d+)\s*\(\s*([^\s]+)\s*\)\s*([AB])\s*")
+        super().__init__(amplitude, initial, final)
+
+    @classmethod
+    def from_str(cls, line: str):
+        s = line.split("->")
+        if len(s) != 2:
+            raise ValueError(f"cannot match {line}")
+        lhs = s[0].strip()
+        rhs = s[1].strip()
+        amp_str = lhs.split()[0]
+        amplitude = float(amp_str)
+        lhs = lhs[lhs.find(amp_str) + len(amp_str) :].lstrip()
+        return cls(amplitude, lhs, rhs)
+
+    def to_ccsd(self, homo: int, symmetry: bool) -> CCSDTransition:
+        initials = []
+        finals = []
+        for id_i, id_f in zip(self.id_i, self.id_f):
+            if symmetry:
+                initial = f"{int(id_i[0]) + 1} ({id_i[1]}) {id_i[2]}"
+                final = f"{int(id_f[0]) + homo + 1} ({id_f[1]}) {id_f[2]}"
+            else:
+                initial = f"{int(id_i[0]) + 1} (A) {id_i[2]})"
+                final = f"{int(id_f[0]) + homo + 1} (A) {id_f[2]}"
+            initials.append(initial)
+            finals.append(final)
+        return CCSDTransition(self.amplitude, "\t".join(initials), "\t".join(finals))
+
+    def to_std(self, homo):
+        return self.to_ccsd(homo, False)
+
+
+class TMCC2Transition(Transition):
+    amppattern = re.compile(r"\s*([+-]?\d+\.\d+)\s+[+-]?\d+\.\d+\s*")
+
+    def __init__(self, amplitude: float, initial: str, final: str):
+        self.name = "CC2Transition"
+        self.pattern = re.compile(
+            r"""
+            ^\s*
+            (\d+)                # group 1: the first integer
+            \s+
+            (?=[ab]\s+(\d+))     # LOOKAHEAD: assert “letter + spaces + digits” next,
+                                 # and capture that digit as group 2
+            ([ab])               # group 3: the letter
+            \s+
+            \d+                  # match the digit again, but don’t capture it
+            \s*$
+        """,
+            re.VERBOSE,
         )
-
-
-class CC2Transition(Transition):
-    PATTERN = re.compile(r"^\s*\d+\s+[ab]\s+(\d+)\s*$")
-    AMPPATTERN = re.compile(r"\s*([+-]?\d+\.\d+)\s+[+-]?\d+\.\d+\s*")
-    NAME = "CC2Transition"
+        super().__init__(amplitude, initial, final)
+        self._spin_ind = 1
 
     @classmethod
     def from_str(cls, line: str):
@@ -136,12 +195,19 @@ class CC2Transition(Transition):
             raise ValueError(f"cannot match {line}")
         lhs = s[1].strip()
         rhs = s[2].strip()
-        if (m := CC2Transition.AMPPATTERN.match(s[3].strip())) is not None:
+        if (m := TMCC2Transition.amppattern.match(s[3].strip())) is not None:
             amplitude = float(m.group(1))
         else:
             raise ValueError(f"could not match the amplitude {line}")
         return cls(amplitude, lhs, rhs)
 
-    # for cc2 we have to have check_spin=True
-    def is_equal(self, other, check_amp=False, check_spin=True) -> bool:
-        return super().is_equal(other, check_amp, check_spin)
+    def to_std(self, homo: int = 0) -> CCSDTransition:
+        # the double transitions is not tested
+        initials = []
+        finals = []
+        for id_i, id_f in zip(self.id_i, self.id_f):
+            initial = f"{int(id_i[0])} (A) {id_i[2].upper()}"
+            final = f"{int(id_f[0])} (A) {id_f[2].upper()}"
+        initials.append(initial)
+        finals.append(final)
+        return CCSDTransition(self.amplitude, "\t".join(initials), "\t".join(finals))

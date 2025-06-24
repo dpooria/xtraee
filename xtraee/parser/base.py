@@ -48,23 +48,6 @@ class BaseParser:
             lowest_excitations.append(e_block)
         return lowest_excitations
 
-    def compare_with_ccsd(self, ccsd_irrep_dict: DatasetType) -> DatasetType:
-        logging.warning(
-            f"Comparison with CCSD is not implemented for {self.name} parser."
-        )
-        return {}
-
-    def write_vsccsd(self, fname: PathType, ccsd_irrep_dict: DatasetType) -> None:
-        logging.warning(f"Writing vsCCSD is not implemented for {self.name} parser.")
-
-    def compare_eomee(
-        self, irreps_dict: Dict[str, Irrep], method: str
-    ) -> Dict[str, DataFrame]:
-        logging.warning(
-            f"Comparison with EOM-CCSD is not implemented for {self.name} parser."
-        )
-        return DataFrame()
-
     def process_file(self) -> None:
         with open(self.input_file, "r") as f:
             for line in f:
@@ -141,5 +124,69 @@ class BaseParser:
             for irrep_triplet in irreps_triplets:
                 scores[irrep_singlet.name + "_" + irrep_triplet.name] = (
                     irrep_singlet.compare(irrep_triplet, method)
+                )
+        return scores
+
+    def match2std(self, key: str, other_block: TransitionBlock):
+        irrep = self.irreps_dict[key]
+        majors = []
+        # match all of the states in the reference to current
+        for i, trblock in enumerate(irrep.trblocks):
+            if trblock.is_equal_std(other_block):
+                majors.append(trblock)
+        return majors
+
+    def write_vs_std(self, path: str, other_irrep_dict: DatasetType) -> None:
+        data = {}
+        for key_irrep_ccsd, irrep_ccsd in other_irrep_dict.items():
+            data[key_irrep_ccsd] = []
+            for trblock_ccsd in irrep_ccsd.trblocks:
+                result = {
+                    "ref": trblock_ccsd,
+                    self.name: self.match2std(trblock_ccsd.excitation, trblock_ccsd),
+                }
+                data[key_irrep_ccsd].append(result)
+        with open(path, "w") as f:
+            f.write("---- Sad family ----\n")
+            for k, v in data.items():
+                f.write(f"{k}\n")
+                for item in v:
+                    f.write(
+                        f"ref: {item['ref'].excitation}-{item['ref'].id_number}/{item['ref'].irrep} <=>"
+                    )
+                    line = ",".join(
+                        map(
+                            lambda block: f"{self.name}: {block.excitation}-{block.id_number}/{block.irrep}",
+                            item[self.name],
+                        )
+                    )
+                    f.write(line + "\n")
+            f.write("--- End of sad family :( ---")
+
+    def compare_std(
+        self, irreps_dict: Dict[str, Irrep], method: str
+    ) -> Dict[str, DataFrame]:
+        irreps_singlets = [
+            irrep for irrep in self.irreps_dict.values() if irrep.ee_type == "singlet"
+        ]
+        irreps_triplets = [
+            irrep for irrep in self.irreps_dict.values() if irrep.ee_type == "triplet"
+        ]
+        oirr_singlets = [
+            irrep for irrep in irreps_dict.values() if irrep.ee_type == "singlet"
+        ]
+        oirr_triplets = [
+            irrep for irrep in irreps_dict.values() if irrep.ee_type == "triplet"
+        ]
+        scores = {}
+        for irrep_singlet in irreps_singlets:
+            for oirr_singlet in oirr_singlets:
+                scores[irrep_singlet.identifier + "_vs_" + oirr_singlet.identifier] = (
+                    irrep_singlet.compare(oirr_singlet, method)
+                )
+        for irrep_triplet in irreps_triplets:
+            for oirr_triplet in oirr_triplets:
+                scores[irrep_triplet.identifier + "_vs_" + oirr_triplet.identifier] = (
+                    irrep_triplet.compare(oirr_triplet, method)
                 )
         return scores

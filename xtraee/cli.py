@@ -12,7 +12,7 @@ from xtraee.parser import BaseParser, Parser
 
 
 def extract_and_write(args) -> dict[str, BaseParser]:
-    """Process inputs and write full/overview/vsccsd outputs."""
+    """Process inputs and write full/overview/vsstd outputs."""
     outdir = Path(args.outdir)
     outdir.mkdir(parents=True, exist_ok=True)
 
@@ -31,12 +31,12 @@ def extract_and_write(args) -> dict[str, BaseParser]:
                 p.write_full(f"{args.out_fdata}_{name}.txt")
             p.write_dataset(f"{args.out_data}_{name}.txt")
 
-    eom = parsers.get("EOM-CCSD")
-    if eom:
+    ref = parsers.get(args.ref)
+    if ref:
         with chdir(outdir):
             for name, p in parsers.items():
-                if name != "EOM-CCSD":
-                    p.write_vsccsd(f"{args.out_vsccsd}_{name}.txt", eom.irreps_dict)
+                if name != args.ref:
+                    p.write_vs_std(f"{args.out_vsstd}_{name}.txt", ref.irreps_dict)
 
     return parsers
 
@@ -77,19 +77,20 @@ def do_compare(args, parsers: dict[str, BaseParser]) -> int:
 def do_compare_all(args, parsers: dict[str, BaseParser]) -> None:
     """Compare every state (and vs CCSD if available)."""
     outdir = Path(args.outdir)
-    eom = parsers.get("EOM-CCSD")
+    refname = args.ref
+    ref = parsers.get(refname)
 
     for name, p in parsers.items():
         data = p.compare_all(args.acc_method)
         for key, df in data.items():
             with chdir(outdir):
-                df.to_csv(f"{key}_{args.output}_{name}.csv")
+                df.to_csv(f"{key}_{name}_{args.output}.csv")
 
-        if eom and name != "EOM-CCSD":
-            data_vs = p.compare_eomee(eom.irreps_dict, args.acc_method)
+        if ref and name != refname:
+            data_vs = p.compare_std(ref.irreps_dict, args.acc_method)
             for key, df in data_vs.items():
                 with chdir(outdir):
-                    df.to_csv(f"{key}_{args.output}_{name}_vsccsd.csv")
+                    df.to_csv(f"{key}_{args.output}.csv")
 
 
 def do_descriptors(args, parsers: dict[str, BaseParser]) -> int:
@@ -145,15 +146,22 @@ def parse_args() -> argparse.Namespace:
         help="Threshold for filtering out matching transitions",
     )
     parent.add_argument(
-        "--out-vsccsd",
+        "--out-vsstd",
         type=str,
-        default="vsccsd",
-        help="Filename format for the comparison with EOM-CCSD",
+        default="vsstd",
+        help="Filename format for the comparison with the reference calculation (usually EOM-CCSD)",
+    )
+    parent.add_argument(
+        "--ref",
+        type=str,
+        default="EOM-CCSD",
+        help="Reference parser name for comparison (usually EOM-CCSD)",
     )
     parent.add_argument("--debug", action="store_true", help="Debug mode")
 
     parser = argparse.ArgumentParser(
-        description="Extract data from QChem CCSD output file"
+        description="Extract data from excited-state calculations output."
+        "supported methods: QChem(CIS, CISD, EOM-CCSD), Turbomole(CC2)"
     )
     sub = parser.add_subparsers(dest="command", required=True)
 
@@ -161,8 +169,8 @@ def parse_args() -> argparse.Namespace:
     _ext = sub.add_parser(
         "extract",
         parents=[parent],
-        help=argparse.SUPPRESS,
-        description="Extract data from QChem CCSD output file",
+        help="Extract data from excited-state calculations output file (default behaviour)",
+        description="Extract data from excited-state calculations output file",
     )
 
     # compare

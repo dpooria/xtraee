@@ -1,11 +1,10 @@
-import logging
 import re
 from enum import Enum
 from typing import Optional
 
 from xtraee.irrep import Irrep
-from xtraee.parser.base import BaseParser, DatasetType, PathType
-from xtraee.trblock import CC2TransitionBlock, TransitionBlock
+from xtraee.parser.base import BaseParser, PathType
+from xtraee.trblock import TMCC2TransitionBlock, TransitionBlock
 
 meta_patterns = {
     "trblock": re.compile(
@@ -86,7 +85,7 @@ class TMCC2Parser(BaseParser):
             cc2_energy = float(m.group(4))
             t1 = float(m.group(5))
             t2 = float(m.group(6))
-            transition_block = CC2TransitionBlock(
+            transition_block = TMCC2TransitionBlock(
                 id_number, irrep, multi, cc2_energy, t1, t2
             )
             k = f"{multi}-{irrep}"

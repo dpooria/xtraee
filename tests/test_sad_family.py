@@ -1,4 +1,5 @@
 import pathlib
+import filecmp
 
 from xtraee.parser import QCCSDParser, QCISParser
 
@@ -14,4 +15,13 @@ def test_sad_family():
     cis_parser.process_file()
     cis_parser.write_full(cwd / "first_kid_cis.txt")
     cis_parser.write_dataset(cwd / "happy_family_cis.txt")
-    cis_parser.write_vsccsd(cwd / "sad_family_cis.txt", ccsd_parser.irreps_dict)
+    cis_parser.write_vs_std(cwd / "new.sad_family_cis.txt", ccsd_parser.irreps_dict)
+    assert filecmp.cmp(
+        cwd / "new.sad_family_cis.txt",
+        cwd / "sad_family_cis.txt",
+        shallow=False,
+    ), "Files do not match."
+
+
+if __name__ == "__main__":
+    test_sad_family()

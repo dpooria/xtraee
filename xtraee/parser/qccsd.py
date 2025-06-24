@@ -3,7 +3,7 @@ from enum import Enum
 from typing import Optional
 
 from xtraee.irrep import Irrep
-from xtraee.trblock import EOMEETransitionBlock, TransitionBlock
+from xtraee.trblock import CCSDTransitionBlock, TransitionBlock
 
 from xtraee.parser.base import BaseParser, PathType
 
@@ -124,6 +124,7 @@ class QCCSDParser(BaseParser):
                     m.group(1),
                     ee_type,
                     n_states,
+                    parent="CCSD"
                 )
                 self.irreps_dict[f"{ee_type}-0/{m.group(1)}"] = self._current_irrep
                 self._current_excitation = ee_type
@@ -151,7 +152,7 @@ class QCCSDParser(BaseParser):
                         )
                 else:
                     raise ValueError("No current transition block")
-                self._current_transition = EOMEETransitionBlock(
+                self._current_transition = CCSDTransitionBlock(
                     int(m.group(1)), irrep, self._current_excitation
                 )
             elif start_indicators["eeprop"] in line:
