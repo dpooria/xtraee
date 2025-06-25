@@ -11,7 +11,7 @@ def test_compareall():
             "compareall",
             cwd / "../test_qcis/input1.log",
             cwd / "../test_qccsd/input2.log",
-            "--acc-method=2",
+            "--acc-method=inner-prod",
             f"--outdir={cwd.as_posix()}",
         ],
         capture_output=True,

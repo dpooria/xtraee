@@ -23,12 +23,29 @@ def test_happy_family(inputfile, expected_output, tmp_path):
     ), f"Files {outputfile} and {expected_output_path} do not match."
 
 
+def usage_and_exit():
+    print("Usage: %s {test,update-test}" % sys.argv[0])
+    exit(1)
+
+
 if __name__ == "__main__":
+    import sys
+
+    if len(sys.argv) != 2:
+        usage_and_exit()
+    mode = sys.argv[1]
+    if mode not in ["test", "update-test"]:
+        usage_and_exit()
+
     for inputfile in ["ricc2.out"]:
         output = f"happy_family_{inputfile}"
         test_dir = Path(__file__).parent
-        inputfile_path = test_dir / inputfile
-        outputfile = test_dir / output
-        tmcc2 = TMCC2Parser(inputfile_path, 0.0)
-        tmcc2.process_file()
-        tmcc2.write_dataset(outputfile)
+        if mode == "test":
+            test_happy_family(inputfile, output, test_dir)
+        elif mode == "update-test":
+            inputfile_path = test_dir / inputfile
+            outputfile = test_dir / output
+            tmcc2 = TMCC2Parser(inputfile_path, 0.0)
+            tmcc2.process_file()
+            tmcc2.write_dataset(outputfile)
+    exit(0)

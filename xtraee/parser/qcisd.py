@@ -1,9 +1,6 @@
-from typing import Optional
-
 from xtraee.irrep import Irrep
 from xtraee.lazypattern import LP, VERBOSE
 from xtraee.parser.base import BaseParser, Block, PathType
-from xtraee.parser.qccsd import meta_patterns as qccsd_meta_patterns
 from xtraee.trblock import CISDTransitionBlock
 
 trblock_begin_pattern = LP(
@@ -46,50 +43,50 @@ class QCISDParser(BaseParser):
         threshold: float = 0.0,
     ):
         super().__init__(input_file, threshold)
-        self.parser = {
-            Block.null: lambda line: None,
-            Block.input: self.process_input,
-            Block.irrep: self.process_irreps,
-            Block.mo: self.finalize_irreps,
-        }
-        self._current_transition: Optional[CISDTransitionBlock] = None
-        self._current_irrep: Optional[Irrep] = None
+        self.parser.update(
+            {Block.irrep: self.process_irreps, Block.mo: self.finalize_irreps}
+        )
+
+    def reset(self):
+        super().reset()
+        self._current_trblock: None | CISDTransitionBlock = None
+        self._current_irrep: None | Irrep = None
+        self._irrep_counter: int = 0
 
     def detect_block(self, line: str) -> None:
         for block, indicator in start_indicators:
-            if indicator is not None and indicator in line:
+            if indicator and indicator in line:
                 self.block = block
                 break
 
-    def process_input_block(self, line: str) -> None:
-        if self.N_singlets == 0:
-            if (m := qccsd_meta_patterns["ee_singlets"].match(line)) is not None:
-                self.ee_singlets = list(map(int, m.group(1).strip().split(",")))
-                self.N_singlets = len(self.ee_singlets)
-        if self.N_triplets == 0:
-            if (m := qccsd_meta_patterns["ee_triplets"].match(line)) is not None:
-                self.ee_triplets = list(map(int, m.group(1).strip().split(",")))
-                self.N_triplets = len(self.ee_triplets)
-
     def process_trblock(self, line: str) -> None:
         if (m := trblock_begin_pattern.match(line)) is not None:
-            if self._current_transition is not None:
-                self._current_transition.sort()
-                if self._current_transition.ee_type == "singlet":
-                    self.irrep_singlets.append(self._current_transition)
-                elif self._current_transition.ee_type == "triplet":
-                    self.irrep_triplets.append(self._current_transition)
+            if self._current_trblock is not None:
+                self._current_trblock.sort()
+                if self._current_trblock.ee_type == "singlet":
+                    self.irrep_singlets.append(self._current_trblock)
+                elif self._current_trblock.ee_type == "triplet":
+                    self.irrep_triplets.append(self._current_trblock)
                 else:
-                    raise ValueError(f"Unknown excitation {self._current_transition}")
-            self._current_transition = CISDTransitionBlock(int(m.group(1)))
-            self._current_transition.excitation_energy = float(m.group(2))
-        elif self._current_transition is not None:
-            self._current_transition.add_data(line)
+                    raise ValueError(f"Unknown excitation {self._current_trblock}")
+            self._current_trblock = CISDTransitionBlock(int(m.group(1)))
+            self._current_trblock.excitation_energy = float(m.group(2))
+        elif self._current_trblock is not None:
+            self._current_trblock.add_data(line)
 
-    def process_irreps(self, multi: Block) -> None:
-        pass
+    def process_irreps(self, line: str) -> None:
+        if m := meta_patterns["irreps"].match(line):
+            multi = "single" if m["multi"] == "LOWSPIN" else "triple"
+            irrep = Irrep(m["irrep"], multi, int(m["n_roots"]), "CISD")
+            self.irreps_dict[irrep.identifier] = irrep
+            self._current_irrep = irrep
+        elif m := trblock_begin_pattern.match(line):
+            if self._current_irrep is None:
+                raise ValueError("trblock before irrep")
+            trblock = CISDTransitionBlock(m["root"])
 
     def finalize_irreps(self) -> None:
+        homo = 0
         for irrep in self.irreps_dict.values():
             irrep.sort()
             assert irrep.n_states == len(
@@ -97,11 +94,10 @@ class QCISDParser(BaseParser):
             ), f"Inconsitent number of states in {irrep}"
 
             for tr in irrep:
-                self.homo = max(
-                    *[int(id[1]) for tr_ in tr.transitions for id in tr_.id_i],
-                    self.homo,
+                homo = max(
+                    *[int(id_[1]) for tr_ in tr.transitions for id_ in tr_.id_i],
+                    homo,
                 )
-        # broadcast homo
+        self.homo = homo
         for irrep in self.irreps_dict.values():
-            for tr in irrep:
-                tr.homo = self.homo
+            irrep.scatter_attr("homo", self.homo)

@@ -1,14 +1,19 @@
-from abc import abstractmethod
 from enum import Enum, auto
 from pathlib import Path
-from typing import Any, Callable, Dict, List
+from typing import Any, Callable
 
 from pandas.core.frame import DataFrame
 from xtraee.irrep import Irrep
+from xtraee.lazypattern import LP
 from xtraee.trblock import TransitionBlock
 
-DatasetType = Dict[str, Dict[str, Any]]
+DatasetType = dict[str, dict[str, Any]]
 PathType = str | Path
+
+input_patterns = dict(
+    ee_singlets=LP(r"^EE_SINGLETS\s*=?\s*\[?([\d,\s]+)\]?\s*"),
+    ee_triplets=LP(r"^EE_TRIPLETS\s*=?\s*\[?([\d,\s]+)\]?\s*"),
+)
 
 
 class Block(Enum):
@@ -32,22 +37,38 @@ class BaseParser:
     ):
         self.threshold = threshold
         self.input_file = input_file
-        self.parser: Dict[int, Callable[[str], None]] = {Block.null: lambda line: None}
+        self.parser: dict[Block, Callable[[str], None]] = {
+            Block.null: lambda line: None,
+            Block.input: self.process_input,
+        }
+        self.reset()
+
+    def reset(self) -> None:
         self.block = Block.null
-        self.ee_singlets: List[int] = []
+        self.ee_singlets: list[int] = []
         self.N_singlets = 0
-        self.ee_triplets: List[int] = []
+        self.ee_triplets: list[int] = []
         self.N_triplets = 0
-        self.irreps_dict: Dict[str, Irrep] = {}
+        self.irreps_dict: dict[str, Irrep] = {}
         self.data: DatasetType = {}
         self.homo: int = 0
 
-    @abstractmethod
     def detect_block(self, line: str) -> None:
         pass
 
+    def process_input(self, line: str) -> None:
+        # only valid for QChem inputs
+        if self.N_singlets == 0:
+            if (m := input_patterns["ee_singlets"].match(line)) is not None:
+                self.ee_singlets = list(map(int, m.group(1).strip().split(",")))
+                self.N_singlets = len(self.ee_singlets)
+        if self.N_triplets == 0:
+            if (m := input_patterns["ee_triplets"].match(line)) is not None:
+                self.ee_triplets = list(map(int, m.group(1).strip().split(",")))
+                self.N_triplets = len(self.ee_triplets)
+
     @staticmethod
-    def select_lowest_excitations(states: List[Irrep]) -> List[TransitionBlock]:
+    def select_lowest_excitations(states: list[Irrep]) -> list[TransitionBlock]:
         n_states = [irr.n_states for irr in states]
         lowest_excitations = []
         for i in range(min(n_states)):
@@ -119,7 +140,7 @@ class BaseParser:
             }
         return data
 
-    def compare_all(self, method: str) -> Dict[str, DataFrame]:
+    def compare_all(self, method: str) -> dict[str, DataFrame]:
         irreps_singlets = [
             irrep for irrep in self.irreps_dict.values() if irrep.ee_type == "singlet"
         ]
@@ -185,8 +206,8 @@ class BaseParser:
             f.write("--- End of sad family :( ---")
 
     def compare_std(
-        self, irreps_dict: Dict[str, Irrep], method: str
-    ) -> Dict[str, DataFrame]:
+        self, irreps_dict: dict[str, Irrep], method: str
+    ) -> dict[str, DataFrame]:
         irreps_singlets = [
             irrep for irrep in self.irreps_dict.values() if irrep.ee_type == "singlet"
         ]

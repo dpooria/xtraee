@@ -9,12 +9,12 @@ class CISDTransitionBlock(TransitionBlock):
         self,
         id_number: int,
         irrep: str = "",
-        excitation: str = "",
+        ee_type: str = "",
         excitation_energy: float = 0.0,
         oscillator_strength: float = 0.0,
     ):
         super().__init__(
-            id_number, irrep, excitation, excitation_energy, oscillator_strength
+            id_number, irrep, ee_type, excitation_energy, oscillator_strength
         )
         self.transitions: list[CISDTransition] = []
         self.tr_cls = CISDTransition

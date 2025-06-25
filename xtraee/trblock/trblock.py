@@ -1,7 +1,6 @@
 import logging
 from copy import deepcopy
 from functools import partial
-from typing import List, Tuple
 
 from xtraee.config import debug
 from xtraee.lazypattern import LP
@@ -9,9 +8,9 @@ from xtraee.transition import Transition
 
 
 def lsq_fit(
-    transitions: List[Transition],
-    other_transitions: List[Transition],
-    amps: List[Tuple[float, float]],
+    transitions: list[Transition],
+    other_transitions: list[Transition],
+    amps: list[tuple[float, float]],
 ) -> None:
     import numpy as np
     from scipy.optimize import minimize
@@ -56,8 +55,8 @@ class TransitionBlock:
         excitation_energy: float = 0.0,
         oscillator_strength: float = 0.0,
     ):
-        self.transitions: List[Transition] = []
-        self.std_transitions: List[Transition] = []
+        self.transitions: list[Transition] = []
+        self.std_transitions: list[Transition] = []
         self.id_number = id_number
         self.irrep = irrep
         self.ee_type = ee_type
@@ -68,16 +67,17 @@ class TransitionBlock:
         self.oscillator_strength = oscillator_strength
         self.tr_cls = Transition
         self.tr_indicator = "->"
+        # this means the transition never gets terminated as the line is stripped
         self.end_trblock = "\n"
 
     @property
     def identifier(self) -> str:
         return f"{self.ee_type}-{self.id_number}/{self.irrep}"
 
-    def utrs(self, transitions: List[Transition] | None = None) -> List[Transition]:
+    def utrs(self, transitions: list[Transition] | None = None) -> list[Transition]:
         if transitions is None:
             transitions = self.std_transitions
-        ut: List[Transition] = []
+        ut: list[Transition] = []
         for tr in transitions:
             if tr in ut:
                 new_tr = deepcopy(ut[ut.index(tr)])
@@ -91,7 +91,7 @@ class TransitionBlock:
             for tr in ut:
                 assert tr.probability >= 0.0
                 assert tr.probability <= 1.0
-                assert abs(tr.amplitude - tr.probability**0.5) < 1e-6
+                assert abs(tr.amplitude) - tr.probability**0.5 < 1e-6
             assert sum([tr.probability for tr in ut]) <= 1.0
         return ut
 
@@ -117,12 +117,12 @@ class TransitionBlock:
     def __getitem__(self, key) -> Transition:
         return self.transitions[key]
 
-    def _compare_acc(
+    def _compare_wabs(
         self,
-        transitions: List[Transition],
-        other_transitions: List[Transition],
-        check_spin: bool = False,
-    ) -> Tuple[float, float, float]:
+        transitions: list[Transition],
+        other_transitions: list[Transition],
+        shallow: bool = False,
+    ) -> tuple[float, float, float]:
         probs = []
         N_tr = len(transitions)
         N_pos = 0
@@ -131,7 +131,7 @@ class TransitionBlock:
         for tr in transitions:
             matched = False
             for o_tr in other_transitions:
-                if tr.is_equal(o_tr, check_spin=check_spin):
+                if tr.is_equal(o_tr, shallow=shallow):
                     probs.append((tr.probability, o_tr.probability))
                     matched = True
                     N_pos += 1
@@ -145,10 +145,10 @@ class TransitionBlock:
 
     def _compare_pearson(
         self,
-        transitions: List[Transition],
-        other_transitions: List[Transition],
-        check_spin: bool = False,
-    ) -> Tuple[float, float, float]:
+        transitions: list[Transition],
+        other_transitions: list[Transition],
+        shallow: bool = False,
+    ) -> tuple[float, float, float]:
         import numpy as np
 
         probs = []
@@ -156,7 +156,7 @@ class TransitionBlock:
         N_pos = 0
         for tr in transitions:
             for o_tr in other_transitions:
-                if tr.is_equal(o_tr, check_spin=check_spin):
+                if tr.is_equal(o_tr, shallow=shallow):
                     probs.append((tr.probability, o_tr.probability))
                     N_pos += 1
                     break
@@ -171,11 +171,11 @@ class TransitionBlock:
 
     def _compare_innerprod(
         self,
-        transitions: List[Transition],
-        other_transitions: List[Transition],
+        transitions: list[Transition],
+        other_transitions: list[Transition],
         retreive: bool = False,
-        check_spin: bool = False,
-    ) -> Tuple[float, float, float]:
+        shallow: bool = False,
+    ) -> tuple[float, float, float]:
         amps = []
         N_tr = len(transitions)
         N_pos = 0
@@ -183,7 +183,7 @@ class TransitionBlock:
         for tr in transitions:
             matched = False
             for o_tr in other_transitions:
-                if tr.is_equal(o_tr, check_spin=check_spin):
+                if tr.is_equal(o_tr, shallow=shallow):
                     amps.append((tr.amplitude, o_tr.amplitude))
                     matched = True
                     N_pos += 1
@@ -200,15 +200,15 @@ class TransitionBlock:
         return acc, mae, N_pos / N_tr
 
     def compare(
-        self, other: "TransitionBlock", method: str, check_spin: bool = False
+        self, other: "TransitionBlock", method: str, shallow: bool = True
     ) -> tuple[float, float, float]:
-        if method == "1":
-            comp = self._compare_acc
-        elif method == "2":
+        if method == "w-abs":
+            comp = self._compare_wabs
+        elif method == "inner-prod":
             comp = self._compare_innerprod
-        elif method == "3":
+        elif method == "innerp-retrieve":
             comp = partial(self._compare_innerprod, retreive=True)
-        elif method == "4":
+        elif method == "pearson":
             comp = self._compare_pearson
         else:
             raise ValueError(f"Method not recognized {method}")
@@ -216,7 +216,7 @@ class TransitionBlock:
             self.generate_std()
         if not other.std_ready():
             other.generate_std()
-        return comp(self.utrs(), other.utrs(), check_spin=check_spin)
+        return comp(self.utrs(), other.utrs(), shallow=shallow)
 
     def generate_std(self) -> list[Transition]:
         self.std_transitions = [tr.to_std(self.homo) for tr in self.transitions]

@@ -1,11 +1,31 @@
-from typing import List, Tuple
+from typing import NamedTuple
 
 from xtraee.lazypattern import LP, VERBOSE
 
 
+class TrID(NamedTuple):
+    orb_num: int
+    irrep: str
+    multi: str
+
+    def __repr__(self):
+        return f"{self.orb_num} ({self.irrep}) {self.multi}"
+
+
 class Transition:
     name = "Transition"
-    pattern = LP(r".+")
+    pattern = LP(
+        r"""
+    (?P<orb_num>\d+)       # integer
+    \s*
+    \(\s*
+    (?P<irrep>[A-Za-z0-9'"]{1,3})      # allow letters, digits, ' and "
+    \s*\)
+    \s+
+    (?P<multi>[AB])                  # A or B
+    """,
+        VERBOSE,
+    )
 
     def __init__(
         self,
@@ -17,56 +37,57 @@ class Transition:
         self.probability = amplitude**2
         self.initial = initial.strip()
         self.final = final.strip()
-        self.id_i: List[Tuple[str, ...]] = []
-        self.id_f: List[Tuple[str, ...]] = []
+        self.id_i: list[TrID] = []
+        self.id_f: list[TrID] = []
         self._spin_ind = 2
         self.is_double = False
-        if not self.parse():
+        if not self.parse(self.initial, self.final):
             raise ValueError(f"Cannot parse {initial} -> {final}")
 
     @classmethod
     def from_str(cls, line: str):
         raise NotImplementedError
 
-    def parse(
-        self,
-    ) -> bool:
-        if m_l := self.pattern.findall(self.initial):
-            self.id_i = m_l
-        else:
-            return False
+    def trid_match(self, tr_str: str):
+        trid = []
+        for m in self.pattern.finditer(tr_str):
+            md = m.groupdict()
+            trid.append(
+                TrID(int(md["orb_num"]), md.get("irrep", "A"), md.get("multi", "A"))
+            )
+        return trid
 
-        if m_l := self.pattern.findall(self.final):
-            self.id_f = m_l
-        else:
-            return False
+    def parse(self, initial, final) -> bool:
+        self.id_i = self.trid_match(initial)
+        self.id_f = self.trid_match(final)
         if len(self.id_i) > 1 or len(self.id_f) > 1:
             self.is_double = True
         else:
             self.is_double = False
         return True
 
-    def is_equal(self, other, check_amp=False, check_spin=False) -> bool:
-        if not isinstance(other, Transition):
-            return NotImplemented
+    def is_equal(self, other: "Transition", shallow=False) -> bool:
+        # currently we don't check for spin matching at all (use trblock.utrs)
         if self.is_double != other.is_double:
             return False
-        if check_spin:
-            for id_i, other_id_i in zip(self.id_i, other.id_i):
-                if id_i != other_id_i:
-                    return False
-            for id_f, other_id_f in zip(self.id_f, other.id_f):
-                if id_f != other_id_f:
-                    return False
-        else:
-            for id_i, other_id_i, id_f, other_id_f in zip(
-                self.id_i, other.id_i, self.id_f, other.id_f
-            ):
-                if id_i[: self._spin_ind] != other_id_i[: self._spin_ind]:
-                    return False
-                if id_f[: self._spin_ind] != other_id_f[: self._spin_ind]:
-                    return False
-        return True
+
+        equal_orbnum = True
+        for id_i, id_f, other_id_i, other_id_f in zip(
+            self.id_i, self.id_f, other.id_i, other.id_f
+        ):
+            if id_i.orb_num != other_id_i.orb_num or id_f.orb_num != other_id_f.orb_num:
+                equal_orbnum = False
+                break
+        if (not equal_orbnum) or shallow:
+            return equal_orbnum
+        full_equal = True
+        for id_i, id_f, other_id_i, other_id_f in zip(
+            self.id_i, self.id_f, other.id_i, other.id_f
+        ):
+            if id_i.irrep != other_id_i.irrep or id_f.irrep != other_id_f.irrep:
+                full_equal = False
+                break
+        return full_equal
 
     def to_std(self, homo: int = 0) -> "CCSDTransition":
         return self
@@ -75,14 +96,13 @@ class Transition:
         return self.is_equal(other)
 
     def __repr__(self) -> str:
-        return f"{self.amplitude:.4f}\t {self.initial} -> {self.final}"
+        return f"{self.amplitude:.4f}\t{self.initial} -> {self.final}"
 
 
 # CCSDTransition is the standard format
 class CCSDTransition(Transition):
     def __init__(self, amplitude: float, initial: str, final: str):
         self.name = "CCSDTransition"
-        self.pattern = LP(r"\s*(\d+)\s*\(([^\s]+)\)\s*(\w*)\s*")
         super().__init__(amplitude, initial, final)
 
     @classmethod
@@ -108,33 +128,39 @@ class CCSDTransition(Transition):
 class CISTransition(Transition):
     def __init__(self, amplitude: float, initial: str, final: str):
         self.name = "CISTransition"
-        self.pattern = LP(r"\s*([^\s]+)\s*\(\s*(\d+)\s*\)\s*")
         super().__init__(amplitude, initial, final)
+
+    @staticmethod
+    def make_standard(t: str) -> str:
+        p_open = t.find("(")
+        p_close = t.find(")")
+        if p_open == -1 or p_close == -1:
+            raise ValueError(f"cannot convert {t} to the standard form")
+        return f"{int(t[p_open+1:p_close])} (A) A"
 
     @classmethod
     def from_str(cls, line: str):
         s = line.split("-->")
         if len(s) != 2:
             raise ValueError(f"cannot match {line}")
-        lhs = s[0].strip()
+        initial = cls.make_standard(s[0].strip())
         rhs = s[1].strip()
         idx = rhs.index("=")
         amplitude = float(rhs[idx + 1 :])
-        idx = rhs.find("amplitude")
-        rhs = rhs[:idx]
-        return cls(amplitude, lhs, rhs)
+        final = cls.make_standard(rhs)
+        return cls(amplitude, initial, final)
 
     def to_std(self, homo: int) -> CCSDTransition:
         # not considering symmetry and there is no double excitation in CIS
-        initial = f"{int(self.id_i[0][1])} (A)"
-        final = f"{int(self.id_f[0][1]) + homo} (A)"
+        initial = f"{self.id_i[0].orb_num} (A) A"
+        final = f"{self.id_f[0].orb_num + homo} (A) A"
         return CCSDTransition(self.amplitude, initial, final)
 
 
 class CISDTransition(Transition):
     def __init__(self, amplitude: float, initial: str, final: str):
         self.name = "CISDTransition"
-        self.pattern = LP(r"\s*(\d+)\s*\(\s*([^\s]+)\s*\)\s*([AB])\s*")
+        # self.pattern = LP(r"\s*(\d+)\s*\(\s*([^\s]+)\s*\)\s*([AB])\s*")
         super().__init__(amplitude, initial, final)
 
     @classmethod
@@ -149,17 +175,17 @@ class CISDTransition(Transition):
         lhs = lhs[lhs.find(amp_str) + len(amp_str) :].lstrip()
         return cls(amplitude, lhs, rhs)
 
-    def to_ccsd(self, homo: int, symmetry: bool) -> CCSDTransition:
+    def to_ccsd(self, homo: int, preserve_irreps: bool = False) -> CCSDTransition:
         initials = []
         finals = []
         # CISD orbitals numbering starts from 0
         for id_i, id_f in zip(self.id_i, self.id_f):
-            if symmetry:
-                initial = f"{int(id_i[0]) + 1} ({id_i[1]}) {id_i[2]}"
-                final = f"{int(id_f[0]) + homo + 1} ({id_f[1]}) {id_f[2]}"
+            if preserve_irreps:
+                initial = f"{id_i.orb_num + 1} ({id_i.irrep}) {id_i.multi}"
+                final = f"{id_f.orb_num + homo + 1} ({id_f.irrep}) {id_f.multi}"
             else:
-                initial = f"{int(id_i[0]) + 1} (A) {id_i[2]})"
-                final = f"{int(id_f[0]) + homo + 1} (A) {id_f[2]}"
+                initial = f"{id_i.orb_num + 1} (A) {id_i.multi})"
+                final = f"{id_f.orb_num + homo + 1} (A) {id_f.multi}"
             initials.append(initial)
             finals.append(final)
         return CCSDTransition(self.amplitude, "\t".join(initials), "\t".join(finals))
@@ -170,23 +196,21 @@ class CISDTransition(Transition):
 
 class TMCC2Transition(Transition):
     amppattern = LP(r"\s*([+-]?\d+\.\d+)\s+[+-]?\d+\.\d+\s*")
+    nonstd_pattern = LP(
+        r"""
+        \s*
+        (?P<orb_num>\d+)
+        \s+
+        (?P<irrep>[a-z]{1,3})
+        \s+
+        \d+
+        \s*
+    """,
+        VERBOSE,
+    )
 
     def __init__(self, amplitude: float, initial: str, final: str):
         self.name = "CC2Transition"
-        self.pattern = LP(
-            r"""
-            ^\s*
-            (\d+)                # group 1: the first integer
-            \s+
-            (?=[ab]\s+(\d+))     # LOOKAHEAD: assert “letter + spaces + digits” next,
-                                 # and capture that digit as group 2
-            ([ab])               # group 3: the letter
-            \s+
-            \d+                  # match the digit again, but don’t capture it
-            \s*$
-        """,
-            VERBOSE,
-        )
         super().__init__(amplitude, initial, final)
         self._spin_ind = 1
 
@@ -195,21 +219,20 @@ class TMCC2Transition(Transition):
         s = line.split("|")
         if len(s) < 4:
             raise ValueError(f"cannot match {line}")
-        lhs = s[1].strip()
-        rhs = s[2].strip()
-        if (m := TMCC2Transition.amppattern.match(s[3].strip())) is not None:
+        lhs = cls.make_standard(s[1].strip())
+        rhs = cls.make_standard(s[2].strip())
+        if (m := cls.amppattern.match(s[3].strip())) is not None:
             amplitude = float(m.group(1))
         else:
             raise ValueError(f"could not match the amplitude {line}")
         return cls(amplitude, lhs, rhs)
 
-    def to_std(self, homo: int = 0) -> CCSDTransition:
-        # the double transitions is not tested
-        initials = []
-        finals = []
-        for id_i, id_f in zip(self.id_i, self.id_f):
-            initial = f"{int(id_i[0])} (A) {id_i[2].upper()}"
-            final = f"{int(id_f[0])} (A) {id_f[2].upper()}"
-        initials.append(initial)
-        finals.append(final)
-        return CCSDTransition(self.amplitude, "\t".join(initials), "\t".join(finals))
+    @classmethod
+    def make_standard(cls, t: str) -> str:
+        if (m := cls.nonstd_pattern.match(t)) is not None:
+            orb_num = m["orb_num"]
+            irrep = m["irrep"].upper()  # ?
+            # TODO: add spin stuff
+            return f"{orb_num} ({irrep}) A"
+        else:
+            raise ValueError(f"cannot convert {t} to the standard form")

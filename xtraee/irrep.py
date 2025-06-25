@@ -1,5 +1,3 @@
-from typing import Dict, List
-
 import pandas as pd
 
 from xtraee.trblock import TransitionBlock
@@ -9,8 +7,8 @@ class Irrep:
     def __init__(self, name: str, ee_type: str, n_states: int, parent: str = ""):
         self.name = name
         self.n_states = n_states
-        self.trblocks: List[TransitionBlock] = []
-        self.trblocks_dict: Dict[str, TransitionBlock] = {}
+        self.trblocks: list[TransitionBlock] = []
+        self.trblocks_dict: dict[str, TransitionBlock] = {}
         self.ee_type = ee_type
         self.sorted = False
         self.updated = True

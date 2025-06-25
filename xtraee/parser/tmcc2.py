@@ -1,5 +1,3 @@
-from typing import Optional
-
 from xtraee.irrep import Irrep
 from xtraee.lazypattern import LP
 from xtraee.parser.base import BaseParser, Block, PathType
@@ -19,7 +17,7 @@ table_end = "Energy:"
 
 
 class TMCC2Parser(BaseParser):
-    name = "CC2TM"
+    name = "TMCC2"
 
     def __init__(
         self,
@@ -27,15 +25,15 @@ class TMCC2Parser(BaseParser):
         threshold: float = 0.0,
     ):
         super().__init__(input_file, threshold)
-        self.block = Block.null
-        self.parser = {
-            Block.null: lambda line: None,
-            Block.ee: self.process_table,
-            Block.tr: self.process_trblocks,
-        }
-        self._singlets_processed = 0
-        self._triplets_processed = 0
-        self._current_trblock: Optional[TransitionBlock] = None
+        self.parser.update(
+            {Block.ee: self.process_table, Block.tr: self.process_trblocks}
+        )
+
+    def reset(self) -> None:
+        super().reset()
+        self._singlets_processed: int = 0
+        self._triplets_processed: int = 0
+        self._current_trblock: None | TransitionBlock = None
 
     def detect_block(self, line):
         if ee_table in line:
@@ -64,7 +62,7 @@ class TMCC2Parser(BaseParser):
                 self.N_triplets += irrep.n_states
 
         elif (m := meta_patterns["table"].match(line)) is not None:
-            irrep = m.group(1)
+            irrep = m.group(1).upper()
             multi = int(m.group(2))
             if multi == 1:
                 multi = "singlet"
@@ -92,7 +90,7 @@ class TMCC2Parser(BaseParser):
             else:
                 multi = "triplet"
                 self._triplets_processed += 1
-            irrep = m.group(1)
+            irrep = m.group(1).upper()
             state = int(m.group(2))
             self._current_trblock = self.irreps_dict[f"{multi}-{irrep}"].trblocks[
                 state - 1

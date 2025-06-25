@@ -179,7 +179,7 @@ def parse_args() -> argparse.Namespace:
     )
     cmp.add_argument("state1", type=str, help="The first state, e.g. CIS:singlet-1/A")
     cmp.add_argument("state2", type=str, help="The second state")
-    cmp.add_argument("--acc-method", type=str, default="1")
+    cmp.add_argument("--acc-method", type=str, default="inner-prod")
     # compareall
     cpa = sub.add_parser(
         "compareall", parents=[parent], help="Compare all different states."
@@ -190,7 +190,7 @@ def parse_args() -> argparse.Namespace:
         default="compare",
         help="Output file format for all-state comparison",
     )
-    cpa.add_argument("--acc-method", type=str, default="1")
+    cpa.add_argument("--acc-method", type=str, default="inner-prod")
     # descriptors
     dsc = sub.add_parser(
         "descriptors", parents=[parent], help="Extract descriptors and write to CSV"

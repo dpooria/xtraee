@@ -8,16 +8,15 @@ class TMCC2TransitionBlock(TransitionBlock):
         self,
         id_number: int,
         irrep: str = "",
-        excitation: str = "",
+        ee_type: str = "",
         excitation_energy: float = 0.0,
         t1: float = 0.0,
         t2: float = 0.0,
     ):
-        super().__init__(id_number, irrep, excitation, excitation_energy)
+        super().__init__(id_number, irrep, ee_type, excitation_energy)
         self.t1 = t1
         self.t2 = t2
         self.transitions: list[TMCC2Transition] = []
-        self.homo = 0
         self.tr_cls = TMCC2Transition
         self.tr_indicator = LP(
             r"^\s*\|\s*\d+\s+\w\s+\d+\s*\|\s*\d+\s+\w\s+\d+\s*\|\s*[+-]?\d+\.\d+\s+[+-]?\d+\.\d+\s*\|$"

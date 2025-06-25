@@ -26,3 +26,7 @@ class LP:
     def findall(self, s):
         self._compile()
         return self._pat.findall(s)
+
+    def finditer(self, s):
+        self._compile()
+        return self._pat.finditer(s)

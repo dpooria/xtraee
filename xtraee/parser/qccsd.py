@@ -1,13 +1,9 @@
-from typing import Optional
-
 from xtraee.irrep import Irrep
 from xtraee.lazypattern import LP
 from xtraee.parser.base import BaseParser, Block, PathType
 from xtraee.trblock import CCSDTransitionBlock
 
 meta_patterns = dict(
-    ee_singlets=LP(r"^EE_SINGLETS\s+\[(.*)\]\s*"),
-    ee_triplets=LP(r"^EE_TRIPLETS\s+\[(.*)\]\s*"),
     irrepsolv=LP(
         r"^\s*Solving\s+for\s+EOMEE-CCSD\s+(.+)\s+(singlet|triplet)\s+states\.\s*$"
     ),
@@ -54,17 +50,16 @@ class QCCSDParser(BaseParser):
         threshold: float = 0.0,
     ):
         super().__init__(input_file, threshold)
-        self.block = Block.null
-        self.parser = {
-            Block.null: lambda line: None,
-            Block.input: self.process_input_block,
-            Block.lambdab: self.process_lambda_block,
-            Block.trprops: self.process_trprops_block,
-        }
+        self.parser.update(
+            {Block.lambdab: self.process_lambda, Block.trprops: self.process_trprops}
+        )
+
+    def reset(self):
+        super().reset()
         self._inside_eomee = False
         self._inside_eeprop = False
-        self._current_trblock: Optional[CCSDTransitionBlock] = None
-        self._current_irrep: Optional[Irrep] = None
+        self._current_trblock: None | CCSDTransitionBlock = None
+        self._current_irrep: None | Irrep = None
         self._current_eetype: str = ""
         self._current_trprop: str = ""
         self._singlet_irrep_counter = 0
@@ -85,17 +80,7 @@ class QCCSDParser(BaseParser):
             block = Block.null
         self.block = block
 
-    def process_input_block(self, line: str) -> None:
-        if self.N_singlets == 0:
-            if (m := meta_patterns["ee_singlets"].match(line)) is not None:
-                self.ee_singlets = list(map(int, m.group(1).strip().split(",")))
-                self.N_singlets = len(self.ee_singlets)
-        if self.N_triplets == 0:
-            if (m := meta_patterns["ee_triplets"].match(line)) is not None:
-                self.ee_triplets = list(map(int, m.group(1).strip().split(",")))
-                self.N_triplets = len(self.ee_triplets)
-
-    def process_lambda_block(self, line: str) -> None:
+    def process_lambda(self, line: str) -> None:
         if start_indicators["irrepsolv"] in line:
             if (m := meta_patterns["irrepsolv"].match(line)) is not None:
                 ee_type = m.group(2)
@@ -165,7 +150,7 @@ class QCCSDParser(BaseParser):
                         self._current_trprop
                     ]
 
-    def process_trprops_block(self, line: str) -> None:
+    def process_trprops(self, line: str) -> None:
         if (m := meta_patterns["trprop"].match(line)) is not None:
             ee_type, id_number, irrep = m.group(1), m.group(2), m.group(3)
             self._current_trprop = f"{ee_type}-{id_number}/{irrep}"
