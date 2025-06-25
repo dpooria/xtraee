@@ -28,6 +28,10 @@ class Irrep:
         self.trblocks.sort(key=lambda t: t.excitation_energy)
         self.update_transitions()
 
+    def scatter_attr(self, attr_name, attr_value):
+        for tr in self.trblocks:
+            setattr(tr, attr_name, attr_value)
+
     def update_transitions(self) -> None:
         if self.updated:
             return

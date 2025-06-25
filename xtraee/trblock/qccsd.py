@@ -1,26 +1,23 @@
-import re
-
+from xtraee.lazypattern import LP
 from xtraee.transition import CCSDTransition
 
 from .trblock import TransitionBlock
 
 
 class CCSDTransitionBlock(TransitionBlock):
-    ee_pattern = re.compile(r"^.*Excitation energy\s*=\s*([-+]?\d*\.?\d+)\s*eV\.\s*$")
-    r2_pattern = re.compile(
+    ee_pattern = LP(r"^.*Excitation energy\s*=\s*([-+]?\d*\.?\d+)\s*eV\.\s*$")
+    r2_pattern = LP(
         r"^.*R0\^2\s*=\s*(\d*.\d+)\s*R1\^2\s*=\s*([-+]?\d*\.?\d+)\s*R2\^2\s*=\s*([-+]?\d*\.?\d+).*$"
     )
 
     occ_frontier_no = "Occupation of frontier NOs:"
-    frontier_no_pattern = re.compile(
-        r"^\s*([-+]?[0-9]+\.[0-9]+)\s+([-+]?[0-9]+\.[0-9]+)\s*$"
-    )
-    unpaired_no_pattern = re.compile(
+    frontier_no_pattern = LP(r"^\s*([-+]?[0-9]+\.[0-9]+)\s+([-+]?[0-9]+\.[0-9]+)\s*$")
+    unpaired_no_pattern = LP(
         r"^\s*Number of unpaired electrons:\s*n_u\s*=\s*([-+]?[0-9]+\.[0-9]+),\s*n_u,nl\s*=\s*([-+]?[0-9]+\.[0-9]+)\s*$"
     )
     unpaired_no = "Number of unpaired electrons:"
     prno_ind = "NO participation ratio (PR_NO):"
-    prno_pattern = re.compile(
+    prno_pattern = LP(
         r"^\s*NO participation ratio \(PR_NO\):\s*([-+]?[0-9]+\.[0-9]+)\s*$"
     )
 
@@ -87,7 +84,7 @@ class CCSDTransitionBlock(TransitionBlock):
     def __repr__(self) -> str:
         line = "\n".join(map(str, self.transitions))
         return (
-            f"EOMEE transition {self.excitation} {self.id_number}/{self.irrep}\n"  # noqa
+            f"EOMEE transition {self.ee_type} {self.id_number}/{self.irrep}\n"  # noqa
             f"EE: {self.excitation_energy:.4f} eV.\n"
             f"R0^2: {self.R0:.4f} R1^2: {self.R1:.4f} R2^2: {self.R2:.4f}\n"  # noqa
             "Amplitude Transitions between orbitals\n"

@@ -1,13 +1,10 @@
-import re
-from functools import partial
-
+from xtraee.lazypattern import LP
 from xtraee.transition import CISTransition
 
-from .ccsd_trblock import CCSDTransitionBlock
 from .trblock import TransitionBlock
 
-oscillator_pattern = re.compile(r"Strength\s+:\s*([-+]?\d*\.?\d+)\s*")
-multplicity_pattern = re.compile(r"Multiplicity:\s*(Singlet|Triplet)")
+oscillator_pattern = LP(r"Strength\s+:\s*([-+]?\d*\.?\d+)\s*")
+multplicity_pattern = LP(r"Multiplicity:\s*(Singlet|Triplet)")
 
 
 class CISTransitionBlock(TransitionBlock):
@@ -22,12 +19,12 @@ class CISTransitionBlock(TransitionBlock):
         if (m := oscillator_pattern.match(line)) is not None:
             self.oscillator_strength = float(m.group(1))
         elif (m := multplicity_pattern.match(line)) is not None:
-            self.excitation = m.group(1).lower()
+            self.ee_type = m.group(1).lower()
 
     def __repr__(self) -> str:
         line = "\n".join(map(str, self.transitions))
         return (
-            f"CIS transition {self.id_number}/{self.irrep} {self.excitation}\n"  # noqa
+            f"CIS transition {self.id_number}/{self.irrep} {self.ee_type}\n"  # noqa
             f"EE: {self.excitation_energy:.4f} eV.\n"
             "Amplitude Transitions between orbitals\n"
             f"{line}\n"

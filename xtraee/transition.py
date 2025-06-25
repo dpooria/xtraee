@@ -1,10 +1,11 @@
-import re
 from typing import List, Tuple
+
+from xtraee.lazypattern import LP, VERBOSE
 
 
 class Transition:
     name = "Transition"
-    pattern = re.compile(r".+")
+    pattern = LP(r".+")
 
     def __init__(
         self,
@@ -81,7 +82,7 @@ class Transition:
 class CCSDTransition(Transition):
     def __init__(self, amplitude: float, initial: str, final: str):
         self.name = "CCSDTransition"
-        self.pattern = re.compile(r"\s*(\d+)\s*\(([^\s]+)\)\s*(\w*)\s*")
+        self.pattern = LP(r"\s*(\d+)\s*\(([^\s]+)\)\s*(\w*)\s*")
         super().__init__(amplitude, initial, final)
 
     @classmethod
@@ -92,7 +93,7 @@ class CCSDTransition(Transition):
         lhs = s[0].strip()
         rhs = s[1].strip()
         # match with the float
-        if (m := re.match(r"([-+]?\d+\.\d+)", lhs)) is not None:
+        if (m := LP(r"([-+]?\d+\.\d+)").match(lhs)) is not None:
             amp_str = m.group(1)
             amplitude = float(amp_str)
             # remove the matched part
@@ -107,7 +108,7 @@ class CCSDTransition(Transition):
 class CISTransition(Transition):
     def __init__(self, amplitude: float, initial: str, final: str):
         self.name = "CISTransition"
-        self.pattern = re.compile(r"\s*([^\s]+)\s*\(\s*(\d+)\s*\)\s*")
+        self.pattern = LP(r"\s*([^\s]+)\s*\(\s*(\d+)\s*\)\s*")
         super().__init__(amplitude, initial, final)
 
     @classmethod
@@ -124,7 +125,7 @@ class CISTransition(Transition):
         return cls(amplitude, lhs, rhs)
 
     def to_std(self, homo: int) -> CCSDTransition:
-        # not considering symmetry and there is no double excitation
+        # not considering symmetry and there is no double excitation in CIS
         initial = f"{int(self.id_i[0][1])} (A)"
         final = f"{int(self.id_f[0][1]) + homo} (A)"
         return CCSDTransition(self.amplitude, initial, final)
@@ -133,7 +134,7 @@ class CISTransition(Transition):
 class CISDTransition(Transition):
     def __init__(self, amplitude: float, initial: str, final: str):
         self.name = "CISDTransition"
-        self.pattern = re.compile(r"\s*(\d+)\s*\(\s*([^\s]+)\s*\)\s*([AB])\s*")
+        self.pattern = LP(r"\s*(\d+)\s*\(\s*([^\s]+)\s*\)\s*([AB])\s*")
         super().__init__(amplitude, initial, final)
 
     @classmethod
@@ -151,6 +152,7 @@ class CISDTransition(Transition):
     def to_ccsd(self, homo: int, symmetry: bool) -> CCSDTransition:
         initials = []
         finals = []
+        # CISD orbitals numbering starts from 0
         for id_i, id_f in zip(self.id_i, self.id_f):
             if symmetry:
                 initial = f"{int(id_i[0]) + 1} ({id_i[1]}) {id_i[2]}"
@@ -167,11 +169,11 @@ class CISDTransition(Transition):
 
 
 class TMCC2Transition(Transition):
-    amppattern = re.compile(r"\s*([+-]?\d+\.\d+)\s+[+-]?\d+\.\d+\s*")
+    amppattern = LP(r"\s*([+-]?\d+\.\d+)\s+[+-]?\d+\.\d+\s*")
 
     def __init__(self, amplitude: float, initial: str, final: str):
         self.name = "CC2Transition"
-        self.pattern = re.compile(
+        self.pattern = LP(
             r"""
             ^\s*
             (\d+)                # group 1: the first integer
@@ -183,7 +185,7 @@ class TMCC2Transition(Transition):
             \d+                  # match the digit again, but don’t capture it
             \s*$
         """,
-            re.VERBOSE,
+            VERBOSE,
         )
         super().__init__(amplitude, initial, final)
         self._spin_ind = 1

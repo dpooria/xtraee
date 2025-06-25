@@ -1,39 +1,35 @@
-import re
-from enum import Enum
 from typing import Optional
 
 from xtraee.irrep import Irrep
-from xtraee.trblock import CCSDTransitionBlock, TransitionBlock
-
-from xtraee.parser.base import BaseParser, PathType
+from xtraee.lazypattern import LP
+from xtraee.parser.base import BaseParser, Block, PathType
+from xtraee.trblock import CCSDTransitionBlock
 
 meta_patterns = dict(
-    ee_singlets=re.compile(r"^EE_SINGLETS\s+\[(.*)\]\s*"),
-    ee_triplets=re.compile(r"^EE_TRIPLETS\s+\[(.*)\]\s*"),
-    irrepsolv=re.compile(
+    ee_singlets=LP(r"^EE_SINGLETS\s+\[(.*)\]\s*"),
+    ee_triplets=LP(r"^EE_TRIPLETS\s+\[(.*)\]\s*"),
+    irrepsolv=LP(
         r"^\s*Solving\s+for\s+EOMEE-CCSD\s+(.+)\s+(singlet|triplet)\s+states\.\s*$"
     ),
-    eomee=re.compile(r"^\s*EOMEE\s+transition\s+(\d+)/(.+)\s*$"),
-    trprop=re.compile(
+    eomee=LP(r"^\s*EOMEE\s+transition\s+(\d+)/(.+)\s*$"),
+    trprop=LP(
         r"^\s*State\s+B:\s+eomee_ccsd/rhfref/(singlet|triplet)s:\s+(\d+)/(.+)\s*$"
     ),
-    eeprop=re.compile(
+    eeprop=LP(
         r"^\s*Excited state properties for\s+EOMEE-CCSD transition\s+(\d+)/(.+)\s*$"
     ),
 )
 prop_patterns = dict(
-    oscillator_strength=re.compile(
+    oscillator_strength=LP(
         r"^\s*Oscillator strength \(a\.u\.\):\s+([-+]?\d+\.\d+)\s*$"
     ),
-    gamma=re.compile(
-        r"^\s*\|\|gamma\^AB\|\|\*\|\|gamma\^BA\|\|:\s*([0-9]+\.[0-9]+)\s*$"
-    ),
-    omega=re.compile(r"^\s*omega\s+=\s+([-+]?\d+\.\d+)\s*$"),
-    alphabeta=re.compile(r"^\s*2\<alpha\|beta\>\s+=\s+([-+]?\d+\.\d+)\s*$"),
-    loc=re.compile(r"^\s*LOC\s+=\s+([-+]?\d+\.\d+)\s*$"),
-    phe=re.compile(r"^\s*\<Phe\>\s+=\s+([-+]?\d+\.\d+)\s*$"),
-    rhre=re.compile(r"^\s*\|<r_e - r_h>\|\s*\[Ang\]:\s*(\d+\.\d+)$"),
-    corr_coef=re.compile(r"^\s*Correlation coefficient:\s*([-+]?[0-9]+\.[0-9]+)\s*$"),
+    gamma=LP(r"^\s*\|\|gamma\^AB\|\|\*\|\|gamma\^BA\|\|:\s*([0-9]+\.[0-9]+)\s*$"),
+    omega=LP(r"^\s*omega\s+=\s+([-+]?\d+\.\d+)\s*$"),
+    alphabeta=LP(r"^\s*2\<alpha\|beta\>\s+=\s+([-+]?\d+\.\d+)\s*$"),
+    loc=LP(r"^\s*LOC\s+=\s+([-+]?\d+\.\d+)\s*$"),
+    phe=LP(r"^\s*\<Phe\>\s+=\s+([-+]?\d+\.\d+)\s*$"),
+    rhre=LP(r"^\s*\|<r_e - r_h>\|\s*\[Ang\]:\s*(\d+\.\d+)$"),
+    corr_coef=LP(r"^\s*Correlation coefficient:\s*([-+]?[0-9]+\.[0-9]+)\s*$"),
 )
 
 start_indicators = dict(
@@ -47,13 +43,6 @@ end_indicators = dict(
     lambdab="Start computing the transition properties",
     trprop="All requested transition properties have been computed.",
 )
-
-
-class Block(Enum):
-    null = 0
-    input = 1
-    lambdab = 2
-    trprops = 3
 
 
 class QCCSDParser(BaseParser):
@@ -74,9 +63,9 @@ class QCCSDParser(BaseParser):
         }
         self._inside_eomee = False
         self._inside_eeprop = False
-        self._current_transition: Optional[TransitionBlock] = None
+        self._current_trblock: Optional[CCSDTransitionBlock] = None
         self._current_irrep: Optional[Irrep] = None
-        self._current_excitation: str = ""
+        self._current_eetype: str = ""
         self._current_trprop: str = ""
         self._singlet_irrep_counter = 0
         self._triplet_irrep_counter = 0
@@ -121,22 +110,19 @@ class QCCSDParser(BaseParser):
                     assert len(cc) == cc.n_states, "Irrep states mismatch"
                     cc.sort()
                 self._current_irrep = Irrep(
-                    m.group(1),
-                    ee_type,
-                    n_states,
-                    parent="CCSD"
+                    m.group(1), ee_type, n_states, parent="CCSD"
                 )
-                self.irreps_dict[f"{ee_type}-0/{m.group(1)}"] = self._current_irrep
-                self._current_excitation = ee_type
-        elif self._inside_eomee and self._current_transition is not None:
-            if self._current_transition.add_data(line):
-                self._current_transition.sort()
+                self.irreps_dict[f"{ee_type}-{m.group(1)}"] = self._current_irrep
+                self._current_eetype = ee_type
+        elif self._inside_eomee and self._current_trblock is not None:
+            if self._current_trblock.add_data(line):
+                self._current_trblock.sort()
                 self._inside_eomee = False
                 if self._current_irrep is not None:
-                    self._current_irrep.append(self._current_transition)
+                    self._current_irrep.append(self._current_trblock)
         elif self._inside_eeprop:
-            if not self._current_transition.completed_extras:
-                self._current_transition.add_data(line)
+            if not self._current_trblock.completed_extras:
+                self._current_trblock.add_data(line)
             else:
                 self._inside_eeprop = False
         else:
@@ -152,8 +138,8 @@ class QCCSDParser(BaseParser):
                         )
                 else:
                     raise ValueError("No current transition block")
-                self._current_transition = CCSDTransitionBlock(
-                    int(m.group(1)), irrep, self._current_excitation
+                self._current_trblock = CCSDTransitionBlock(
+                    int(m.group(1)), irrep, self._current_eetype
                 )
             elif start_indicators["eeprop"] in line:
                 if (m := meta_patterns["eeprop"].match(line)) is not None:
@@ -175,7 +161,7 @@ class QCCSDParser(BaseParser):
                         m.group(2),
                     )
                     self._current_trprop = f"{ee_type}-{id_number}/{irrep}"
-                    self._current_transition = self._current_irrep.trblocks_dict[
+                    self._current_trblock = self._current_irrep.trblocks_dict[
                         self._current_trprop
                     ]
 
@@ -183,16 +169,16 @@ class QCCSDParser(BaseParser):
         if (m := meta_patterns["trprop"].match(line)) is not None:
             ee_type, id_number, irrep = m.group(1), m.group(2), m.group(3)
             self._current_trprop = f"{ee_type}-{id_number}/{irrep}"
-            self._current_irrep = self.irreps_dict[f"{ee_type}-0/{irrep}"]
+            self._current_irrep = self.irreps_dict[f"{ee_type}-{irrep}"]
             self._current_irrep.update_transitions()
-            self._current_transition = self._current_irrep.trblocks_dict[
+            self._current_trblock = self._current_irrep.trblocks_dict[
                 self._current_trprop
             ]
-        elif self._current_trprop != "" and self._current_transition is not None:
+        elif self._current_trprop != "" and self._current_trblock is not None:
             for name, pattern in prop_patterns.items():
                 if (m := pattern.match(line)) is not None:
                     value = float(m.group(1))
-                    setattr(self._current_transition, name, value)
+                    setattr(self._current_trblock, name, value)
                     if name == "corr_coef":
                         self._current_trprop = ""  # end the current trprop state
                     break

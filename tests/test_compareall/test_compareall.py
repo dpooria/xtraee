@@ -1,15 +1,18 @@
 import subprocess
+from pathlib import Path
 
 
 def test_compareall():
     # Run the compareall.py script
+    cwd = Path(__file__).parent
     result = subprocess.run(
         [
             "xtraee",
             "compareall",
-            "../test_qcis/input1.log",
-            "../test_qccsd/input2.log",
-            "--acc-method=2"
+            cwd / "../test_qcis/input1.log",
+            cwd / "../test_qccsd/input2.log",
+            "--acc-method=2",
+            f"--outdir={cwd.as_posix()}",
         ],
         capture_output=True,
         text=True,

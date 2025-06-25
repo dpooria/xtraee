@@ -1,10 +1,10 @@
 import logging
-import re
 from copy import deepcopy
-from typing import List, Tuple
 from functools import partial
+from typing import List, Tuple
 
 from xtraee.config import debug
+from xtraee.lazypattern import LP
 from xtraee.transition import Transition
 
 
@@ -52,14 +52,15 @@ class TransitionBlock:
         self,
         id_number: int,
         irrep: str = "",
-        excitation: str = "",
+        ee_type: str = "",
         excitation_energy: float = 0.0,
         oscillator_strength: float = 0.0,
     ):
         self.transitions: List[Transition] = []
+        self.std_transitions: List[Transition] = []
         self.id_number = id_number
         self.irrep = irrep
-        self.excitation = excitation
+        self.ee_type = ee_type
         self.completed = False
         self.completed_extras = False
         self.homo = 0
@@ -71,7 +72,7 @@ class TransitionBlock:
 
     @property
     def identifier(self) -> str:
-        return f"{self.excitation}-{self.id_number}/{self.irrep}"
+        return f"{self.ee_type}-{self.id_number}/{self.irrep}"
 
     def utrs(self, transitions: List[Transition] | None = None) -> List[Transition]:
         if transitions is None:
@@ -101,7 +102,7 @@ class TransitionBlock:
         if self.end_trblock in line:
             self.completed = True
             return True
-        if isinstance(self.tr_indicator, re.Pattern):
+        if isinstance(self.tr_indicator, LP):
             if self.tr_indicator.search(line):
                 self.transitions.append(self.tr_cls.from_str(line))
         elif self.tr_indicator in line:
@@ -211,15 +212,29 @@ class TransitionBlock:
             comp = self._compare_pearson
         else:
             raise ValueError(f"Method not recognized {method}")
+        if not self.std_ready():
+            self.generate_std()
+        if not other.std_ready():
+            other.generate_std()
         return comp(self.utrs(), other.utrs(), check_spin=check_spin)
 
     def generate_std(self) -> list[Transition]:
         self.std_transitions = [tr.to_std(self.homo) for tr in self.transitions]
         return self.std_transitions
 
+    def std_ready(self) -> bool:
+        return len(self.std_transitions) == len(self.transitions)
+
     def is_equal_std(self, other: "TransitionBlock") -> bool:
-        self.generate_std()
-        other.generate_std()
+        if not self.std_ready():
+            self.generate_std()
+        if not other.std_ready():
+            other.generate_std()
+
+        if len(self.std_transitions) == 0 or len(other.std_transitions) == 0:
+            logging.warning("The transition block is empty!")
+            return False
+
         for o_tr in other.std_transitions:
             for tr in self.std_transitions:
                 if tr.is_equal(o_tr):

@@ -1,6 +1,5 @@
-import logging
 from abc import abstractmethod
-from enum import Enum
+from enum import Enum, auto
 from pathlib import Path
 from typing import Any, Callable, Dict, List
 
@@ -13,7 +12,14 @@ PathType = str | Path
 
 
 class Block(Enum):
-    null = 0
+    null = auto()
+    input = auto()
+    lambdab = auto()
+    trprops = auto()
+    ee = auto()
+    mo = auto()
+    tr = auto()
+    irrep = auto()
 
 
 class BaseParser:
@@ -27,13 +33,14 @@ class BaseParser:
         self.threshold = threshold
         self.input_file = input_file
         self.parser: Dict[int, Callable[[str], None]] = {Block.null: lambda line: None}
-        self.block = Block.null  # remember to change this in the inherited classes
+        self.block = Block.null
         self.ee_singlets: List[int] = []
         self.N_singlets = 0
         self.ee_triplets: List[int] = []
         self.N_triplets = 0
         self.irreps_dict: Dict[str, Irrep] = {}
         self.data: DatasetType = {}
+        self.homo: int = 0
 
     @abstractmethod
     def detect_block(self, line: str) -> None:
@@ -95,13 +102,13 @@ class BaseParser:
             matched_triplets = {}
             for idx, s_max in enumerate(singlet.transitions):
                 if abs(s_max.amplitude) > self.threshold:
-                    ss = str(s_max).strip()
-                    matched_triplets[ss] = []
+                    key = str(s_max)
+                    matched_triplets[key] = []
                     for triplet in triplets:
                         for trblock in triplet.trblocks:
                             for tr in trblock.transitions:
                                 if s_max.is_equal(tr):
-                                    matched_triplets[ss].append(
+                                    matched_triplets[key].append(
                                         f"{trblock.id_number} {trblock.irrep} {tr.amplitude:.4f} "
                                     )
                                     break
@@ -127,36 +134,50 @@ class BaseParser:
                 )
         return scores
 
-    def match2std(self, key: str, other_block: TransitionBlock):
-        irrep = self.irreps_dict[key]
+    def match2std(self, my_irrep: Irrep, other_block: TransitionBlock):
         majors = []
         # match all of the states in the reference to current
-        for i, trblock in enumerate(irrep.trblocks):
+        for i, trblock in enumerate(my_irrep.trblocks):
             if trblock.is_equal_std(other_block):
                 majors.append(trblock)
         return majors
 
+    def _find_equivalent_irrep(self, other_irrep: Irrep) -> Irrep:
+        # first try respecting the name of the symmetry
+        for irrep in self.irreps_dict.values():
+            if irrep.ee_type == other_irrep.ee_type and irrep.name == other_irrep.name:
+                return irrep
+        # if not found, try by ee_type
+        for irrep in self.irreps_dict.values():
+            if irrep.ee_type == other_irrep.ee_type:
+                return irrep
+        # unreachable!
+        raise ValueError(
+            f"No equivalent irrep found for {other_irrep.ee_type} {other_irrep.name}"
+        )
+
     def write_vs_std(self, path: str, other_irrep_dict: DatasetType) -> None:
         data = {}
-        for key_irrep_ccsd, irrep_ccsd in other_irrep_dict.items():
-            data[key_irrep_ccsd] = []
-            for trblock_ccsd in irrep_ccsd.trblocks:
+        for other_key, other_irrep in other_irrep_dict.items():
+            my_irrep = self._find_equivalent_irrep(other_irrep)
+            data[other_key] = []
+            for other_trblock in other_irrep.trblocks:
                 result = {
-                    "ref": trblock_ccsd,
-                    self.name: self.match2std(trblock_ccsd.excitation, trblock_ccsd),
+                    "ref": other_trblock,
+                    self.name: self.match2std(my_irrep, other_trblock),
                 }
-                data[key_irrep_ccsd].append(result)
+                data[other_key].append(result)
         with open(path, "w") as f:
             f.write("---- Sad family ----\n")
             for k, v in data.items():
                 f.write(f"{k}\n")
                 for item in v:
                     f.write(
-                        f"ref: {item['ref'].excitation}-{item['ref'].id_number}/{item['ref'].irrep} <=>"
+                        f"ref: {item['ref'].ee_type}-{item['ref'].id_number}/{item['ref'].irrep} <=>"
                     )
                     line = ",".join(
                         map(
-                            lambda block: f"{self.name}: {block.excitation}-{block.id_number}/{block.irrep}",
+                            lambda block: f"{self.name}: {block.ee_type}-{block.id_number}/{block.irrep}",
                             item[self.name],
                         )
                     )

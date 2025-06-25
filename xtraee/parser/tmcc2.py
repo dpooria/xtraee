@@ -1,16 +1,13 @@
-import re
-from enum import Enum
 from typing import Optional
 
 from xtraee.irrep import Irrep
-from xtraee.parser.base import BaseParser, PathType
+from xtraee.lazypattern import LP
+from xtraee.parser.base import BaseParser, Block, PathType
 from xtraee.trblock import TMCC2TransitionBlock, TransitionBlock
 
 meta_patterns = {
-    "trblock": re.compile(
-        r"^\s*\|\s*type:\s*\S+\s+symmetry:\s*(\S+)\s+state:\s*(\d+)\s*\|$"
-    ),
-    "table": re.compile(
+    "trblock": LP(r"^\s*\|\s*type:\s*\S+\s+symmetry:\s*(\S+)\s+state:\s*(\d+)\s*\|$"),
+    "table": LP(
         r"^\s*\|\s*(\w+)\s*\|\s*(\d+)\s*\|\s*(\d+)\s*\|\s*[+-]?\d+\.\d+\s*\|\s*([+-]?\d+\.\d+)\s*\|\s*[+-]?\d+\.\d+\s*\|\s*([+-]?\d+\.\d+)\s*\|\s*([+-]?\d+\.\d+)\s*\|$"
     ),
 }
@@ -19,12 +16,6 @@ ee_table = (
     "| sym | multi | state |          CC2 excitation energies       |  %t1   |  %t2   |"
 )
 table_end = "Energy:"
-
-
-class Block(Enum):
-    null = 0
-    ee = 1
-    tr = 2
 
 
 class TMCC2Parser(BaseParser):
@@ -90,7 +81,7 @@ class TMCC2Parser(BaseParser):
             )
             k = f"{multi}-{irrep}"
             if k not in self.irreps_dict:
-                self.irreps_dict[k] = Irrep(irrep, multi, 0)
+                self.irreps_dict[k] = Irrep(irrep, multi, 0, parent="TMCC2")
             self.irreps_dict[k].append(transition_block)
 
     def process_trblocks(self, line):
