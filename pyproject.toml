@@ -41,6 +41,5 @@ testpaths = [
     "tests",
 ]
 
-[tool.setuptools.packages]
+[tool.setuptools.packages.find]
 include = ["xtraee*"]
-# find = { include = ["xtraee"] }
