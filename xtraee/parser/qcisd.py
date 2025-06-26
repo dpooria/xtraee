@@ -77,7 +77,7 @@ class QCISDParser(BaseParser):
     def process_irreps(self, line: str) -> None:
         if m := meta_patterns["irreps"].match(line):
             multi = "singlet" if m["multi"] == "LOWSPIN" else "triplet"
-            irrep = Irrep(m["irrep"], multi, int(m["n_roots"]), "CISD")
+            irrep = Irrep(m["irrep"], multi, int(m["n_roots"]), self.name)
             self.irreps[irrep.identifier] = irrep
             self._current_irrep = irrep
         elif m := trblock_begin_pattern.match(line):
@@ -115,3 +115,7 @@ class QCISDParser(BaseParser):
         homo += 1
         for irrep in self.irreps.values():
             irrep.scatter_attr("homo", homo)
+
+
+class QCIS_D_Parser(QCISDParser):
+    name = "CIS(D)"

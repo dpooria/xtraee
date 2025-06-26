@@ -4,7 +4,7 @@ from pathlib import Path
 from xtraee.parser.base import BaseParser
 from xtraee.parser.qccsd import QCCSDParser, QCC2Parser
 from xtraee.parser.qcis import QCISParser, QCTDDFTParser
-from xtraee.parser.qcisd import QCISDParser
+from xtraee.parser.qcisd import QCISDParser, QCIS_D_Parser
 from xtraee.parser.tmcc2 import TMCC2Parser
 
 
@@ -29,6 +29,9 @@ def Parser(input_file: str | Path, *args, **kwargs) -> BaseParser:
                 break
             elif "doing genuine cisd calculations" in ls or "method cisd" in ls:
                 parser = QCISDParser(input_file, *args, **kwargs)
+                break
+            elif "cis(d)" in ls:
+                parser = QCIS_D_Parser(input_file, *args, **kwargs)
                 break
             elif "cc2 - approximate cc singles and doubles" in ls:
                 parser = TMCC2Parser(input_file, *args, **kwargs)
