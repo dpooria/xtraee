@@ -42,4 +42,13 @@ def Parser(input_file: str | Path, *args, **kwargs) -> BaseParser:
     return parser
 
 
-__all__ = ["Parser", "QCCSDParser", "QCISParser", "QCISDParser", "TMCC2Parser"]
+__all__ = [
+    "Parser",
+    "QCCSDParser",
+    "QCC2Parser",
+    "QCISParser",
+    "QCTDDFTParser",
+    "QCISDParser",
+    "QCIS_D_Parser",
+    "TMCC2Parser",
+]
