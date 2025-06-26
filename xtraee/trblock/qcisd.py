@@ -12,9 +12,10 @@ class CISDTransitionBlock(TransitionBlock):
         ee_type: str = "",
         excitation_energy: float = 0.0,
         oscillator_strength: float = 0.0,
+        name="CISD",
     ):
         super().__init__(
-            id_number, irrep, ee_type, excitation_energy, oscillator_strength
+            id_number, irrep, ee_type, excitation_energy, oscillator_strength, name=name
         )
         self.transitions: list[CISDTransition] = []
         self.tr_cls = CISDTransition
@@ -33,7 +34,7 @@ class CISDTransitionBlock(TransitionBlock):
     def __repr__(self) -> str:
         line = "\n".join(map(str, self.transitions))
         return (
-            f"CISD transition {self.id_number}/{self.irrep} {self.ee_type}\n"  # noqa
+            f"{self.name} transition {self.id_number}/{self.irrep} {self.ee_type}\n"  # noqa
             f"EE: {self.excitation_energy:.4f} eV.\n"
             f"U0={self.R0:.4f}, U1={self.R1:.4f}, U2={self.R2:.4f}\n"
             "Amplitude Transitions between orbitals\n"

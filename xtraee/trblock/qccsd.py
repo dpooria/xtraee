@@ -21,8 +21,8 @@ class CCSDTransitionBlock(TransitionBlock):
         r"^\s*NO participation ratio \(PR_NO\):\s*([-+]?[0-9]+\.[0-9]+)\s*$"
     )
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, *args, name="CCSD", **kwargs):
+        super().__init__(*args, **kwargs, name=name)
         self.transitions: list[CCSDTransition] = []
         self.tr_cls = CCSDTransition
         self.tr_indicator = "->"
@@ -84,7 +84,7 @@ class CCSDTransitionBlock(TransitionBlock):
     def __repr__(self) -> str:
         line = "\n".join(map(str, self.transitions))
         return (
-            f"EOMEE transition {self.ee_type} {self.id_number}/{self.irrep}\n"  # noqa
+            f"{self.name} transition {self.ee_type} {self.id_number}/{self.irrep}\n"  # noqa
             f"EE: {self.excitation_energy:.4f} eV.\n"
             f"R0^2: {self.R0:.4f} R1^2: {self.R1:.4f} R2^2: {self.R2:.4f}\n"  # noqa
             "Amplitude Transitions between orbitals\n"

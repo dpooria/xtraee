@@ -3,7 +3,7 @@ from xtraee.lazypattern import LP
 from xtraee.parser.base import BaseParser, Block, PathType
 from xtraee.trblock import CISTransitionBlock
 
-start_indicators = {"cisee": "CIS Excitation Energies", "mo": "Orbital Energies (a.u.)"}
+start_indicators = {"ee": "Excitation Energies", "mo": "Orbital Energies (a.u.)"}
 
 trblock_begin_pattern = LP(
     r"^Excited\s+state\s+(\d+)\s*:\s*excitation\s+energy\s+\(eV\)\s*=\s*([-+]?\d+.\d+)\s*$"
@@ -25,15 +25,15 @@ class QCISParser(BaseParser):
         # not supporting symmetry for CIS
         self.N_singlets = 1
         self.N_triplets = 1
-        self.irrep_singlets = Irrep("A", "singlet", 0, "CIS")
-        self.irrep_triplets = Irrep("A", "triplet", 0, "CIS")
+        self.irrep_singlets = Irrep("A", "singlet", 0, self.name)
+        self.irrep_triplets = Irrep("A", "triplet", 0, self.name)
 
     def reset(self):
         super().reset()
         self._current_trblock: None | CISTransitionBlock = None
 
     def detect_block(self, line: str) -> None:
-        if start_indicators["cisee"] in line:
+        if start_indicators["ee"] in line:
             self.block = Block.ee
         elif start_indicators["mo"] in line:
             # move this as detect_block should only detect
@@ -50,7 +50,7 @@ class QCISParser(BaseParser):
                     self.irrep_triplets.append(self._current_trblock)
                 else:
                     raise ValueError(f"Unknown excitation {self._current_trblock}")
-            self._current_trblock = CISTransitionBlock(int(m.group(1)))
+            self._current_trblock = CISTransitionBlock(int(m.group(1)), name=self.name)
             self._current_trblock.excitation_energy = float(m.group(2))
         elif self._current_trblock is not None:
             self._current_trblock.add_data(line)
@@ -77,3 +77,7 @@ class QCISParser(BaseParser):
             f"singlet-{self.irrep_singlets.name}": self.irrep_singlets,
             f"triplet-{self.irrep_triplets.name}": self.irrep_triplets,
         }
+
+
+class QCTDDFTParser(QCISParser):
+    name = "TDDFT"

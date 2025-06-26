@@ -12,8 +12,9 @@ class TMCC2TransitionBlock(TransitionBlock):
         excitation_energy: float = 0.0,
         t1: float = 0.0,
         t2: float = 0.0,
+        name="CC2",
     ):
-        super().__init__(id_number, irrep, ee_type, excitation_energy)
+        super().__init__(id_number, irrep, ee_type, excitation_energy, name=name)
         self.t1 = t1
         self.t2 = t2
         self.transitions: list[TMCC2Transition] = []
@@ -26,7 +27,7 @@ class TMCC2TransitionBlock(TransitionBlock):
     def __repr__(self) -> str:
         line = "\n".join(map(str, self.transitions))
         return (
-            f"CC2 transition {self.id_number}/{self.irrep} {self.ee_type},\n"  # noqa
+            f"{self.name} transition {self.id_number}/{self.irrep} {self.ee_type},\n"  # noqa
             f"EE: {self.excitation_energy:.4f} eV,\n"
             f"%t1: {self.t1}, %t2: {self.t2}.\n"
             "Amplitude Transitions between orbitals\n"

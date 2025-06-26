@@ -55,7 +55,9 @@ class TransitionBlock:
         ee_type: str = "",
         excitation_energy: float = 0.0,
         oscillator_strength: float = 0.0,
+        name="Transition",
     ):
+        self.name = name
         self.transitions: list[Transition] = []
         self.std_transitions: list[Transition] = []
         self.id_number = id_number

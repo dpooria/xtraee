@@ -8,8 +8,13 @@ multplicity_pattern = LP(r"Multiplicity:\s*(Singlet|Triplet)")
 
 
 class CISTransitionBlock(TransitionBlock):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(
+        self,
+        *args,
+        name="CIS",
+        **kwargs,
+    ):
+        super().__init__(*args, **kwargs, name=name)
         self.transitions: list[CISTransition] = []
         self.tr_cls = CISTransition
         self.tr_indicator = "-->"
@@ -24,7 +29,7 @@ class CISTransitionBlock(TransitionBlock):
     def __repr__(self) -> str:
         line = "\n".join(map(str, self.transitions))
         return (
-            f"CIS transition {self.id_number}/{self.irrep} {self.ee_type}\n"  # noqa
+            f"{self.name} transition {self.id_number}/{self.irrep} {self.ee_type}\n"  # noqa
             f"EE: {self.excitation_energy:.4f} eV.\n"
             "Amplitude Transitions between orbitals\n"
             f"{line}\n"

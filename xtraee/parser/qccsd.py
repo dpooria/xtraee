@@ -123,7 +123,7 @@ class QCCSDParser(BaseParser):
                 # else:
                 #     raise ValueError("No current transition block")
                 self._current_trblock = CCSDTransitionBlock(
-                    int(m.group(1)), irrep, self._current_eetype
+                    int(m.group(1)), irrep, self._current_eetype, name=self.name
                 )
             elif start_indicators["eeprop"] in line:
                 if (m := meta_patterns["eeprop"].match(line)) is not None:
