@@ -96,7 +96,9 @@ class Transition:
         return self.is_equal(other)
 
     def __repr__(self) -> str:
-        return f"{self.amplitude:.4f}\t{self.initial} -> {self.final}"
+        initial = "\t".join([str(id_) for id_ in self.id_i])
+        final = "\t".join([str(id_) for id_ in self.id_f])
+        return f"{self.amplitude:.4f}\t{initial} -> {final}"
 
 
 # CCSDTransition is the standard format

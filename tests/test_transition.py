@@ -1,7 +1,7 @@
 import re
 
 import pytest
-from xtraee.transition import CCSDTransition, CISTransition
+from xtraee.transition import CCSDTransition, CISTransition, CISDTransition
 
 
 @pytest.mark.parametrize(
@@ -44,23 +44,15 @@ def test_ccsdtransition_double():
     transition = CCSDTransition.from_str(
         "  0.4088       1 (B2u) A     1 (B2u) B   ->    1 (B3g) A     1 (B3g) B"
     )
-    print(transition.id_i)
-    print(transition.id_f)
-    print(len(transition.id_i))
-    print(len(transition.id_f))
     assert transition.id_f == [(1, "B3g", "A"), (1, "B3g", "B")]
     assert transition.id_i == [(1, "B2u", "A"), (1, "B2u", "B")]
     assert transition.is_double
 
 
-# def test_cistransition_double():
-#     transition = CISTransition.from_str(
-#         "  D(   15) H (   2  )--> V(    1)  V(16      ) amplitude =  0.9698        "
-#     )
-#     print()
-#     print(transition.id_i)
-#     print(transition.id_f)
-#     assert transition.amplitude == pytest.approx(0.9698)
-#     assert transition.id_i == [(15, "A", "A"), ("H", "2")]
-#     assert transition.id_f == [("V", "1"), ("G", "16")]
-#     assert transition.is_double
+def test_cisd_transition():
+    transition = CISDTransition.from_str(
+        "  0.6397                 12(   A1) B   ->    0(   A1) B "
+    )
+    assert transition.id_i == [(12, "A1", "B")]
+    assert transition.id_f == [(0, "A1", "B")]
+    assert transition.amplitude == pytest.approx(0.6397)

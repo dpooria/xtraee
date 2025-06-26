@@ -1,10 +1,11 @@
-import logging
 from copy import deepcopy
 from functools import partial
 
-from xtraee.config import debug
+from xtraee.config import debug, get_logger
 from xtraee.lazypattern import LP
 from xtraee.transition import Transition
+
+log = get_logger("trblock", debug)
 
 
 def lsq_fit(
@@ -40,7 +41,7 @@ def lsq_fit(
         method="SLSQP",
     )
     if not result.success:
-        logging.debug("Unable to retrieve the missing transitions", result)
+        log.debug("Unable to retrieve the missing transitions", result)
         return
     for m_amp, o_amps in zip(result.x, o_nm_amps):
         amps.append((abs(m_amp), o_amps))
@@ -216,6 +217,8 @@ class TransitionBlock:
             self.generate_std()
         if not other.std_ready():
             other.generate_std()
+        if len(self.std_transitions) == 0 or len(other.std_transitions) == 0:
+            return 0.0, 1.0, 0.0
         return comp(self.utrs(), other.utrs(), shallow=shallow)
 
     def generate_std(self) -> list[Transition]:
@@ -232,7 +235,7 @@ class TransitionBlock:
             other.generate_std()
 
         if len(self.std_transitions) == 0 or len(other.std_transitions) == 0:
-            logging.warning("The transition block is empty!")
+            log.warning("The transition block is empty!")
             return False
 
         for o_tr in other.std_transitions:

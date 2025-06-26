@@ -44,12 +44,12 @@ class TMCC2Parser(BaseParser):
             self.block = Block.tr
             self.irrep_singlets = [
                 irrep
-                for irrep in self.irreps_dict.values()
+                for irrep in self.irreps.values()
                 if irrep.ee_type == "singlet"
             ]
             self.irrep_triplets = [
                 irrep
-                for irrep in self.irreps_dict.values()
+                for irrep in self.irreps.values()
                 if irrep.ee_type == "triplet"
             ]
             for irrep in self.irrep_singlets:
@@ -78,9 +78,9 @@ class TMCC2Parser(BaseParser):
                 id_number, irrep, multi, cc2_energy, t1, t2
             )
             k = f"{multi}-{irrep}"
-            if k not in self.irreps_dict:
-                self.irreps_dict[k] = Irrep(irrep, multi, 0, parent="TMCC2")
-            self.irreps_dict[k].append(transition_block)
+            if k not in self.irreps:
+                self.irreps[k] = Irrep(irrep, multi, 0, parent="TMCC2")
+            self.irreps[k].append(transition_block)
 
     def process_trblocks(self, line):
         if (m := meta_patterns["trblock"].match(line)) is not None:
@@ -92,7 +92,7 @@ class TMCC2Parser(BaseParser):
                 self._triplets_processed += 1
             irrep = m.group(1).upper()
             state = int(m.group(2))
-            self._current_trblock = self.irreps_dict[f"{multi}-{irrep}"].trblocks[
+            self._current_trblock = self.irreps[f"{multi}-{irrep}"].trblocks[
                 state - 1
             ]
         elif self._current_trblock is not None:

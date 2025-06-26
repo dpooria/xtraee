@@ -1,1 +1,40 @@
+import logging
+import sys
+
+
+class ColorFormatter(logging.Formatter):
+    COLORS = {
+        "DEBUG": "\033[94m",  # Blue
+        "INFO": "\033[92m",  # Green
+        "WARNING": "\033[93m",  # Yellow
+        "ERROR": "\033[91m",  # Red
+        "CRITICAL": "\033[95m",  # Magenta
+    }
+    RESET = "\033[0m"
+
+    def format(self, record):
+        # wrap the *message* in color codes, not the entire record
+        msg = super().format(record)
+        color = self.COLORS.get(record.levelname, "")
+        return f"{color}{msg}{self.RESET}"
+
+
+def get_logger(name: str = None, debug: bool = False) -> logging.Logger:
+    """
+    Returns a logger with a single console handler using ColorFormatter.
+    """
+    logger = logging.getLogger(name)
+    # only add handlers once
+    if not logger.hasHandlers():
+        fmt = "%(asctime)s - %(levelname)s - %(message)s"
+        datefmt = "%Y-%m-%d %H:%M:%S"
+        handler = logging.StreamHandler(sys.stdout)
+        handler.setFormatter(ColorFormatter(fmt, datefmt))
+        logger.addHandler(handler)
+
+    logger.setLevel(logging.DEBUG if debug else logging.WARNING)
+    logger.propagate = False
+    return logger
+
+
 debug = True

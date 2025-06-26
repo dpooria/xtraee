@@ -97,7 +97,7 @@ class QCCSDParser(BaseParser):
                 self._current_irrep = Irrep(
                     m.group(1), ee_type, n_states, parent="CCSD"
                 )
-                self.irreps_dict[f"{ee_type}-{m.group(1)}"] = self._current_irrep
+                self.irreps[f"{ee_type}-{m.group(1)}"] = self._current_irrep
                 self._current_eetype = ee_type
         elif self._inside_eomee and self._current_trblock is not None:
             if self._current_trblock.add_data(line):
@@ -154,7 +154,7 @@ class QCCSDParser(BaseParser):
         if (m := meta_patterns["trprop"].match(line)) is not None:
             ee_type, id_number, irrep = m.group(1), m.group(2), m.group(3)
             self._current_trprop = f"{ee_type}-{id_number}/{irrep}"
-            self._current_irrep = self.irreps_dict[f"{ee_type}-{irrep}"]
+            self._current_irrep = self.irreps[f"{ee_type}-{irrep}"]
             self._current_irrep.update_transitions()
             self._current_trblock = self._current_irrep.trblocks_dict[
                 self._current_trprop
@@ -170,7 +170,7 @@ class QCCSDParser(BaseParser):
 
     def gather_descriptors(self, id_prefix: str = ""):
         data = []
-        for irr in self.irreps_dict.values():
+        for irr in self.irreps.values():
             irr.sort()
             for trblock in irr.trblocks:
                 data.append(

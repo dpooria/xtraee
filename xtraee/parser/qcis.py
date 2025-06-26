@@ -73,7 +73,7 @@ class QCISParser(BaseParser):
             )
         self.irrep_singlets.scatter_attr("homo", self.homo)
         self.irrep_triplets.scatter_attr("homo", self.homo)
-        self.irreps_dict = {
+        self.irreps = {
             f"singlet-{self.irrep_singlets.name}": self.irrep_singlets,
-            f"triplet-{self.irrep_singlets.name}": self.irrep_triplets,
+            f"triplet-{self.irrep_triplets.name}": self.irrep_triplets,
         }

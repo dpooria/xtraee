@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
-import sys
 import argparse
-import logging
+import sys
 from contextlib import chdir
 from pathlib import Path
 
 import pandas as pd
 from rich import print
 
+from xtraee.config import get_logger
 from xtraee.parser import BaseParser, Parser
 
 
@@ -15,9 +15,6 @@ def extract_and_write(args) -> dict[str, BaseParser]:
     """Process inputs and write full/overview/vsstd outputs."""
     outdir = Path(args.outdir)
     outdir.mkdir(parents=True, exist_ok=True)
-
-    if args.debug:
-        logging.basicConfig(level=logging.DEBUG)
 
     parsers: dict[str, BaseParser] = {}
     for infile in args.input:
@@ -36,20 +33,21 @@ def extract_and_write(args) -> dict[str, BaseParser]:
         with chdir(outdir):
             for name, p in parsers.items():
                 if name != args.ref:
-                    p.write_vs_std(f"{args.out_vsstd}_{name}.txt", ref.irreps_dict)
+                    p.write_vs_std(f"{args.out_vsstd}_{name}.txt", ref.irreps)
 
     return parsers
 
 
 def do_compare(args, parsers: dict[str, BaseParser]) -> int:
     """Compare two individual states."""
+    log = get_logger("compare")
     try:
         m1, s1 = args.state1.split(":", 1)
         m2, s2 = args.state2.split(":", 1)
         m1 = "EOM-CCSD" if m1.upper() == "CCSD" else m1
         m2 = "EOM-CCSD" if m2.upper() == "CCSD" else m2
     except ValueError:
-        logging.error(
+        log(
             "Could not parse %r and %r; format is "
             "{method}:{excitation}-{state-id}/{irrep-id}, e.g. CIS:singlet-1/A",
             args.state1,
@@ -59,18 +57,18 @@ def do_compare(args, parsers: dict[str, BaseParser]) -> int:
 
     p1, p2 = parsers.get(m1), parsers.get(m2)
     if not p1 or not p2:
-        logging.error("Parser for %s or %s not found!", m1, m2)
+        log.error("Parser for %s or %s not found!" % (m1, m2))
         return 1
 
     tb1 = p1.get_transition_block(s1)
     tb2 = p2.get_transition_block(s2)
     if tb1 is None or tb2 is None:
-        logging.error("State %r or %r not found!", s1, s2)
+        log.error("State %r or %r not found!" % (s1, s2))
         return 1
 
-    print(f"Comparing {s1} and {s2}")
-    print("accuracy  | error | fraction matched")
-    print("|\t".join(map(str, tb1.compare(tb2, args.acc_method))))
+    log.info(f"Comparing {s1} and {s2}")
+    log.info("accuracy  | error | fraction matched")
+    log.info("|\t".join(map(str, tb1.compare(tb2, args.acc_method))))
     return 0
 
 
@@ -87,7 +85,7 @@ def do_compare_all(args, parsers: dict[str, BaseParser]) -> None:
                 df.to_csv(f"{key}_{name}_{args.output}.csv")
 
         if ref and name != refname:
-            data_vs = p.compare_std(ref.irreps_dict, args.acc_method)
+            data_vs = p.compare_std(ref.irreps, args.acc_method)
             for key, df in data_vs.items():
                 with chdir(outdir):
                     df.to_csv(f"{key}_{args.output}.csv")
@@ -95,9 +93,10 @@ def do_compare_all(args, parsers: dict[str, BaseParser]) -> None:
 
 def do_descriptors(args, parsers: dict[str, BaseParser]) -> int:
     """Gather descriptors for EOM-CCSD and dump to CSV."""
+    log = get_logger("descriptor")
     eom = parsers.get("EOM-CCSD")
     if not eom:
-        logging.error("Descriptors are only implemented for EOM-CCSD")
+        log.error("Descriptors are only implemented for EOM-CCSD")
         return 1
 
     df = pd.DataFrame(eom.gather_descriptors())

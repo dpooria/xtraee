@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Any, Callable
 
 from pandas.core.frame import DataFrame
+from xtraee.config import debug, get_logger
 from xtraee.irrep import Irrep
 from xtraee.lazypattern import LP
 from xtraee.trblock import TransitionBlock
@@ -41,6 +42,7 @@ class BaseParser:
             Block.null: lambda line: None,
             Block.input: self.process_input,
         }
+        self.log = get_logger(self.name, debug)
         self.reset()
 
     def reset(self) -> None:
@@ -49,7 +51,7 @@ class BaseParser:
         self.N_singlets = 0
         self.ee_triplets: list[int] = []
         self.N_triplets = 0
-        self.irreps_dict: dict[str, Irrep] = {}
+        self.irreps: dict[str, Irrep] = {}
         self.data: DatasetType = {}
         self.homo: int = 0
 
@@ -87,7 +89,7 @@ class BaseParser:
 
     def write_full(self, fname: PathType) -> None:
         with open(fname, "w") as f:
-            for irrep in self.irreps_dict.values():
+            for irrep in self.irreps.values():
                 f.write(f"{irrep.name}\n")
                 for tr in irrep.trblocks:
                     f.write(f"{tr}\n")
@@ -106,11 +108,11 @@ class BaseParser:
             f.write("--- End of the happy family :) ---")
 
     def create_dataset(self) -> DatasetType:
-        for irr in self.irreps_dict.values():
+        for irr in self.irreps.values():
             irr.sort()
         singlets = []
         triplets = []
-        for irr in self.irreps_dict.values():
+        for irr in self.irreps.values():
             if irr.ee_type == "singlet":
                 singlets.append(irr)
             elif irr.ee_type == "triplet":
@@ -132,20 +134,20 @@ class BaseParser:
                                     matched_triplets[key].append(
                                         f"{trblock.id_number} {trblock.irrep} {tr.amplitude:.4f} "
                                     )
+                                    data[f"S{i + 1}"] = {
+                                        "idx": idx,
+                                        "singlet": singlet,
+                                        "matched_triplets": matched_triplets,
+                                    }
                                     break
-            data[f"S{i + 1}"] = {
-                "idx": idx,
-                "singlet": singlet,
-                "matched_triplets": matched_triplets,
-            }
         return data
 
     def compare_all(self, method: str) -> dict[str, DataFrame]:
         irreps_singlets = [
-            irrep for irrep in self.irreps_dict.values() if irrep.ee_type == "singlet"
+            irrep for irrep in self.irreps.values() if irrep.ee_type == "singlet"
         ]
         irreps_triplets = [
-            irrep for irrep in self.irreps_dict.values() if irrep.ee_type == "triplet"
+            irrep for irrep in self.irreps.values() if irrep.ee_type == "triplet"
         ]
         scores = {}
         for irrep_singlet in irreps_singlets:
@@ -165,11 +167,11 @@ class BaseParser:
 
     def _find_equivalent_irrep(self, other_irrep: Irrep) -> Irrep:
         # first try respecting the name of the symmetry
-        for irrep in self.irreps_dict.values():
+        for irrep in self.irreps.values():
             if irrep.ee_type == other_irrep.ee_type and irrep.name == other_irrep.name:
                 return irrep
         # if not found, try by ee_type
-        for irrep in self.irreps_dict.values():
+        for irrep in self.irreps.values():
             if irrep.ee_type == other_irrep.ee_type:
                 return irrep
         # unreachable!
@@ -177,9 +179,9 @@ class BaseParser:
             f"No equivalent irrep found for {other_irrep.ee_type} {other_irrep.name}"
         )
 
-    def write_vs_std(self, path: str, other_irrep_dict: DatasetType) -> None:
+    def write_vs_std(self, path: str, o_irreps: DatasetType) -> None:
         data = {}
-        for other_key, other_irrep in other_irrep_dict.items():
+        for other_key, other_irrep in o_irreps.items():
             my_irrep = self._find_equivalent_irrep(other_irrep)
             data[other_key] = []
             for other_trblock in other_irrep.trblocks:
@@ -206,19 +208,19 @@ class BaseParser:
             f.write("--- End of sad family :( ---")
 
     def compare_std(
-        self, irreps_dict: dict[str, Irrep], method: str
+        self, o_irreps: dict[str, Irrep], method: str
     ) -> dict[str, DataFrame]:
         irreps_singlets = [
-            irrep for irrep in self.irreps_dict.values() if irrep.ee_type == "singlet"
+            irrep for irrep in self.irreps.values() if irrep.ee_type == "singlet"
         ]
         irreps_triplets = [
-            irrep for irrep in self.irreps_dict.values() if irrep.ee_type == "triplet"
+            irrep for irrep in self.irreps.values() if irrep.ee_type == "triplet"
         ]
         oirr_singlets = [
-            irrep for irrep in irreps_dict.values() if irrep.ee_type == "singlet"
+            irrep for irrep in o_irreps.values() if irrep.ee_type == "singlet"
         ]
         oirr_triplets = [
-            irrep for irrep in irreps_dict.values() if irrep.ee_type == "triplet"
+            irrep for irrep in o_irreps.values() if irrep.ee_type == "triplet"
         ]
         scores = {}
         for irrep_singlet in irreps_singlets:
