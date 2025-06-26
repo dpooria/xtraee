@@ -2,7 +2,7 @@ import re
 from pathlib import Path
 
 from xtraee.parser.base import BaseParser
-from xtraee.parser.qccsd import QCCSDParser
+from xtraee.parser.qccsd import QCCSDParser, QCC2Parser
 from xtraee.parser.qcis import QCISParser
 from xtraee.parser.qcisd import QCISDParser
 from xtraee.parser.tmcc2 import TMCC2Parser
@@ -17,6 +17,9 @@ def Parser(input_file: str | Path, *args, **kwargs) -> BaseParser:
             ls = re.sub(r"\s+", " ", line.strip().lower())
             if "eom-ccsd" in ls:
                 parser = QCCSDParser(input_file, *args, **kwargs)
+                break
+            elif "eom-cc2" in ls:
+                parser = QCC2Parser(input_file, *args, **kwargs)
                 break
             elif "cis excitation energies" in ls:
                 parser = QCISParser(input_file, *args, **kwargs)

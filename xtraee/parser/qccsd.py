@@ -5,14 +5,14 @@ from xtraee.trblock import CCSDTransitionBlock
 
 meta_patterns = dict(
     irrepsolv=LP(
-        r"^\s*Solving\s+for\s+EOMEE-CCSD\s+(.+)\s+(singlet|triplet)\s+states\.\s*$"
+        r"^\s*Solving\s+for\s+EOMEE-(CCSD|CC2)\s+(.+)\s+(singlet|triplet)\s+states\.\s*$"
     ),
     eomee=LP(r"^\s*EOMEE\s+transition\s+(\d+)/(.+)\s*$"),
     trprop=LP(
         r"^\s*State\s+B:\s+eomee_ccsd/rhfref/(singlet|triplet)s:\s+(\d+)/(.+)\s*$"
     ),
     eeprop=LP(
-        r"^\s*Excited state properties for\s+EOMEE-CCSD transition\s+(\d+)/(.+)\s*$"
+        r"^\s*Excited state properties for\s+EOMEE-(CCSD|CC2) transition\s+(\d+)/(.+)\s*$"
     ),
 )
 prop_patterns = dict(
@@ -29,14 +29,13 @@ prop_patterns = dict(
 )
 
 start_indicators = dict(
-    irrepsolv="Solving for EOMEE-CCSD",
+    irrepsolv="Solving for",
     input="$rem",
-    lambdab="CCSD Lambda converged.",
-    eeprop="Excited state properties for  EOMEE-CCSD transition",
+    eeprop="Excited state properties for",
 )
 end_indicators = dict(
     input="$end",
-    lambdab="Start computing the transition properties",
+    irrepsolv="Start computing the transition properties",
     trprop="All requested transition properties have been computed.",
 )
 
@@ -51,7 +50,7 @@ class QCCSDParser(BaseParser):
     ):
         super().__init__(input_file, threshold)
         self.parser.update(
-            {Block.lambdab: self.process_lambda, Block.trprops: self.process_trprops}
+            {Block.irrep: self.process_irrepsolv, Block.trprops: self.process_trprops}
         )
 
     def reset(self):
@@ -70,20 +69,20 @@ class QCCSDParser(BaseParser):
         if block == Block.null:
             if start_indicators["input"] in line:
                 block = Block.input
-            elif start_indicators["lambdab"] in line:
-                block = Block.lambdab
+            elif start_indicators["irrepsolv"] in line:
+                block = Block.irrep
         elif block == Block.input and end_indicators["input"] in line:
             block = Block.null
-        elif block == Block.lambdab and end_indicators["lambdab"] in line:
+        elif block == Block.irrep and end_indicators["irrepsolv"] in line:
             block = Block.trprops
         elif block == Block.null and end_indicators["trprop"] in line:
             block = Block.null
         self.block = block
 
-    def process_lambda(self, line: str) -> None:
+    def process_irrepsolv(self, line: str) -> None:
         if start_indicators["irrepsolv"] in line:
             if (m := meta_patterns["irrepsolv"].match(line)) is not None:
-                ee_type = m.group(2)
+                ee_type = m.group(3)
                 if ee_type == "singlet":
                     n_states = self.ee_singlets[self._singlet_irrep_counter]
                     self._singlet_irrep_counter += 1
@@ -95,9 +94,9 @@ class QCCSDParser(BaseParser):
                     assert len(cc) == cc.n_states, "Irrep states mismatch"
                     cc.sort()
                 self._current_irrep = Irrep(
-                    m.group(1), ee_type, n_states, parent="CCSD"
+                    m.group(2), ee_type, n_states, parent=self.name
                 )
-                self.irreps[f"{ee_type}-{m.group(1)}"] = self._current_irrep
+                self.irreps[f"{ee_type}-{m.group(2)}"] = self._current_irrep
                 self._current_eetype = ee_type
         elif self._inside_eomee and self._current_trblock is not None:
             if self._current_trblock.add_data(line):
@@ -118,18 +117,18 @@ class QCCSDParser(BaseParser):
                     if self._current_irrep.name != irrep:
                         raise ValueError(
                             "Transition block irrep mismatch {} != {}".format(
-                                irrep, self._current_irrep
+                                irrep, self._current_irrep.name
                             )
                         )
-                else:
-                    raise ValueError("No current transition block")
+                # else:
+                #     raise ValueError("No current transition block")
                 self._current_trblock = CCSDTransitionBlock(
                     int(m.group(1)), irrep, self._current_eetype
                 )
             elif start_indicators["eeprop"] in line:
                 if (m := meta_patterns["eeprop"].match(line)) is not None:
                     self._inside_eeprop = True
-                    irrep = m.group(2)
+                    irrep = m.group(3)
                     if self._current_irrep is not None:
                         if self._current_irrep.name != irrep:
                             raise ValueError(
@@ -142,8 +141,8 @@ class QCCSDParser(BaseParser):
                     self._current_irrep.update_transitions()
                     ee_type, id_number, irrep = (
                         self._current_irrep.ee_type,
-                        m.group(1),
                         m.group(2),
+                        m.group(3),
                     )
                     self._current_trprop = f"{ee_type}-{id_number}/{irrep}"
                     self._current_trblock = self._current_irrep.trblocks_dict[
@@ -192,3 +191,7 @@ class QCCSDParser(BaseParser):
                     }
                 )
         return data
+
+
+class QCC2Parser(QCCSDParser):
+    name = "CC2"

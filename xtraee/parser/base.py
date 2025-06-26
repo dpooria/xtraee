@@ -20,7 +20,6 @@ input_patterns = dict(
 class Block(Enum):
     null = auto()
     input = auto()
-    lambdab = auto()
     trprops = auto()
     ee = auto()
     mo = auto()
