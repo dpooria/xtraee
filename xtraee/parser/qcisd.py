@@ -12,24 +12,24 @@ trblock_begin_pattern = LP(
     \s*\(Ex\s+Ene\s+              # skip “(Ex Ene ”
     (?P<ex>[-+]?\d+\.\d+)         # 2) capture Ex Ene
     \s+eV\),\s*                   # skip “ eV),”
-    U0\^2=\s*(?P<U0>[-+]?\d+\.\d+),\s*  # 3) capture U0
-    U1\^2=\s*(?P<U1>[-+]?\d+\.\d+),\s*  # 4) capture U1
-    U2\^2=\s*(?P<U2>[-+]?\d+\.\d+)      # 5) capture U2
+    (U0\^2=\s*(?P<U0>[-+]?\d+\.\d+),\s*)?  # 3) capture U0
+    (U1\^2=\s*(?P<U1>[-+]?\d+\.\d+),\s*)?  # 4) capture U1
+    (U2\^2=\s*(?P<U2>[-+]?\d+\.\d+))?      # 5) capture U2
     """,
     VERBOSE,
 )
 
 meta_patterns = dict(
     irreps=LP(
-        r"^\s*(?P<n_roots>\d+)\s+lowest\s+(?P<multi>LOWSPIN|HIGHSPIN)"
-        r"\s+roots\s+of\s+symmetry\s+(?P<irrep>.+?)\s*:\s*$"
+        r"SOLVE\s+LINEAR\s+RESPONSE\s+EQUATIONS\s+FOR\s+(?P<multi>LOWSPIN|HIGHSPIN)"
+        r"\s+SINGLE\s+(AND\s+DOUBLE\s+)?EXCITATIONS\s+OF\s+(?P<irrep>.+)\s+IRREP"
     ),
 )
 
 start_indicators = {
     Block.null: None,
     Block.input: "$rem",
-    Block.irrep: "roots of symmetry",
+    Block.irrep: "SOLVE LINEAR RESPONSE EQUATIONS FOR",
     Block.mo: "Orbital Energies (a.u.)",
 }
 
@@ -60,24 +60,27 @@ class QCISDParser(BaseParser):
                 break
 
     def process_trblock(self, line: str) -> None:
+        ctrb = self._current_trblock
         if (m := trblock_begin_pattern.match(line)) is not None:
-            if self._current_trblock is not None:
-                self._current_trblock.sort()
-                if self._current_trblock.ee_type == "singlet":
-                    self.irrep_singlets.append(self._current_trblock)
-                elif self._current_trblock.ee_type == "triplet":
-                    self.irrep_triplets.append(self._current_trblock)
+            if ctrb is not None:
+                # finalize the current trblock
+                ctrb.sort()
+                if ctrb.ee_type == "singlet":
+                    self.irrep_singlets.append(ctrb)
+                elif ctrb.ee_type == "triplet":
+                    self.irrep_triplets.append(ctrb)
                 else:
-                    raise ValueError(f"Unknown excitation {self._current_trblock}")
-            self._current_trblock = CISDTransitionBlock(int(m.group(1)))
-            self._current_trblock.excitation_energy = float(m.group(2))
-        elif self._current_trblock is not None:
-            self._current_trblock.add_data(line)
+                    raise ValueError(f"Unknown excitation {ctrb}")
+            ctrb = CISDTransitionBlock(int(m.group(1)))
+            ctrb.excitation_energy = float(m.group(2))
+            self._current_trblock = ctrb
+        elif ctrb is not None:
+            ctrb.add_data(line)
 
     def process_irreps(self, line: str) -> None:
         if m := meta_patterns["irreps"].match(line):
             multi = "singlet" if m["multi"] == "LOWSPIN" else "triplet"
-            irrep = Irrep(m["irrep"], multi, int(m["n_roots"]), self.name)
+            irrep = Irrep(m["irrep"], multi, 0, self.name)
             self.irreps[irrep.identifier] = irrep
             self._current_irrep = irrep
         elif m := trblock_begin_pattern.match(line):
@@ -88,9 +91,9 @@ class QCISDParser(BaseParser):
                 int(m["root"]), irrep.name, irrep.ee_type, float(m["ex"])
             )
             trblock.R0, trblock.R1, trblock.R2 = (
-                float(m["U0"]),
-                float(m["U1"]),
-                float(m["U2"]),
+                float(m["U0"] or "nan"),
+                float(m["U1"] or "nan"),
+                float(m["U2"] or "nan"),
             )
             irrep.append(trblock)
             self._current_trblock = trblock
@@ -102,9 +105,10 @@ class QCISDParser(BaseParser):
         homo = 0
         for irrep in self.irreps.values():
             irrep.sort()
-            assert irrep.n_states == len(
-                irrep
-            ), f"Inconsitent number of states in {irrep}"
+            # assert irrep.n_states == len(irrep), (
+            #     f"Inconsitent number of states in {irrep}"
+            # )
+            irrep.n_states = len(irrep)
 
             for tr in irrep:
                 if tr.transitions:

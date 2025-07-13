@@ -1,5 +1,6 @@
 */input*.log
 **/input*.log
+**/*_input.log
 **/*ricc2*.out
 */*.csv
 *.csv

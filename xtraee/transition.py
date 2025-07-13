@@ -138,7 +138,7 @@ class CISTransition(Transition):
         p_close = t.find(")")
         if p_open == -1 or p_close == -1:
             raise ValueError(f"cannot convert {t} to the standard form")
-        return f"{int(t[p_open+1:p_close])} (A) A"
+        return f"{int(t[p_open + 1 : p_close])} (A) A"  # noqa
 
     @classmethod
     def from_str(cls, line: str):
@@ -148,7 +148,7 @@ class CISTransition(Transition):
         initial = cls.make_standard(s[0].strip())
         rhs = s[1].strip()
         idx = rhs.index("=")
-        amplitude = float(rhs[idx + 1 :])
+        amplitude = float(rhs[idx + 1 :])  # noqa
         final = cls.make_standard(rhs)
         return cls(amplitude, initial, final)
 
@@ -162,7 +162,6 @@ class CISTransition(Transition):
 class CISDTransition(Transition):
     def __init__(self, amplitude: float, initial: str, final: str):
         self.name = "CISDTransition"
-        # self.pattern = LP(r"\s*(\d+)\s*\(\s*([^\s]+)\s*\)\s*([AB])\s*")
         super().__init__(amplitude, initial, final)
 
     @classmethod
@@ -174,7 +173,7 @@ class CISDTransition(Transition):
         rhs = s[1].strip()
         amp_str = lhs.split()[0]
         amplitude = float(amp_str)
-        lhs = lhs[lhs.find(amp_str) + len(amp_str) :].lstrip()
+        lhs = lhs[lhs.find(amp_str) + len(amp_str) :].lstrip()  # noqa
         return cls(amplitude, lhs, rhs)
 
     def to_ccsd(self, homo: int, preserve_irreps: bool = False) -> CCSDTransition:
@@ -194,6 +193,29 @@ class CISDTransition(Transition):
 
     def to_std(self, homo):
         return self.to_ccsd(homo, False)
+
+
+class ADC2Transition(Transition):
+    trpattern = LP("")
+
+    def __init__(self, amplitude: float, initial: str, final: str):
+        self.name = "ADC2Transition"
+        super().__init__(amplitude, initial, final)
+
+    @classmethod
+    def from_str(cls, line: str):
+        s = line.split()
+        if len(s) not in [3, 5]:
+            raise ValueError(f"cannot match {line}")
+        lhs = s[0].strip()
+        rhs = s[1].strip()
+        amp_str = lhs.split()[0]
+        amplitude = float(amp_str)
+        lhs = lhs[lhs.find(amp_str) + len(amp_str) :].lstrip()  # noqa
+        return cls(amplitude, lhs, rhs)
+
+    def to_std(self, homo):
+        return self
 
 
 class TMCC2Transition(Transition):
@@ -217,6 +239,16 @@ class TMCC2Transition(Transition):
         self._spin_ind = 1
 
     @classmethod
+    def make_standard(cls, t: str) -> str:
+        if (m := cls.nonstd_pattern.match(t)) is not None:
+            orb_num = m["orb_num"]
+            irrep = m["irrep"].upper()  # ?
+            # TODO: add spin stuff
+            return f"{orb_num} ({irrep}) A"
+        else:
+            raise ValueError(f"cannot convert {t} to the standard form")
+
+    @classmethod
     def from_str(cls, line: str):
         s = line.split("|")
         if len(s) < 4:
@@ -228,13 +260,3 @@ class TMCC2Transition(Transition):
         else:
             raise ValueError(f"could not match the amplitude {line}")
         return cls(amplitude, lhs, rhs)
-
-    @classmethod
-    def make_standard(cls, t: str) -> str:
-        if (m := cls.nonstd_pattern.match(t)) is not None:
-            orb_num = m["orb_num"]
-            irrep = m["irrep"].upper()  # ?
-            # TODO: add spin stuff
-            return f"{orb_num} ({irrep}) A"
-        else:
-            raise ValueError(f"cannot convert {t} to the standard form")
