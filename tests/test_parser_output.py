@@ -13,6 +13,7 @@ from xtraee.parser import Parser
         ("test_qccsd", "input2.log", "happy_family2.txt"),
         ("test_qccsd", "input3.log", "happy_family3.txt"),
         ("test_qcadc2", "input.log", "data_ADC2.txt"),
+        ("test_qcis_d_", "input1.log", "data_CIS_D_.txt"),
     ],
 )
 def test_happy_family(path, inputfile, expected_output, tmp_path):

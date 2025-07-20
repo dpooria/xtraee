@@ -1,7 +1,11 @@
 from xtraee.lazypattern import LP
 from xtraee.transition import CISDTransition
+from xtraee.utils import Ha, nan
+from .trblock import TransitionBlock
 
-from .trblock import TransitionBlock, nan
+# for CIS(D)
+cis_d_exen_pattern = LP(r"E_ex\s*=\s*([-+]?\d+\.\d+)\s*eV")
+cis_d_toten_pattern = LP(r"E_CIS\(D\)\s*=\s*([-+]?\d+\.\d+)\s+hartree")
 
 
 class CISDTransitionBlock(TransitionBlock):
@@ -35,3 +39,11 @@ class CISDTransitionBlock(TransitionBlock):
             r"\d+\s*\(.+\)\s*[AB]\s*$"
         )
         self.meta_data.update({"U0": nan, "U1": nan, "U2": nan})
+
+    def extras(self, line):
+        if self.name == "CIS_D_":
+            if f"Root {self.id_number} CIS(D) corr=" in line:
+                if (m := cis_d_exen_pattern.search(line)) is not None:
+                    self.excitation_energy = float(m.group(1))
+                if (m := cis_d_toten_pattern.search(line)) is not None:
+                    self.total_energy = float(m.group(1)) * Ha

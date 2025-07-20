@@ -111,4 +111,4 @@ class QCISDParser(BaseParser):
 
 
 class QCIS_D_Parser(QCISDParser):
-    name = "CIS(D)"
+    name = "CIS_D_"
