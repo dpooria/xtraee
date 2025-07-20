@@ -8,7 +8,7 @@ trblock_begin_pattern = LP(
     ^Root\s+                      # literal “Root ” at start
     (?P<root>\d+)                 # 1) capture root number
     \s+Conv-d\s+yes\s+Tot\s+Ene=  # skip the fixed text
-    \s*[-+]?\d+\.\d+\s+hartree    # skip the total energy value
+    \s*(?P<tote>[-+]?\d+\.\d+)\s+hartree    # skip the total energy value
     \s*\(Ex\s+Ene\s+              # skip “(Ex Ene ”
     (?P<ex>[-+]?\d+\.\d+)         # 2) capture Ex Ene
     \s+eV\),\s*                   # skip “ eV),”
@@ -59,24 +59,6 @@ class QCISDParser(BaseParser):
                 self.block = block
                 break
 
-    def process_trblock(self, line: str) -> None:
-        ctrb = self._current_trblock
-        if (m := trblock_begin_pattern.match(line)) is not None:
-            if ctrb is not None:
-                # finalize the current trblock
-                ctrb.sort()
-                if ctrb.ee_type == "singlet":
-                    self.irrep_singlets.append(ctrb)
-                elif ctrb.ee_type == "triplet":
-                    self.irrep_triplets.append(ctrb)
-                else:
-                    raise ValueError(f"Unknown excitation {ctrb}")
-            ctrb = CISDTransitionBlock(int(m.group(1)))
-            ctrb.excitation_energy = float(m.group(2))
-            self._current_trblock = ctrb
-        elif ctrb is not None:
-            ctrb.add_data(line)
-
     def process_irreps(self, line: str) -> None:
         if m := meta_patterns["irreps"].match(line):
             multi = "singlet" if m["multi"] == "LOWSPIN" else "triplet"
@@ -88,12 +70,19 @@ class QCISDParser(BaseParser):
                 raise ValueError("trblock before irrep")
             irrep = self._current_irrep
             trblock = CISDTransitionBlock(
-                int(m["root"]), irrep.name, irrep.ee_type, float(m["ex"])
+                int(m["root"]),
+                irrep.name,
+                irrep.multi,
+                self.name,
+                float(m["ex"]),
+                float(m["tote"]),
             )
-            trblock.R0, trblock.R1, trblock.R2 = (
-                float(m["U0"] or "nan"),
-                float(m["U1"] or "nan"),
-                float(m["U2"] or "nan"),
+            trblock.meta_data.update(
+                {
+                    "U0": float(m["U0"] or "nan"),
+                    "U1": float(m["U1"] or "nan"),
+                    "U2": float(m["U2"] or "nan"),
+                }
             )
             irrep.append(trblock)
             self._current_trblock = trblock

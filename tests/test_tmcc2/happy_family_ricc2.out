@@ -1,37 +1,43 @@
 ---- Happy family ----
 ------------S1------------
-CC2 transition 1/A singlet,
-EE: 5.3888 eV,
-%t1: 90.36, %t2: 9.64.
+TMCC2 transition 1/A singlet,
+Excitation energy:    5.3888 eV
+Total energy:       nan eV
+Oscillator strenght:       nan (a.u.)
+%t1: 90.36, %t2: 9.64
 Amplitude Transitions between orbitals
-0.6933	21 (A) A -> 23 (A) A
--0.6931	20 (A) A -> 22 (A) A
+  0.6933	21 (A) A -> 23 (A) A
+  -0.6931	20 (A) A -> 22 (A) A
 
 Matched triplets: 
 0.6933	21 (A) A -> 23 (A) A <==> 3 A 0.6068 ,        2 A 0.3678 ,        4 A 0.6942 
 -0.6931	20 (A) A -> 22 (A) A <==> 3 A 0.6064 ,        2 A 0.3680 ,        4 A -0.6946 
 ------------S2------------
-CC2 transition 2/A singlet,
-EE: 6.8003 eV,
-%t1: 93.8, %t2: 6.2.
+TMCC2 transition 2/A singlet,
+Excitation energy:    6.8003 eV
+Total energy:       nan eV
+Oscillator strenght:       nan (a.u.)
+%t1: 93.8, %t2: 6.2
 Amplitude Transitions between orbitals
-0.6903	21 (A) A -> 22 (A) A
-0.6893	20 (A) A -> 23 (A) A
+  0.6903	21 (A) A -> 22 (A) A
+  0.6893	20 (A) A -> 23 (A) A
 
 Matched triplets: 
 0.6903	21 (A) A -> 22 (A) A <==> 1 A 0.6800 ,        3 A 0.3553 ,        2 A -0.5986 
 0.6893	20 (A) A -> 23 (A) A <==> 1 A 0.6788 ,        3 A -0.3557 ,        2 A 0.5997 
 ------------S3------------
-CC2 transition 3/A singlet,
-EE: 7.6358 eV,
-%t1: 92.32, %t2: 7.68.
+TMCC2 transition 3/A singlet,
+Excitation energy:    7.6358 eV
+Total energy:       nan eV
+Oscillator strenght:       nan (a.u.)
+%t1: 92.32, %t2: 7.68
 Amplitude Transitions between orbitals
-0.6595	20 (A) A -> 23 (A) A
--0.6584	21 (A) A -> 22 (A) A
-0.2017	20 (A) A -> 22 (A) A
-0.2015	21 (A) A -> 23 (A) A
--0.0706	19 (A) A -> 33 (A) A
--0.0705	18 (A) A -> 34 (A) A
+  0.6595	20 (A) A -> 23 (A) A
+  -0.6584	21 (A) A -> 22 (A) A
+  0.2017	20 (A) A -> 22 (A) A
+  0.2015	21 (A) A -> 23 (A) A
+  -0.0706	19 (A) A -> 33 (A) A
+  -0.0705	18 (A) A -> 34 (A) A
 
 Matched triplets: 
 0.6595	20 (A) A -> 23 (A) A <==> 1 A 0.6788 ,        3 A -0.3557 ,        2 A 0.5997 
@@ -41,16 +47,18 @@ Matched triplets:
 -0.0706	19 (A) A -> 33 (A) A <==> 
 -0.0705	18 (A) A -> 34 (A) A <==> 
 ------------S4------------
-CC2 transition 4/A singlet,
-EE: 7.6359 eV,
-%t1: 92.33, %t2: 7.67.
+TMCC2 transition 4/A singlet,
+Excitation energy:    7.6359 eV
+Total energy:       nan eV
+Oscillator strenght:       nan (a.u.)
+%t1: 92.33, %t2: 7.67
 Amplitude Transitions between orbitals
-0.6572	20 (A) A -> 22 (A) A
-0.6571	21 (A) A -> 23 (A) A
--0.2075	20 (A) A -> 23 (A) A
-0.2073	21 (A) A -> 22 (A) A
--0.0704	19 (A) A -> 34 (A) A
-0.0703	18 (A) A -> 33 (A) A
+  0.6572	20 (A) A -> 22 (A) A
+  0.6571	21 (A) A -> 23 (A) A
+  -0.2075	20 (A) A -> 23 (A) A
+  0.2073	21 (A) A -> 22 (A) A
+  -0.0704	19 (A) A -> 34 (A) A
+  0.0703	18 (A) A -> 33 (A) A
 
 Matched triplets: 
 0.6572	20 (A) A -> 22 (A) A <==> 3 A 0.6064 ,        2 A 0.3680 ,        4 A -0.6946 
@@ -60,20 +68,24 @@ Matched triplets:
 -0.0704	19 (A) A -> 34 (A) A <==> 
 0.0703	18 (A) A -> 33 (A) A <==> 
 ------------S5------------
-CC2 transition 5/A singlet,
-EE: 8.1431 eV,
-%t1: 92.72, %t2: 7.28.
+TMCC2 transition 5/A singlet,
+Excitation energy:    8.1431 eV
+Total energy:       nan eV
+Oscillator strenght:       nan (a.u.)
+%t1: 92.72, %t2: 7.28
 Amplitude Transitions between orbitals
-0.9876	21 (A) A -> 24 (A) A
+  0.9876	21 (A) A -> 24 (A) A
 
 Matched triplets: 
 0.9876	21 (A) A -> 24 (A) A <==> 5 A 0.9807 
 ------------S6------------
-CC2 transition 6/A singlet,
-EE: 8.1442 eV,
-%t1: 92.72, %t2: 7.28.
+TMCC2 transition 6/A singlet,
+Excitation energy:    8.1442 eV
+Total energy:       nan eV
+Oscillator strenght:       nan (a.u.)
+%t1: 92.72, %t2: 7.28
 Amplitude Transitions between orbitals
-0.9875	20 (A) A -> 24 (A) A
+  0.9875	20 (A) A -> 24 (A) A
 
 Matched triplets: 
 0.9875	20 (A) A -> 24 (A) A <==> 6 A 0.9807 

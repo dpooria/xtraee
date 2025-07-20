@@ -3,28 +3,29 @@ import sys
 from pathlib import Path
 
 import pytest
-from xtraee.parser import QCCSDParser
+from xtraee.parser import Parser
 
 
 @pytest.mark.parametrize(
-    "inputfile, expected_output",
+    "path, inputfile, expected_output",
     [
-        ("input1.log", "happy_family1.txt"),
-        ("input2.log", "happy_family2.txt"),
-        ("input3.log", "happy_family3.txt"),
+        ("test_qccsd", "input1.log", "happy_family1.txt"),
+        ("test_qccsd", "input2.log", "happy_family2.txt"),
+        ("test_qccsd", "input3.log", "happy_family3.txt"),
+        ("test_qcadc2", "input.log", "data_ADC2.txt"),
     ],
 )
-def test_happy_family(inputfile, expected_output, tmp_path):
-    test_dir = Path(__file__).parent
+def test_happy_family(path, inputfile, expected_output, tmp_path):
+    test_dir = Path(__file__).parent / path
     inputfile_path = test_dir / inputfile
     expected_output_path = test_dir / expected_output
     outputfile = tmp_path / ("test_" + expected_output)
-    qccsd = QCCSDParser(inputfile_path, 0.2)
+    qccsd = Parser(inputfile_path, 0.2)
     qccsd.process_file()
     qccsd.write_dataset(outputfile)
-    assert filecmp.cmp(
-        outputfile, expected_output_path, shallow=False
-    ), f"Files {outputfile} and {expected_output_path} do not match."
+    assert filecmp.cmp(outputfile, expected_output_path, shallow=False), (
+        f"Files {outputfile} and {expected_output_path} do not match."
+    )
 
 
 def usage_and_exit():
@@ -47,7 +48,7 @@ if __name__ == "__main__":
             test_happy_family(inputfile, expected_output, test_dir)
         elif mode == "update-test":
             outputfile = test_dir / expected_output
-            qccsd = QCCSDParser(inputfile_path, 0.2)
+            qccsd = Parser(inputfile_path, 0.2)
             qccsd.process_file()
             qccsd.write_dataset(outputfile)
     exit(0)

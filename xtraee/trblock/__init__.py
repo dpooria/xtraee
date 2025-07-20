@@ -3,6 +3,7 @@ from xtraee.trblock.qcis import CISTransitionBlock
 from xtraee.trblock.qcisd import CISDTransitionBlock
 from xtraee.trblock.tmcc2 import TMCC2TransitionBlock
 from xtraee.trblock.trblock import TransitionBlock
+from xtraee.trblock.qcadc2 import ADC2TransitionBlock
 
 __all__ = [
     "TransitionBlock",
@@ -10,4 +11,5 @@ __all__ = [
     "CISDTransitionBlock",
     "CISTransitionBlock",
     "TMCC2TransitionBlock",
+    "ADC2TransitionBlock",
 ]

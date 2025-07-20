@@ -44,9 +44,9 @@ class QCISParser(BaseParser):
         if (m := trblock_begin_pattern.match(line)) is not None:
             if self._current_trblock is not None:
                 self._current_trblock.sort()
-                if self._current_trblock.ee_type == "singlet":
+                if self._current_trblock.multi == "singlet":
                     self.irrep_singlets.append(self._current_trblock)
-                elif self._current_trblock.ee_type == "triplet":
+                elif self._current_trblock.multi == "triplet":
                     self.irrep_triplets.append(self._current_trblock)
                 else:
                     raise ValueError(f"Unknown excitation {self._current_trblock}")

@@ -43,14 +43,10 @@ class TMCC2Parser(BaseParser):
         if table_end in line:
             self.block = Block.tr
             self.irrep_singlets = [
-                irrep
-                for irrep in self.irreps.values()
-                if irrep.ee_type == "singlet"
+                irrep for irrep in self.irreps.values() if irrep.multi == "singlet"
             ]
             self.irrep_triplets = [
-                irrep
-                for irrep in self.irreps.values()
-                if irrep.ee_type == "triplet"
+                irrep for irrep in self.irreps.values() if irrep.multi == "triplet"
             ]
             for irrep in self.irrep_singlets:
                 irrep.n_states = len(irrep.trblocks)
@@ -72,11 +68,12 @@ class TMCC2Parser(BaseParser):
                 raise ValueError(f"Unknown multiplicity {multi}")
             id_number = int(m.group(3))
             cc2_energy = float(m.group(4))
+            transition_block = TMCC2TransitionBlock(
+                id_number, irrep, multi, self.name, cc2_energy
+            )
             t1 = float(m.group(5))
             t2 = float(m.group(6))
-            transition_block = TMCC2TransitionBlock(
-                id_number, irrep, multi, cc2_energy, t1, t2
-            )
+            transition_block.meta_data.update({"%t1": t1, "%t2": t2})
             k = f"{multi}-{irrep}"
             if k not in self.irreps:
                 self.irreps[k] = Irrep(irrep, multi, 0, parent="TMCC2")
@@ -92,9 +89,7 @@ class TMCC2Parser(BaseParser):
                 self._triplets_processed += 1
             irrep = m.group(1).upper()
             state = int(m.group(2))
-            self._current_trblock = self.irreps[f"{multi}-{irrep}"].trblocks[
-                state - 1
-            ]
+            self._current_trblock = self.irreps[f"{multi}-{irrep}"].trblocks[state - 1]
         elif self._current_trblock is not None:
             self._current_trblock.add_data(line)
             # if self.current_trblock.add_data(line):

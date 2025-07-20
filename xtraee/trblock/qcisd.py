@@ -1,7 +1,7 @@
 from xtraee.lazypattern import LP
 from xtraee.transition import CISDTransition
 
-from .trblock import TransitionBlock
+from .trblock import TransitionBlock, nan
 
 
 class CISDTransitionBlock(TransitionBlock):
@@ -9,13 +9,20 @@ class CISDTransitionBlock(TransitionBlock):
         self,
         id_number: int,
         irrep: str = "",
-        ee_type: str = "",
-        excitation_energy: float = 0.0,
-        oscillator_strength: float = 0.0,
+        multi: str = "",
         name="CISD",
+        excitation_energy: float = nan,
+        total_energy: float = nan,
+        oscillator_strength: float = nan,
     ):
         super().__init__(
-            id_number, irrep, ee_type, excitation_energy, oscillator_strength, name=name
+            id_number,
+            irrep,
+            multi,
+            name,
+            excitation_energy,
+            total_energy,
+            oscillator_strength,
         )
         self.transitions: list[CISDTransition] = []
         self.tr_cls = CISDTransition
@@ -27,16 +34,4 @@ class CISDTransitionBlock(TransitionBlock):
             r"\s*->\s*"
             r"\d+\s*\(.+\)\s*[AB]\s*$"
         )
-        self.R0 = 0.0
-        self.R1 = 0.0
-        self.R2 = 0.0
-
-    def __repr__(self) -> str:
-        line = "\n".join(map(str, self.transitions))
-        return (
-            f"{self.name} transition {self.id_number}/{self.irrep} {self.ee_type}\n"  # noqa
-            f"EE: {self.excitation_energy:.4f} eV.\n"
-            f"U0={self.R0:.4f}, U1={self.R1:.4f}, U2={self.R2:.4f}\n"
-            "Amplitude Transitions between orbitals\n"
-            f"{line}\n"
-        )
+        self.meta_data.update({"U0": nan, "U1": nan, "U2": nan})

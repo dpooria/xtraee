@@ -4,12 +4,12 @@ from xtraee.trblock import TransitionBlock
 
 
 class Irrep:
-    def __init__(self, name: str, ee_type: str, n_states: int, parent: str = ""):
+    def __init__(self, name: str, multi: str, n_states: int, parent: str = ""):
         self.name = name
         self.n_states = n_states
         self.trblocks: list[TransitionBlock] = []
         self.trblocks_dict: dict[str, TransitionBlock] = {}
-        self.ee_type = ee_type
+        self.multi = multi
         self.sorted = False
         self.updated = True
         self.parent = parent
@@ -17,9 +17,9 @@ class Irrep:
     @property
     def identifier(self) -> str:
         if self.parent:
-            return f"{self.parent}-{self.name}.{self.ee_type}"
+            return f"{self.parent}-{self.name}.{self.multi}"
         else:
-            return f"{self.name}.{self.ee_type}"
+            return f"{self.name}.{self.multi}"
 
     def sort(self) -> None:
         self.sorted = True

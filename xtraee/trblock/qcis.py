@@ -1,5 +1,6 @@
-from xtraee.lazypattern import LP
+from xtraee.lazypattern import LP, flp
 from xtraee.transition import CISTransition
+from xtraee.utils import Ha, nan
 
 from .trblock import TransitionBlock
 
@@ -10,28 +11,32 @@ multplicity_pattern = LP(r"Multiplicity:\s*(Singlet|Triplet)")
 class CISTransitionBlock(TransitionBlock):
     def __init__(
         self,
-        *args,
+        id_number: int,
+        irrep: str = "",
+        multi: str = "",
         name="CIS",
-        **kwargs,
+        excitation_energy: float = nan,
+        total_energy: float = nan,
+        oscillator_strength: float = nan,
     ):
-        super().__init__(*args, **kwargs, name=name)
+        super().__init__(
+            id_number,
+            irrep,
+            multi,
+            name,
+            excitation_energy,
+            total_energy,
+            oscillator_strength,
+        )
         self.transitions: list[CISTransition] = []
         self.tr_cls = CISTransition
         self.tr_indicator = "-->"
         self.end_trblock = "\n"
 
     def extras(self, line: str):
+        if f"Total energy for state  {self.id_number}" in line:
+            self.total_energy = float(flp.search(line).group(0)) * Ha
         if (m := oscillator_pattern.match(line)) is not None:
             self.oscillator_strength = float(m.group(1))
         elif (m := multplicity_pattern.match(line)) is not None:
-            self.ee_type = m.group(1).lower()
-
-    def __repr__(self) -> str:
-        line = "\n".join(map(str, self.transitions))
-        return (
-            f"{self.name} transition {self.id_number}/{self.irrep} {self.ee_type}\n"  # noqa
-            f"EE: {self.excitation_energy:.4f} eV.\n"
-            "Amplitude Transitions between orbitals\n"
-            f"{line}\n"
-            f"Oscillator strength (a.u.): {self.oscillator_strength:.6f}, \n"
-        )
+            self.multi = m.group(1).lower()

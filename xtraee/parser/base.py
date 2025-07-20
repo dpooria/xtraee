@@ -100,10 +100,10 @@ class BaseParser:
             f.write("---- Happy family ----\n")
             for s, d in data.items():
                 f.write(f"------------{s}------------\n")
-                f.write(f'{d["singlet"]}\n')
+                f.write(f"{d['singlet']}\n")
                 f.write("Matched triplets: " + "\n")  # noqa
                 for tr, triplet in d["matched_triplets"].items():
-                    f.write(f'{tr} <==> {",        ".join(triplet)}\n')
+                    f.write(f"{tr} <==> {',        '.join(triplet)}\n")
             f.write("--- End of the happy family :) ---")
 
     def create_dataset(self) -> DatasetType:
@@ -112,12 +112,12 @@ class BaseParser:
         singlets = []
         triplets = []
         for irr in self.irreps.values():
-            if irr.ee_type == "singlet":
+            if irr.multi == "singlet":
                 singlets.append(irr)
-            elif irr.ee_type == "triplet":
+            elif irr.multi == "triplet":
                 triplets.append(irr)
             else:
-                raise ValueError(f"Unknown excitation type {irr.ee_type}")
+                raise ValueError(f"Unknown excitation type {irr.multi}")
         lowest_singlets = BaseParser.select_lowest_excitations(singlets)
         data = {}
         for i, singlet in enumerate(lowest_singlets):
@@ -143,10 +143,10 @@ class BaseParser:
 
     def compare_all(self, method: str) -> dict[str, DataFrame]:
         irreps_singlets = [
-            irrep for irrep in self.irreps.values() if irrep.ee_type == "singlet"
+            irrep for irrep in self.irreps.values() if irrep.multi == "singlet"
         ]
         irreps_triplets = [
-            irrep for irrep in self.irreps.values() if irrep.ee_type == "triplet"
+            irrep for irrep in self.irreps.values() if irrep.multi == "triplet"
         ]
         scores = {}
         for irrep_singlet in irreps_singlets:
@@ -167,15 +167,15 @@ class BaseParser:
     def _find_equivalent_irrep(self, other_irrep: Irrep) -> Irrep:
         # first try respecting the name of the symmetry
         for irrep in self.irreps.values():
-            if irrep.ee_type == other_irrep.ee_type and irrep.name == other_irrep.name:
+            if irrep.multi == other_irrep.multi and irrep.name == other_irrep.name:
                 return irrep
-        # if not found, try by ee_type
+        # if not found, try by multi
         for irrep in self.irreps.values():
-            if irrep.ee_type == other_irrep.ee_type:
+            if irrep.multi == other_irrep.multi:
                 return irrep
         # unreachable!
         raise ValueError(
-            f"No equivalent irrep found for {other_irrep.ee_type} {other_irrep.name}"
+            f"No equivalent irrep found for {other_irrep.multi} {other_irrep.name}"
         )
 
     def write_vs_std(self, path: str, o_irreps: DatasetType) -> None:
@@ -195,11 +195,11 @@ class BaseParser:
                 f.write(f"{k}\n")
                 for item in v:
                     f.write(
-                        f"ref: {item['ref'].ee_type}-{item['ref'].id_number}/{item['ref'].irrep} <=>"
+                        f"ref: {item['ref'].multi}-{item['ref'].id_number}/{item['ref'].irrep} <=>"
                     )
                     line = ",".join(
                         map(
-                            lambda block: f"{self.name}: {block.ee_type}-{block.id_number}/{block.irrep}",
+                            lambda block: f"{self.name}: {block.multi}-{block.id_number}/{block.irrep}",
                             item[self.name],
                         )
                     )
@@ -210,16 +210,16 @@ class BaseParser:
         self, o_irreps: dict[str, Irrep], method: str
     ) -> dict[str, DataFrame]:
         irreps_singlets = [
-            irrep for irrep in self.irreps.values() if irrep.ee_type == "singlet"
+            irrep for irrep in self.irreps.values() if irrep.multi == "singlet"
         ]
         irreps_triplets = [
-            irrep for irrep in self.irreps.values() if irrep.ee_type == "triplet"
+            irrep for irrep in self.irreps.values() if irrep.multi == "triplet"
         ]
         oirr_singlets = [
-            irrep for irrep in o_irreps.values() if irrep.ee_type == "singlet"
+            irrep for irrep in o_irreps.values() if irrep.multi == "singlet"
         ]
         oirr_triplets = [
-            irrep for irrep in o_irreps.values() if irrep.ee_type == "triplet"
+            irrep for irrep in o_irreps.values() if irrep.multi == "triplet"
         ]
         scores = {}
         for irrep_singlet in irreps_singlets:

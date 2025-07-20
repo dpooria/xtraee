@@ -22,9 +22,9 @@ def test_happy_family(inputfile, expected_output, tmp_path):
     qccsd = QCCSDParser(inputfile_path, 0.2)
     qccsd.process_file()
     qccsd.write_dataset(outputfile)
-    assert filecmp.cmp(
-        outputfile, expected_output_path, shallow=False
-    ), f"Files {outputfile} and {expected_output_path} do not match."
+    assert filecmp.cmp(outputfile, expected_output_path, shallow=False), (
+        f"Files {outputfile} and {expected_output_path} do not match."
+    )
 
 
 def usage_and_exit():

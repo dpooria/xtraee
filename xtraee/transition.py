@@ -1,5 +1,4 @@
 from typing import NamedTuple
-
 from xtraee.lazypattern import LP, VERBOSE
 
 
@@ -204,14 +203,17 @@ class ADC2Transition(Transition):
 
     @classmethod
     def from_str(cls, line: str):
-        s = line.split()
+        s = [ll.strip() for ll in line.split(" " * 4) if ll.strip()]
         if len(s) not in [3, 5]:
             raise ValueError(f"cannot match {line}")
-        lhs = s[0].strip()
-        rhs = s[1].strip()
-        amp_str = lhs.split()[0]
-        amplitude = float(amp_str)
-        lhs = lhs[lhs.find(amp_str) + len(amp_str) :].lstrip()  # noqa
+        if len(s) == 3:
+            lhs = s[0]
+            rhs = s[1]
+        elif len(s) == 5:
+            lhs = " ".join(s[:2])
+            rhs = " ".join(s[2:4])
+
+        amplitude = float(s[-1])
         return cls(amplitude, lhs, rhs)
 
     def to_std(self, homo):

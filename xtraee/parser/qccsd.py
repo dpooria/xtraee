@@ -59,7 +59,7 @@ class QCCSDParser(BaseParser):
         self._inside_eeprop = False
         self._current_trblock: None | CCSDTransitionBlock = None
         self._current_irrep: None | Irrep = None
-        self._current_eetype: str = ""
+        self._current_multi: str = ""
         self._current_trprop: str = ""
         self._singlet_irrep_counter = 0
         self._triplet_irrep_counter = 0
@@ -82,8 +82,8 @@ class QCCSDParser(BaseParser):
     def process_irrepsolv(self, line: str) -> None:
         if start_indicators["irrepsolv"] in line:
             if (m := meta_patterns["irrepsolv"].match(line)) is not None:
-                ee_type = m.group(3)
-                if ee_type == "singlet":
+                multi = m.group(3)
+                if multi == "singlet":
                     n_states = self.ee_singlets[self._singlet_irrep_counter]
                     self._singlet_irrep_counter += 1
                 else:
@@ -94,10 +94,10 @@ class QCCSDParser(BaseParser):
                     assert len(cc) == cc.n_states, "Irrep states mismatch"
                     cc.sort()
                 self._current_irrep = Irrep(
-                    m.group(2), ee_type, n_states, parent=self.name
+                    m.group(2), multi, n_states, parent=self.name
                 )
-                self.irreps[f"{ee_type}-{m.group(2)}"] = self._current_irrep
-                self._current_eetype = ee_type
+                self.irreps[f"{multi}-{m.group(2)}"] = self._current_irrep
+                self._current_multi = multi
         elif self._inside_eomee and self._current_trblock is not None:
             if self._current_trblock.add_data(line):
                 self._current_trblock.sort()
@@ -123,7 +123,7 @@ class QCCSDParser(BaseParser):
                 # else:
                 #     raise ValueError("No current transition block")
                 self._current_trblock = CCSDTransitionBlock(
-                    int(m.group(1)), irrep, self._current_eetype, name=self.name
+                    int(m.group(1)), irrep, self._current_multi, name=self.name
                 )
             elif start_indicators["eeprop"] in line:
                 if (m := meta_patterns["eeprop"].match(line)) is not None:
@@ -139,21 +139,21 @@ class QCCSDParser(BaseParser):
                     else:
                         raise ValueError("No current irreducible representation")
                     self._current_irrep.update_transitions()
-                    ee_type, id_number, irrep = (
-                        self._current_irrep.ee_type,
+                    multi, id_number, irrep = (
+                        self._current_irrep.multi,
                         m.group(2),
                         m.group(3),
                     )
-                    self._current_trprop = f"{ee_type}-{id_number}/{irrep}"
+                    self._current_trprop = f"{multi}-{id_number}/{irrep}"
                     self._current_trblock = self._current_irrep.trblocks_dict[
                         self._current_trprop
                     ]
 
     def process_trprops(self, line: str) -> None:
         if (m := meta_patterns["trprop"].match(line)) is not None:
-            ee_type, id_number, irrep = m.group(1), m.group(2), m.group(3)
-            self._current_trprop = f"{ee_type}-{id_number}/{irrep}"
-            self._current_irrep = self.irreps[f"{ee_type}-{irrep}"]
+            multi, id_number, irrep = m.group(1), m.group(2), m.group(3)
+            self._current_trprop = f"{multi}-{id_number}/{irrep}"
+            self._current_irrep = self.irreps[f"{multi}-{irrep}"]
             self._current_irrep.update_transitions()
             self._current_trblock = self._current_irrep.trblocks_dict[
                 self._current_trprop
@@ -162,7 +162,10 @@ class QCCSDParser(BaseParser):
             for name, pattern in prop_patterns.items():
                 if (m := pattern.match(line)) is not None:
                     value = float(m.group(1))
-                    setattr(self._current_trblock, name, value)
+                    if name == "oscillator_strength":
+                        self._current_trblock.oscillator_strength = value
+                        continue
+                    self._current_trblock.meta_data[name] = value
                     if name == "corr_coef":
                         self._current_trprop = ""  # end the current trprop state
                     break
@@ -172,24 +175,16 @@ class QCCSDParser(BaseParser):
         for irr in self.irreps.values():
             irr.sort()
             for trblock in irr.trblocks:
-                data.append(
-                    {
-                        "id": id_prefix + trblock.identifier,
-                        "R2": trblock.R2,
-                        "gamma": trblock.gamma,
-                        "omega": trblock.omega,
-                        "loc": trblock.loc,
-                        "phe": trblock.phe,
-                        "alphabeta": trblock.alphabeta,
-                        "|r_e-r_h|": trblock.rhre,
-                        "corr_coef": trblock.corr_coef,
-                        "froniter_no_1": trblock.froniter_no[0],
-                        "froniter_no_2": trblock.froniter_no[1],
-                        "nu": trblock.nu,
-                        "nl": trblock.nl,
-                        "prno": trblock.prno,
-                    }
-                )
+                meta = trblock.meta_data.copy()
+                meta.pop("R0")
+                meta.pop("R1")
+                meta["identifier"] = id_prefix + trblock.identifier
+                meta["|r_e-r_h|"] = meta.pop("rhre")
+                frontier_no = meta.pop("frontier_no")
+                meta["frontier_no_1"] = frontier_no[0]
+                meta["frontier_no_2"] = frontier_no[1]
+                data.append(meta)
+
         return data
 
 

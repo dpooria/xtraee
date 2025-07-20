@@ -30,3 +30,6 @@ class LP:
     def finditer(self, s):
         self._compile()
         return self._pat.finditer(s)
+
+
+flp = LP(r"[-+]?\d+\.\d+")

@@ -6,6 +6,7 @@ from xtraee.parser.qccsd import QCCSDParser, QCC2Parser
 from xtraee.parser.qcis import QCISParser, QCTDDFTParser
 from xtraee.parser.qcisd import QCISDParser, QCIS_D_Parser
 from xtraee.parser.tmcc2 import TMCC2Parser
+from xtraee.parser.qcadc2 import QCADC2Parser
 
 
 def Parser(input_file: str | Path, *args, **kwargs) -> BaseParser:
@@ -36,6 +37,9 @@ def Parser(input_file: str | Path, *args, **kwargs) -> BaseParser:
             elif "cc2 - approximate cc singles and doubles" in ls:
                 parser = TMCC2Parser(input_file, *args, **kwargs)
                 break
+            elif "adc(2)" in ls:
+                parser = QCADC2Parser(input_file, *args, **kwargs)
+                break
         else:
             raise ValueError(f"Could not find suitable parser for {input_file}")
 
@@ -51,4 +55,5 @@ __all__ = [
     "QCISDParser",
     "QCIS_D_Parser",
     "TMCC2Parser",
+    "QCADC2Parser",
 ]

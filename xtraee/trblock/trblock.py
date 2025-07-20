@@ -4,6 +4,7 @@ from functools import partial
 from xtraee.config import debug, get_logger
 from xtraee.lazypattern import LP
 from xtraee.transition import Transition
+from xtraee.utils import nan
 
 log = get_logger("trblock", debug)
 
@@ -52,30 +53,33 @@ class TransitionBlock:
         self,
         id_number: int,
         irrep: str = "",
-        ee_type: str = "",
-        excitation_energy: float = 0.0,
-        oscillator_strength: float = 0.0,
+        multi: str = "",
         name="Transition",
+        excitation_energy: float = nan,
+        total_energy: float = nan,
+        oscillator_strength: float = nan,
     ):
         self.name = name
         self.transitions: list[Transition] = []
         self.std_transitions: list[Transition] = []
         self.id_number = id_number
         self.irrep = irrep
-        self.ee_type = ee_type
+        self.multi = multi
         self.completed = False
         self.completed_extras = False
         self.homo = 0
         self.excitation_energy = excitation_energy
+        self.total_energy = total_energy
         self.oscillator_strength = oscillator_strength
         self.tr_cls = Transition
         self.tr_indicator = "->"
         # this means the transition never gets terminated as the line is stripped
         self.end_trblock = "\n"
+        self.meta_data = {}
 
     @property
     def identifier(self) -> str:
-        return f"{self.ee_type}-{self.id_number}/{self.irrep}"
+        return f"{self.multi}-{self.id_number}/{self.irrep}"
 
     def utrs(self, transitions: list[Transition] | None = None) -> list[Transition]:
         if transitions is None:
@@ -108,14 +112,28 @@ class TransitionBlock:
         if isinstance(self.tr_indicator, LP):
             if self.tr_indicator.search(line):
                 self.transitions.append(self.tr_cls.from_str(line))
+                return False
         elif self.tr_indicator in line:
             self.transitions.append(self.tr_cls.from_str(line))
-        else:
-            self.extras(line)
+            return False
+        self.extras(line)
         return False
 
     def sort(self) -> None:
         self.transitions.sort(key=lambda t: abs(t.amplitude), reverse=True)
+
+    def __repr__(self) -> str:
+        transitions = "\n".join(f"  {t}" for t in self.transitions)
+        meta = ", ".join([f"{k}: {v}" for k, v in self.meta_data.items()])
+        return (
+            f"{self.name} transition {self.id_number}/{self.irrep} {self.multi},\n"
+            f"Excitation energy: {self.excitation_energy:>9.4f} eV\n"
+            f"Total energy: {self.total_energy:>9.6f} eV\n"
+            f"Oscillator strenght: {self.oscillator_strength:>9.6f} (a.u.)\n"
+            f"{meta}\n"
+            "Amplitude Transitions between orbitals\n"
+            f"{transitions}\n"
+        )
 
     def __getitem__(self, key) -> Transition:
         return self.transitions[key]
