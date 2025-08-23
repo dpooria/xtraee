@@ -34,7 +34,7 @@ class CISTransitionBlock(TransitionBlock):
         self.end_trblock = "\n"
 
     def extras(self, line: str):
-        if f"Total energy for state  {self.id_number}" in line:
+        if f"Total energy for state {self.id_number:2d}" in line:
             self.total_energy = float(flp.search(line).group(0)) * Ha
         if (m := oscillator_pattern.match(line)) is not None:
             self.oscillator_strength = float(m.group(1))
