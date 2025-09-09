@@ -183,8 +183,8 @@ class CISDTransition(Transition):
         for id_i, id_f in zip(self.id_i, self.id_f):
             if preserve_irreps:
                 initial = f"{id_i.orb_num + 1} ({id_i.irrep}) {id_i.multi}"
-                final = f"{id_f.orb_num + homo +
-                           1} ({id_f.irrep}) {id_f.multi}"
+                final = (f"{id_f.orb_num + homo + 1}"
+                         f"({id_f.irrep}) {id_f.multi}")
             else:
                 initial = f"{id_i.orb_num + 1} (A) {id_i.multi})"
                 final = f"{id_f.orb_num + homo + 1} (A) {id_f.multi}"
