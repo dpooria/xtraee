@@ -15,21 +15,26 @@ class LP:
         if self._pat is None:
             self._pat = re.compile(self._text, self._flags)
 
-    def search(self, s):
+    def search(self, s, *args, **kwargs):
         self._compile()
         return self._pat.search(s)
 
-    def match(self, s):
+    def match(self, s, *args, **kwargs):
         self._compile()
-        return self._pat.match(s)
+        return self._pat.match(s, *args, **kwargs)
 
-    def findall(self, s):
+    def findall(self, s, *args, **kwargs):
         self._compile()
-        return self._pat.findall(s)
+        return self._pat.findall(s, *args, **kwargs)
 
-    def finditer(self, s):
+    def finditer(self, s, *args, **kwargs):
         self._compile()
-        return self._pat.finditer(s)
+        return self._pat.finditer(s, *args, **kwargs)
+
+    def sub(self, sb, line, *args, **kwargs):
+        self._compile()
+        return self._pat.sub(sb, line, *args, **kwargs)
 
 
 flp = LP(r"[-+]?\d+\.\d+")
+slp = LP(r"\s+")

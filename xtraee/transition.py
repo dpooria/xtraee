@@ -52,7 +52,8 @@ class Transition:
         for m in self.pattern.finditer(tr_str):
             md = m.groupdict()
             trid.append(
-                TrID(int(md["orb_num"]), md.get("irrep", "A"), md.get("multi", "A"))
+                TrID(int(md["orb_num"]), md.get(
+                    "irrep", "A"), md.get("multi", "A"))
             )
         return trid
 
@@ -95,8 +96,8 @@ class Transition:
         return self.is_equal(other)
 
     def __repr__(self) -> str:
-        initial = "\t".join([str(id_) for id_ in self.id_i])
-        final = "\t".join([str(id_) for id_ in self.id_f])
+        initial = "    ".join([str(id_) for id_ in self.id_i])
+        final = "    ".join([str(id_) for id_ in self.id_f])
         return f"{self.amplitude:.4f}\t{initial} -> {final}"
 
 
@@ -137,7 +138,7 @@ class CISTransition(Transition):
         p_close = t.find(")")
         if p_open == -1 or p_close == -1:
             raise ValueError(f"cannot convert {t} to the standard form")
-        return f"{int(t[p_open + 1 : p_close])} (A) A"  # noqa
+        return f"{int(t[p_open + 1: p_close])} (A) A"  # noqa
 
     @classmethod
     def from_str(cls, line: str):
@@ -147,7 +148,7 @@ class CISTransition(Transition):
         initial = cls.make_standard(s[0].strip())
         rhs = s[1].strip()
         idx = rhs.index("=")
-        amplitude = float(rhs[idx + 1 :])  # noqa
+        amplitude = float(rhs[idx + 1:])  # noqa
         final = cls.make_standard(rhs)
         return cls(amplitude, initial, final)
 
@@ -172,7 +173,7 @@ class CISDTransition(Transition):
         rhs = s[1].strip()
         amp_str = lhs.split()[0]
         amplitude = float(amp_str)
-        lhs = lhs[lhs.find(amp_str) + len(amp_str) :].lstrip()  # noqa
+        lhs = lhs[lhs.find(amp_str) + len(amp_str):].lstrip()  # noqa
         return cls(amplitude, lhs, rhs)
 
     def to_ccsd(self, homo: int, preserve_irreps: bool = False) -> CCSDTransition:
@@ -182,7 +183,8 @@ class CISDTransition(Transition):
         for id_i, id_f in zip(self.id_i, self.id_f):
             if preserve_irreps:
                 initial = f"{id_i.orb_num + 1} ({id_i.irrep}) {id_i.multi}"
-                final = f"{id_f.orb_num + homo + 1} ({id_f.irrep}) {id_f.multi}"
+                final = f"{id_f.orb_num + homo +
+                           1} ({id_f.irrep}) {id_f.multi}"
             else:
                 initial = f"{id_i.orb_num + 1} (A) {id_i.multi})"
                 final = f"{id_f.orb_num + homo + 1} (A) {id_f.multi}"
@@ -203,15 +205,17 @@ class ADC2Transition(Transition):
 
     @classmethod
     def from_str(cls, line: str):
-        s = [ll.strip() for ll in line.split(" " * 4) if ll.strip()]
-        if len(s) not in [3, 5]:
+        s = [ll.strip() for ll in line.split() if ll.strip()]
+        if len(s) not in [7, 13]:
             raise ValueError(f"cannot match {line}")
-        if len(s) == 3:
-            lhs = s[0]
-            rhs = s[1]
-        elif len(s) == 5:
-            lhs = " ".join(s[:2])
-            rhs = " ".join(s[2:4])
+        if len(s) == 7:
+            # single excitation
+            lhs = " ".join(s[:3])
+            rhs = " ".join(s[3:-1])
+        elif len(s) == 13:
+            # double excitation
+            lhs = " ".join(s[:6])
+            rhs = " ".join(s[6:-1])
 
         amplitude = float(s[-1])
         return cls(amplitude, lhs, rhs)
