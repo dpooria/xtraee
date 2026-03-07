@@ -19,7 +19,8 @@ prop_patterns = dict(
     oscillator_strength=LP(
         r"^\s*Oscillator strength \(a\.u\.\):\s+([-+]?\d+\.\d+)\s*$"
     ),
-    gamma=LP(r"^\s*\|\|gamma\^AB\|\|\*\|\|gamma\^BA\|\|:\s*([0-9]+\.[0-9]+)\s*$"),
+    gamma=LP(
+        r"^\s*\|\|gamma\^AB\|\|\*\|\|gamma\^BA\|\|:\s*([0-9]+\.[0-9]+)\s*$"),
     omega=LP(r"^\s*omega\s+=\s+([-+]?\d+\.\d+)\s*$"),
     alphabeta=LP(r"^\s*2\<alpha\|beta\>\s+=\s+([-+]?\d+\.\d+)\s*$"),
     loc=LP(r"^\s*LOC\s+=\s+([-+]?\d+\.\d+)\s*$"),
@@ -50,7 +51,8 @@ class QCCSDParser(BaseParser):
     ):
         super().__init__(input_file, threshold)
         self.parser.update(
-            {Block.irrep: self.process_irrepsolv, Block.trprops: self.process_trprops}
+            {Block.irrep: self.process_irrepsolv,
+                Block.trprops: self.process_trprops}
         )
 
     def reset(self):
@@ -82,6 +84,8 @@ class QCCSDParser(BaseParser):
     def process_irrepsolv(self, line: str) -> None:
         if start_indicators["irrepsolv"] in line:
             if (m := meta_patterns["irrepsolv"].match(line)) is not None:
+                self._inside_eeprop = False
+                self._inside_eomee = False
                 multi = m.group(3)
                 if multi == "singlet":
                     n_states = self.ee_singlets[self._singlet_irrep_counter]
@@ -137,7 +141,8 @@ class QCCSDParser(BaseParser):
                                 )
                             )
                     else:
-                        raise ValueError("No current irreducible representation")
+                        raise ValueError(
+                            "No current irreducible representation")
                     self._current_irrep.update_transitions()
                     multi, id_number, irrep = (
                         self._current_irrep.multi,
