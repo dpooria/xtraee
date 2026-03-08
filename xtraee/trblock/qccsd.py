@@ -21,7 +21,8 @@ class CCSDTransitionBlock(TransitionBlock):
     )
 
     occ_frontier_no = "Occupation of frontier NOs:"
-    frontier_no_pattern = LP(r"^\s*([-+]?[0-9]+\.[0-9]+)\s+([-+]?[0-9]+\.[0-9]+)\s*$")
+    #frontier_no_pattern = LP(r"^\s*([-+]?[0-9]+\.[0-9]+)\s+([-+]?[0-9]+\.[0-9]+)\s*$")
+    frontier_no_pattern = LP(r"^\s*([-+]?\d+\.\d+)\s+([-+]?\d+\.\d+)")
     unpaired_no_pattern = LP(
         r"^\s*Number of unpaired electrons:\s*n_u\s*=\s*([-+]?[0-9]+\.[0-9]+),\s*n_u,nl\s*=\s*([-+]?[0-9]+\.[0-9]+)\s*$"
     )
