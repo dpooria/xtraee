@@ -1,0 +1,173 @@
+#!/usr/bin/env python
+
+from argparse import ArgumentParser
+from typing import TYPE_CHECKING
+
+import numpy as np
+import pandas as pd
+
+from pyscf import gto, scf, ao2mo
+from xtraee.parser import Parser
+
+if TYPE_CHECKING:
+    from argparse import Namespace
+    from typing import Any
+
+    from xtraee.parser.base import BaseParser
+    from xtraee.trblock import TransitionBlock
+
+    AtomsT = list[tuple(str, tuple[float, float, float])]
+    pyscf_t = Any
+
+Ha = 27.211386245988
+
+
+def run_hf(atoms: AtomsT, basis: str = 'cc-PVDZ') -> tuple[Any, Any]:
+    mol = gto.M(
+        atom=atoms,
+        basis=basis,
+        unit="Angstrom",
+    )
+
+    mf = scf.RHF(mol).run()
+
+    return mol, mf
+
+
+def run_cis(mf: pyscf_t, n_singlets: int, n_triplets: int) -> tuple[pyscf_t, pyscf_t]:
+    cis_s = mf.TDA()
+    cis_s.singlet = True
+    cis_s.nstates = n_singlets
+    cis_s.kernel()
+
+    cis_t = mf.TDA()
+    cis_t.singlet = False
+    cis_t.nstates = n_triplets
+    cis_t.kernel()
+
+    return cis_s, cis_t
+
+
+def extract_singlet_triplet(parser: BaseParser) -> tuple[TransitionBlock, TransitionBlock]:
+    s1 = parser.data['S1']['singlet']
+    scores = parser.scores['A_A']
+    t_match_ind = scores.loc[s1.identifier].argmax()
+    t_match = scores.columns[t_match_ind]
+    t1 = parser.irreps['triplet-A'].trblocks_dict[t_match]
+    return s1, t1
+
+
+def get_iac(trblock: TransitionBlock,
+            homo: int) -> (list[int], list[int], list[float]):
+    i = []
+    a = []
+    c = []
+    for transition in trblock.transitions:
+        i.append(transition.id_i[0].orb_num - 1)
+        a.append(transition.id_f[0].orb_num + homo - 1)
+        c.append(transition.amplitude)
+
+    return i, a, c
+
+
+def exchange_integral(mol: pyscf_t, mf: pyscf_t, i: list[int], a: list[int], j: list[int], b: list[int]) -> np.ndarray:
+    # (ia|jb)
+    C = mf.mo_coeff
+
+    i = np.atleast_1d(i)
+    a = np.atleast_1d(a)
+    j = np.atleast_1d(j)
+    b = np.atleast_1d(b)
+    N1 = len(i)
+    N2 = len(j)
+    assert len(a) == N1 and len(b) == N2
+
+    K_iajb = ao2mo.general(
+        mol,
+        (C[:, i], C[:, a],
+         C[:, j], C[:, b]),
+        compact=False,
+    ).reshape(N1, N1, N2, N2)
+
+    return K_iajb * Ha
+
+
+def calculate_CIS_exchange(mol: pyscf_t, mf: pyscf_t,
+                           c1: list[float], i: list[int],
+                           a: list[int], phase1: list[float],
+                           c2: list[float], j: list[int],
+                           b: list[int], phase2: list[float]) -> float:
+
+    K_iajb = exchange_integral(mol, mf, i, a, j, b)
+
+    # trace
+    K = np.einsum('ppqq->pq', K_iajb)
+
+    c1 = phase1 * np.array(c1) / np.linalg.norm(c1)
+    c2 = phase2 * np.array(c2) / np.linalg.norm(c2)
+
+    return float(c1 @ K @ c2)
+
+
+def get_amplitude_phase(amplitudes: list[float], td: pyscf_t, E: float, i: list[int], a: list[int], homo: int) -> list[float]:
+    root = np.argmin(np.abs(E - td.e * Ha))
+    td_amps = td.xy[root][0]  # nocc x nvirt
+    phase = []
+    for p, c in enumerate(amplitudes):
+        td_amp = td_amps[i[p], a[p] - homo]
+        if td_amp != 0.0:
+            phase.append(np.sign(td_amp) * np.sign(c))
+        else:
+            phase.append(1.0)
+    return phase
+
+
+def parse_args() -> Namespace:
+    parser = ArgumentParser()
+    parser.add_argument('input_file', type=str)
+    parser.add_argument('-o', '--out', default=None, type=str)
+    return parser.parse_args()
+
+
+if __name__ == '__main__':
+    args = parse_args()
+    infile = args.input_file
+    outfile = args.out or infile + '.csv'
+
+    parser = Parser(infile)  # sys.argv[1]
+    parser.run()
+    homo = parser.homo
+
+    singlet, triplet = extract_singlet_triplet(parser)
+
+    E_S = singlet.excitation_energy
+    E_T = triplet.excitation_energy
+    n_singlets = parser.irreps['singlet-A'].n_states
+    n_triplets = parser.irreps['triplet-A'].n_states
+
+    i, a, c_s = get_iac(singlet, homo)
+    j, b, c_t = get_iac(triplet, homo)
+
+    mol, mf = run_hf(parser.atoms)
+    cis_s, cis_t = run_cis(mf, n_singlets, n_triplets)
+
+    phase_s = get_amplitude_phase(c_s, cis_s, E_S, i, a, homo)
+    phase_t = get_amplitude_phase(c_t, cis_t, E_T, j, b, homo)
+
+    K_S = calculate_CIS_exchange(
+        mol, mf, c_s, i, a, phase_s, c_s, i, a, phase_s)
+
+    K_T = calculate_CIS_exchange(
+        mol, mf, c_t, j, b, phase_t, c_t, j, b, phase_t)
+
+    K_avg = (K_S + K_T) / 2.0
+
+    data = {
+        "singlet": singlet.identifier, "triplet": triplet.identifier,
+        "E_S": E_S, "E_T": E_T,
+        "K_S": K_S, "K_T": K_T,
+        "dE_ST": E_S - E_T, "2K_avg": 2 * K_avg,
+    }
+    df = pd.DataFrame([data])
+    print(df)
+    df.to_csv(outfile)
