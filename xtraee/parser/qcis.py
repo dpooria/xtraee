@@ -3,7 +3,8 @@ from xtraee.lazypattern import LP
 from xtraee.parser.base import BaseParser, Block, PathType
 from xtraee.trblock import CISTransitionBlock
 
-start_indicators = {"ee": "Excitation Energies", "mo": "Orbital Energies (a.u.)"}
+start_indicators = {"mol": "$molecule",
+                    "ee": "Excitation Energies", "mo": "Orbital Energies (a.u.)"}
 
 trblock_begin_pattern = LP(
     r"^Excited\s+state\s+(\d+)\s*:\s*excitation\s+energy\s+\(eV\)\s*=\s*([-+]?\d+.\d+)\s*$"
@@ -33,7 +34,11 @@ class QCISParser(BaseParser):
         self._current_trblock: None | CISTransitionBlock = None
 
     def detect_block(self, line: str) -> None:
-        if start_indicators["ee"] in line:
+        if line.startswith(start_indicators["mol"]):
+            self.block = Block.mol
+        elif self.block == Block.mol and line.startswith("$end"):
+            self.block = Block.null
+        elif start_indicators["ee"] in line:
             self.block = Block.ee
         elif start_indicators["mo"] in line:
             # move this as detect_block should only detect
@@ -49,8 +54,10 @@ class QCISParser(BaseParser):
                 elif self._current_trblock.multi == "triplet":
                     self.irrep_triplets.append(self._current_trblock)
                 else:
-                    raise ValueError(f"Unknown excitation {self._current_trblock}")
-            self._current_trblock = CISTransitionBlock(int(m.group(1)), name=self.name)
+                    raise ValueError(
+                        f"Unknown excitation {self._current_trblock}")
+            self._current_trblock = CISTransitionBlock(
+                int(m.group(1)), name=self.name)
             self._current_trblock.excitation_energy = float(m.group(2))
         elif self._current_trblock is not None:
             self._current_trblock.add_data(line)

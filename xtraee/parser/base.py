@@ -19,6 +19,7 @@ input_patterns = dict(
 
 class Block(Enum):
     null = auto()
+    mol = auto()
     input = auto()
     trprops = auto()
     ee = auto()
@@ -40,11 +41,13 @@ class BaseParser:
         self.parser: dict[Block, Callable[[str], None]] = {
             Block.null: lambda line: None,
             Block.input: self.process_input,
+            Block.mol: self.read_molcule_structure
         }
         self.log = get_logger(self.name, debug)
         self.reset()
 
     def reset(self) -> None:
+        self.atoms: list[(str, list[float, float, float])] = []
         self.block = Block.null
         self.ee_singlets: list[int] = []
         self.N_singlets = 0
@@ -52,6 +55,7 @@ class BaseParser:
         self.N_triplets = 0
         self.irreps: dict[str, Irrep] = {}
         self.data: DatasetType = {}
+        self.scores: dict[str, DataFrame] = {}
         self.homo: int = 0
 
     def detect_block(self, line: str) -> None:
@@ -139,9 +143,10 @@ class BaseParser:
                                         "matched_triplets": matched_triplets,
                                     }
                                     break
+        self.data = data
         return data
 
-    def compare_all(self, method: str) -> dict[str, DataFrame]:
+    def compare_all(self, method: str = "inner-prod") -> dict[str, DataFrame]:
         irreps_singlets = [
             irrep for irrep in self.irreps.values() if irrep.multi == "singlet"
         ]
@@ -154,6 +159,7 @@ class BaseParser:
                 scores[irrep_singlet.name + "_" + irrep_triplet.name] = (
                     irrep_singlet.compare(irrep_triplet, method)
                 )
+        self.scores = scores
         return scores
 
     def match2std(self, my_irrep: Irrep, other_block: TransitionBlock):
@@ -233,3 +239,17 @@ class BaseParser:
                     irrep_triplet.compare(oirr_triplet, method)
                 )
         return scores
+
+    def read_molcule_structure(self, line: str) -> None:
+        sp = line.split(' ')
+        if len(sp) <= 2:
+            return
+        symbol = sp[0].strip()
+        positions = tuple(float(pos) for pos in sp[1:] if pos.strip() != '')
+        self.atoms.append((symbol, positions))
+
+    def run(self) -> None:
+        self.process_file()
+        self.create_dataset()
+        self.compare_all()
+

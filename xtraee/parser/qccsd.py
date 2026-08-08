@@ -31,10 +31,12 @@ prop_patterns = dict(
 
 start_indicators = dict(
     irrepsolv="Solving for",
+    mol="$molecule",
     input="$rem",
     eeprop="Excited state properties for",
 )
 end_indicators = dict(
+    mol="$end",
     input="$end",
     irrepsolv="Start computing the transition properties",
     trprop="All requested transition properties have been computed.",
@@ -50,10 +52,10 @@ class QCCSDParser(BaseParser):
         threshold: float = 0.0,
     ):
         super().__init__(input_file, threshold)
-        self.parser.update(
-            {Block.irrep: self.process_irrepsolv,
-                Block.trprops: self.process_trprops}
-        )
+        self.parser.update({
+            Block.irrep: self.process_irrepsolv,
+            Block.trprops: self.process_trprops
+        })
 
     def reset(self):
         super().reset()
@@ -69,10 +71,14 @@ class QCCSDParser(BaseParser):
     def detect_block(self, line: str) -> None:
         block = self.block
         if block == Block.null:
-            if start_indicators["input"] in line:
+            if line.startswith(start_indicators["mol"]):
+                block = Block.mol
+            elif line.startswith(start_indicators["input"]):
                 block = Block.input
             elif start_indicators["irrepsolv"] in line:
                 block = Block.irrep
+        elif block == Block.mol and end_indicators["mol"] in line:
+            block = Block.null
         elif block == Block.input and end_indicators["input"] in line:
             block = Block.null
         elif block == Block.irrep and end_indicators["irrepsolv"] in line:
