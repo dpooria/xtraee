@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from argparse import Namespace
     from typing import Any
 
-    from xtraee.parser.base import BaseParser
+    from xtraee.parser.qcis import QCISParser
     from xtraee.trblock import TransitionBlock
 
     AtomsT = list[tuple(str, tuple[float, float, float])]
@@ -48,13 +48,15 @@ def run_cis(mf: pyscf_t, n_singlets: int, n_triplets: int) -> tuple[pyscf_t, pys
     return cis_s, cis_t
 
 
-def extract_singlet_triplet(parser: BaseParser) -> tuple[TransitionBlock, TransitionBlock]:
-    s1 = parser.data['S1']['singlet']
+def extract_singlet_triplet(parser: QCISParser, s_label: str, t_label: str) \
+        -> tuple[TransitionBlock, TransitionBlock]:
+
+    singlet = parser.data['S1']['singlet']
     scores = parser.scores['A_A']
-    t_match_ind = scores.loc[s1.identifier].argmax()
+    t_match_ind = scores.loc[singlet.identifier].argmax()
     t_match = scores.columns[t_match_ind]
-    t1 = parser.irreps['triplet-A'].trblocks_dict[t_match]
-    return s1, t1
+    triplet = parser.irreps['triplet-A'].trblocks_dict[t_match]
+    return singlet, triplet
 
 
 def get_iac(trblock: TransitionBlock,
@@ -124,21 +126,27 @@ def get_amplitude_phase(amplitudes: list[float], td: pyscf_t, E: float, i: list[
 
 def parse_args() -> Namespace:
     parser = ArgumentParser()
-    parser.add_argument('input_file', type=str)
+    parser.add_argument('cis_file', type=str)
+    parser.add_argument('singlet', type=str)  # singlet-3/
+    parser.add_argument('triplet', type=str)  # triplet-2/
     parser.add_argument('-o', '--out', default=None, type=str)
     return parser.parse_args()
 
 
 if __name__ == '__main__':
     args = parse_args()
-    infile = args.input_file
-    outfile = args.out or infile + '.csv'
+    cis_file = args.cis_file
+    outfile = args.out or cis_file + '.csv'
+    s_label = args.singlet
+    t_label = args.triplet
 
-    parser = Parser(infile)  # sys.argv[1]
+    parser = Parser(cis_file)
     parser.run()
     homo = parser.homo
 
-    singlet, triplet = extract_singlet_triplet(parser)
+    # singlet, triplet = extract_singlet_triplet(parser, s_label, t_label)
+    singlet = parser.irreps['singlet-A'].trblocks_dict[s_label]
+    triplet = parser.irreps['triplet-A'].trblocks_dict[t_label]
 
     E_S = singlet.excitation_energy
     E_T = triplet.excitation_energy

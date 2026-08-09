@@ -213,7 +213,7 @@ class BaseParser:
             f.write("--- End of sad family :( ---")
 
     def compare_std(
-        self, o_irreps: dict[str, Irrep], method: str
+        self, o_irreps: dict[str, Irrep], method: str = 'inner-prod'
     ) -> dict[str, DataFrame]:
         irreps_singlets = [
             irrep for irrep in self.irreps.values() if irrep.multi == "singlet"
