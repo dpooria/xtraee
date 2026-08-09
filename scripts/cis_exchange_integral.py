@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from __future__ import annotations
+
 from argparse import ArgumentParser
 from typing import TYPE_CHECKING
 
@@ -7,13 +9,12 @@ import numpy as np
 import pandas as pd
 
 from pyscf import gto, scf, ao2mo
-from xtraee.parser import Parser
+from xtraee.parser import Parser, QCISParser
 
 if TYPE_CHECKING:
     from argparse import Namespace
     from typing import Any
 
-    from xtraee.parser.qcis import QCISParser
     from xtraee.trblock import TransitionBlock
 
     AtomsT = list[tuple(str, tuple[float, float, float])]
@@ -22,7 +23,7 @@ if TYPE_CHECKING:
 Ha = 27.211386245988
 
 
-def run_hf(atoms: AtomsT, basis: str = 'cc-PVDZ') -> tuple[Any, Any]:
+def run_hf(atoms: AtomsT, basis: str = 'cc-PVDZ') -> tuple[pyscf_t, pyscf_t]:
     mol = gto.M(
         atom=atoms,
         basis=basis,
@@ -48,7 +49,7 @@ def run_cis(mf: pyscf_t, n_singlets: int, n_triplets: int) -> tuple[pyscf_t, pys
     return cis_s, cis_t
 
 
-def extract_singlet_triplet(parser: QCISParser, s_label: str, t_label: str) \
+def extract_singlet_triplet(parser: QCISParser) \
         -> tuple[TransitionBlock, TransitionBlock]:
 
     singlet = parser.data['S1']['singlet']
@@ -72,8 +73,11 @@ def get_iac(trblock: TransitionBlock,
     return i, a, c
 
 
-def exchange_integral(mol: pyscf_t, mf: pyscf_t, i: list[int], a: list[int], j: list[int], b: list[int]) -> np.ndarray:
-    # (ia|jb)
+def exchange_integral(mol: pyscf_t, mf: pyscf_t, i: list[int],
+                      a: list[int], j: list[int], b: list[int]) \
+        -> np.ndarray:
+    """(ia|jb)"""
+
     C = mf.mo_coeff
 
     i = np.atleast_1d(i)
@@ -99,19 +103,21 @@ def calculate_CIS_exchange(mol: pyscf_t, mf: pyscf_t,
                            a: list[int], phase1: list[float],
                            c2: list[float], j: list[int],
                            b: list[int], phase2: list[float]) -> float:
+    """sum_{pq}{ (phase_p * c_p) (i_p,a_p|j_q,b_q) (phase_q * c_q) }"""
 
     K_iajb = exchange_integral(mol, mf, i, a, j, b)
 
     # trace
     K = np.einsum('ppqq->pq', K_iajb)
 
-    c1 = phase1 * np.array(c1) / np.linalg.norm(c1)
-    c2 = phase2 * np.array(c2) / np.linalg.norm(c2)
+    c1 = phase1 * np.array(c1)
+    c2 = phase2 * np.array(c2)
 
     return float(c1 @ K @ c2)
 
 
-def get_amplitude_phase(amplitudes: list[float], td: pyscf_t, E: float, i: list[int], a: list[int], homo: int) -> list[float]:
+def get_amplitude_phase(amplitudes: list[float], td: pyscf_t, E: float,
+                        i: list[int], a: list[int], homo: int) -> list[float]:
     root = np.argmin(np.abs(E - td.e * Ha))
     td_amps = td.xy[root][0]  # nocc x nvirt
     phase = []
@@ -127,13 +133,13 @@ def get_amplitude_phase(amplitudes: list[float], td: pyscf_t, E: float, i: list[
 def parse_args() -> Namespace:
     parser = ArgumentParser()
     parser.add_argument('cis_file', type=str)
-    parser.add_argument('singlet', type=str)  # singlet-3/
-    parser.add_argument('triplet', type=str)  # triplet-2/
+    parser.add_argument('singlet', type=str, help='e.g. singlet-3/')
+    parser.add_argument('triplet', type=str, help='e.g. triplet-2/')
     parser.add_argument('-o', '--out', default=None, type=str)
     return parser.parse_args()
 
 
-if __name__ == '__main__':
+def main() -> int:
     args = parse_args()
     cis_file = args.cis_file
     outfile = args.out or cis_file + '.csv'
@@ -141,6 +147,7 @@ if __name__ == '__main__':
     t_label = args.triplet
 
     parser = Parser(cis_file)
+    assert isinstance(parser, QCISParser), f"This is not a CIS calculation: {cis_file}: {type(parser)}"
     parser.run()
     homo = parser.homo
 
@@ -179,3 +186,8 @@ if __name__ == '__main__':
     df = pd.DataFrame([data])
     print(df)
     df.to_csv(outfile)
+    return 0
+
+
+if __name__ == '__main__':
+    raise SystemExit(main())
