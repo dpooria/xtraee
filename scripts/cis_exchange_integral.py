@@ -69,7 +69,7 @@ def get_iac(trblock: TransitionBlock, homo: int,
     a = []
     c = []
     if use_pyscf_indices:
-        pass
+        raise NotImplementedError
     else:
         for transition in trblock.transitions:
             i.append(transition.id_i[0].orb_num - 1)
