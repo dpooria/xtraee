@@ -1,14 +1,19 @@
 #!/usr/bin/env python3
+from __future__ import annotations
+
 import argparse
-import sys
 from contextlib import chdir
 from pathlib import Path
+import sys
+from typing import TYPE_CHECKING, cast
 
 import pandas as pd
-from rich import print
 
 from xtraee.config import get_logger
-from xtraee.parser import BaseParser, Parser
+from xtraee.parser import Parser, QCCSDParser
+
+if TYPE_CHECKING:
+    from xtraee.parser import BaseParser
 
 
 def extract_and_write(args) -> dict[str, BaseParser]:
@@ -19,6 +24,7 @@ def extract_and_write(args) -> dict[str, BaseParser]:
     parsers: dict[str, BaseParser] = {}
     for infile in args.input:
         p = Parser(infile, args.threshold)
+        assert p is not None
         p.process_file()
         parsers[p.name] = p
 
@@ -47,7 +53,7 @@ def do_compare(args, parsers: dict[str, BaseParser]) -> int:
         m1 = "EOM-CCSD" if m1.upper() == "CCSD" else m1
         m2 = "EOM-CCSD" if m2.upper() == "CCSD" else m2
     except ValueError:
-        log(
+        log.error(
             "Could not parse %r and %r; format is "
             "{method}:{excitation}-{state-id}/{irrep-id}, e.g. CIS:singlet-1/A",
             args.state1,
@@ -60,8 +66,8 @@ def do_compare(args, parsers: dict[str, BaseParser]) -> int:
         log.error("Parser for %s or %s not found!" % (m1, m2))
         return 1
 
-    tb1 = p1.get_transition_block(s1)
-    tb2 = p2.get_transition_block(s2)
+    tb1 = p1.find_trblock(s1)
+    tb2 = p2.find_trblock(s2)
     if tb1 is None or tb2 is None:
         log.error("State %r or %r not found!" % (s1, s2))
         return 1
@@ -91,7 +97,7 @@ def do_compare_all(args, parsers: dict[str, BaseParser]) -> None:
                     df.to_csv(f"{key}_{args.output}.csv")
 
 
-def do_descriptors(args, parsers: dict[str, BaseParser]) -> int:
+def do_descriptors(args, parsers: dict[str, QCCSDParser]) -> int:
     """Gather descriptors for EOM-CCSD and dump to CSV."""
     log = get_logger("descriptor")
     eom = parsers.get("EOM-CCSD")
@@ -131,7 +137,8 @@ def parse_args() -> argparse.Namespace:
         default="fulldata",
         help="Filename format for the full data",
     )
-    parent.add_argument("--outdir", type=str, default=".", help="Output directory")
+    parent.add_argument("--outdir", type=str, default=".",
+                        help="Output directory")
     parent.add_argument(
         "--out-data",
         type=str,
@@ -176,7 +183,8 @@ def parse_args() -> argparse.Namespace:
     cmp = sub.add_parser(
         "compare", parents=[parent], help="Compare two different states"
     )
-    cmp.add_argument("state1", type=str, help="The first state, e.g. CIS:singlet-1/A")
+    cmp.add_argument("state1", type=str,
+                     help="The first state, e.g. CIS:singlet-1/A")
     cmp.add_argument("state2", type=str, help="The second state")
     cmp.add_argument("--acc-method", type=str, default="inner-prod")
     # compareall
@@ -217,8 +225,9 @@ def main() -> int:
         do_compare_all(args, parsers)
         return 0
     if args.command == "descriptors":
-        return do_descriptors(args, parsers)
-    # "extract" → nothing more
+        for parser in parsers.values():
+            assert isinstance(parser, QCCSDParser), "descriptors are only implemented for QCCSD!"
+        return do_descriptors(args, cast(dict[str, QCCSDParser], parsers))
     return 0
 
 

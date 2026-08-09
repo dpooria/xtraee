@@ -1,8 +1,9 @@
 from xtraee.lazypattern import LP, flp
-from xtraee.transition import ADC2Transition
+from xtraee.transition import ADC2Transition, Transition
 from xtraee.utils import Ha, nan
 
 from .trblock import TransitionBlock
+
 
 tr_indicator = LP(r"(\s*\d+\s+\([\w'\"]+\)\s+[AB]?\s*)+[-+]?\d+\.\d+")
 
@@ -27,9 +28,9 @@ class ADC2TransitionBlock(TransitionBlock):
             total_energy,
             oscillator_strength,
         )
-        self.transitions: list[ADC2Transition] = []
+        self.transitions: list[Transition] = []
         self.tr_cls = ADC2Transition
-        self.tr_indicator = tr_indicator
+        self.tr_indicator: str | LP = tr_indicator
         self.end_trblock = "\n"
         self.meta_data.update({"V1^2": nan, "V2^2": nan})
 

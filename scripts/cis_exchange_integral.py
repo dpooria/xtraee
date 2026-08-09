@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 
     from xtraee.trblock import TransitionBlock
 
-    AtomsT = list[tuple(str, tuple[float, float, float])]
+    AtomsT = list[tuple[str, tuple[float, ...]]]
     pyscf_t = Any
 
 Ha = 27.211386245988
@@ -61,7 +61,7 @@ def extract_singlet_triplet(parser: QCISParser) \
 
 
 def get_iac(trblock: TransitionBlock,
-            homo: int) -> (list[int], list[int], list[float]):
+            homo: int) -> tuple[list[int], list[int], list[float]]:
     i = []
     a = []
     c = []
@@ -80,10 +80,6 @@ def exchange_integral(mol: pyscf_t, mf: pyscf_t, i: list[int],
 
     C = mf.mo_coeff
 
-    i = np.atleast_1d(i)
-    a = np.atleast_1d(a)
-    j = np.atleast_1d(j)
-    b = np.atleast_1d(b)
     N1 = len(i)
     N2 = len(j)
     assert len(a) == N1 and len(b) == N2

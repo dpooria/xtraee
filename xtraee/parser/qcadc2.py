@@ -36,7 +36,7 @@ class QCADC2Parser(BaseParser):
             {Block.irrep: self.process_irreps, Block.mo: self.finalize_irreps}
         )
 
-    def reset(self):
+    def reset(self) -> None:
         super().reset()
         self._current_trblock: None | ADC2TransitionBlock = None
         self._irrep_counter: int = 0
@@ -67,7 +67,7 @@ class QCADC2Parser(BaseParser):
             irrep.sort()
             irrep.n_states = len(irrep)
 
-            for tr in irrep:
+            for tr in irrep.trblocks:
                 if tr.transitions:
                     homo = max(
                         *[id_.orb_num for tr_ in tr.transitions for id_ in tr_.id_i],

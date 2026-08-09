@@ -19,7 +19,7 @@ class ColorFormatter(logging.Formatter):
         return f"{color}{msg}{self.RESET}"
 
 
-def get_logger(name: str = None, debug: bool = False) -> logging.Logger:
+def get_logger(name: str | None = None, debug: bool = False) -> logging.Logger:
     """
     Returns a logger with a single console handler using ColorFormatter.
     """

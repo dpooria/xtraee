@@ -1,5 +1,5 @@
 from xtraee.lazypattern import LP, VERBOSE
-from xtraee.transition import CCSDTransition
+from xtraee.transition import CCSDTransition, Transition
 from xtraee.utils import Ha, nan
 from .trblock import TransitionBlock
 
@@ -51,7 +51,7 @@ class CCSDTransitionBlock(TransitionBlock):
             total_energy,
             oscillator_strength,
         )
-        self.transitions: list[CCSDTransition] = []
+        self.transitions: list[Transition] = []
         self.tr_cls = CCSDTransition
         self.tr_indicator = "->"
         self.end_trblock = "Summary of significant orbitals:"
@@ -116,10 +116,10 @@ class CCSDTransitionBlock(TransitionBlock):
             raise ValueError(f"Transition {self} is already completed!")
 
     def compare(
-        self, other: TransitionBlock, method: str
+            self, other: TransitionBlock, method: str, shallow: bool = True
     ) -> tuple[float, float, float]:
         # CCSD is usually the reference
         if isinstance(other, CCSDTransitionBlock):
-            return super().compare(other, method)
+            return super().compare(other, method, shallow)
         else:
-            return other.compare(self, method)
+            return other.compare(self, method, shallow)

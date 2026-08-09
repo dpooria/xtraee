@@ -90,7 +90,7 @@ class Transition:
         return full_equal
 
     def to_std(self, homo: int = 0) -> "CCSDTransition":
-        return self
+        return CCSDTransition(self.amplitude, self.initial, self.final)
 
     def __eq__(self, other) -> bool:
         return self.is_equal(other)
@@ -152,7 +152,7 @@ class CISTransition(Transition):
         final = cls.make_standard(rhs)
         return cls(amplitude, initial, final)
 
-    def to_std(self, homo: int) -> CCSDTransition:
+    def to_std(self, homo: int = 0) -> CCSDTransition:
         # not considering symmetry and there is no double excitation in CIS
         initial = f"{self.id_i[0].orb_num} (A) A"
         final = f"{self.id_f[0].orb_num + homo} (A) A"
@@ -192,7 +192,7 @@ class CISDTransition(Transition):
             finals.append(final)
         return CCSDTransition(self.amplitude, "\t".join(initials), "\t".join(finals))
 
-    def to_std(self, homo):
+    def to_std(self, homo: int = 0):
         return self.to_ccsd(homo, False)
 
 
@@ -219,9 +219,6 @@ class ADC2Transition(Transition):
 
         amplitude = float(s[-1])
         return cls(amplitude, lhs, rhs)
-
-    def to_std(self, homo):
-        return self
 
 
 class TMCC2Transition(Transition):

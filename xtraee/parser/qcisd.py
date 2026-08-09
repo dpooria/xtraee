@@ -31,6 +31,7 @@ start_indicators = {
     Block.input: "$rem",
     Block.irrep: "SOLVE LINEAR RESPONSE EQUATIONS FOR",
     Block.mo: "Orbital Energies (a.u.)",
+    Block.mol: "$molecule"
 }
 
 
@@ -47,7 +48,7 @@ class QCISDParser(BaseParser):
             {Block.irrep: self.process_irreps, Block.mo: self.finalize_irreps}
         )
 
-    def reset(self):
+    def reset(self) -> None:
         super().reset()
         self._current_trblock: None | CISDTransitionBlock = None
         self._current_irrep: None | Irrep = None
@@ -99,7 +100,7 @@ class QCISDParser(BaseParser):
             # )
             irrep.n_states = len(irrep)
 
-            for tr in irrep:
+            for tr in irrep.trblocks:
                 if tr.transitions:
                     homo = max(
                         *[id_.orb_num for tr_ in tr.transitions for id_ in tr_.id_i],

@@ -9,10 +9,11 @@ from xtraee.parser.tmcc2 import TMCC2Parser
 from xtraee.parser.qcadc2 import QCADC2Parser
 
 
-def Parser(input_file: str | Path, *args, **kwargs) -> BaseParser:
+def Parser(input_file: str | Path, *args, **kwargs) -> BaseParser | None:
     """
     Detects the appropriate parser based on the content of the input file.
     """
+    parser: BaseParser | None = None
     with open(input_file, "r") as f:
         for line in f:
             ls = re.sub(r"\s+", " ", line.strip().lower())
@@ -40,8 +41,13 @@ def Parser(input_file: str | Path, *args, **kwargs) -> BaseParser:
             elif "adc(2)" in ls:
                 parser = QCADC2Parser(input_file, *args, **kwargs)
                 break
+            elif "cisd " in ls:
+                parser = QCISDParser(input_file, *args, **kwargs)
+                break
         else:
-            raise ValueError(f"Could not find suitable parser for {input_file}")
+            parser = None
+            raise ValueError(
+                f"Could not find suitable parser for {input_file}")
 
     return parser
 

@@ -1,5 +1,5 @@
 from xtraee.lazypattern import LP, flp
-from xtraee.transition import CISTransition
+from xtraee.transition import CISTransition, Transition
 from xtraee.utils import Ha, nan
 
 from .trblock import TransitionBlock
@@ -28,7 +28,7 @@ class CISTransitionBlock(TransitionBlock):
             total_energy,
             oscillator_strength,
         )
-        self.transitions: list[CISTransition] = []
+        self.transitions: list[Transition] = []
         self.tr_cls = CISTransition
         self.tr_indicator = "-->"
         self.end_trblock = "\n"

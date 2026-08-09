@@ -29,7 +29,7 @@ class QCISParser(BaseParser):
         self.irrep_singlets = Irrep("A", "singlet", 0, self.name)
         self.irrep_triplets = Irrep("A", "triplet", 0, self.name)
 
-    def reset(self):
+    def reset(self) -> None:
         super().reset()
         self._current_trblock: None | CISTransitionBlock = None
 

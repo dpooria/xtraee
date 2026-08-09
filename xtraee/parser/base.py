@@ -47,7 +47,7 @@ class BaseParser:
         self.reset()
 
     def reset(self) -> None:
-        self.atoms: list[(str, list[float, float, float])] = []
+        self.atoms: list[tuple[str, tuple[float, ...]]] = []
         self.block = Block.null
         self.ee_singlets: list[int] = []
         self.N_singlets = 0
@@ -125,7 +125,7 @@ class BaseParser:
         lowest_singlets = BaseParser.select_lowest_excitations(singlets)
         data = {}
         for i, singlet in enumerate(lowest_singlets):
-            matched_triplets = {}
+            matched_triplets: dict[str, list[str]] = {}
             for idx, s_max in enumerate(singlet.transitions):
                 if abs(s_max.amplitude) > self.threshold:
                     key = str(s_max)
@@ -184,8 +184,8 @@ class BaseParser:
             f"No equivalent irrep found for {other_irrep.multi} {other_irrep.name}"
         )
 
-    def write_vs_std(self, path: str, o_irreps: DatasetType) -> None:
-        data = {}
+    def write_vs_std(self, path: str, o_irreps: dict[str, Irrep]) -> None:
+        data: dict[str, list[dict[str, Any]]] = {}
         for other_key, other_irrep in o_irreps.items():
             my_irrep = self._find_equivalent_irrep(other_irrep)
             data[other_key] = []
@@ -239,6 +239,13 @@ class BaseParser:
                     irrep_triplet.compare(oirr_triplet, method)
                 )
         return scores
+
+    def find_trblock(self, identifier: str) -> TransitionBlock | None:
+        for irrep in self.irreps.values():
+            for trblock in irrep.trblocks:
+                if trblock.identifier == identifier:
+                    return trblock
+        return None
 
     def read_molcule_structure(self, line: str) -> None:
         sp = line.split(' ')

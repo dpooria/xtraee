@@ -1,5 +1,5 @@
 from xtraee.lazypattern import LP
-from xtraee.transition import TMCC2Transition
+from xtraee.transition import Transition, TMCC2Transition
 
 from .trblock import TransitionBlock
 from xtraee.utils import nan
@@ -25,9 +25,9 @@ class TMCC2TransitionBlock(TransitionBlock):
             total_energy,
             oscillator_strength,
         )
-        self.transitions: list[TMCC2Transition] = []
+        self.transitions: list[Transition] = []
         self.tr_cls = TMCC2Transition
-        self.tr_indicator = LP(
+        self.tr_indicator: str | LP = LP(
             r"^\s*\|\s*\d+\s+\w\s+\d+\s*\|\s*\d+\s+\w\s+\d+\s*\|\s*[+-]?\d+\.\d+\s+[+-]?\d+\.\d+\s*\|$"
         )
         self.end_trblock = "norm of printed elements:"

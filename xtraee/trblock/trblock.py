@@ -1,3 +1,4 @@
+from typing import Any
 from copy import deepcopy
 from functools import partial
 
@@ -72,10 +73,10 @@ class TransitionBlock:
         self.total_energy = total_energy
         self.oscillator_strength = oscillator_strength
         self.tr_cls = Transition
-        self.tr_indicator = "->"
+        self.tr_indicator: str | LP = "->"
         # this means the transition never gets terminated as the line is stripped
         self.end_trblock = "\n"
-        self.meta_data = {}
+        self.meta_data: dict[str, Any] = {}
 
     @property
     def identifier(self) -> str:
@@ -183,11 +184,11 @@ class TransitionBlock:
                     break
             else:
                 probs.append((tr.probability, 0.0))
-        probs = np.array(probs)
-        if np.sum(probs[:, 1]) == 0.0:
+        probs_arr = np.array(probs)
+        if np.sum(probs_arr[:, 1]) == 0.0:
             acc = 0.0
         else:
-            acc = np.corrcoef(probs.T)[0, 1]
+            acc = np.corrcoef(probs_arr.T)[0, 1]
         return acc, 1 - acc**2, N_pos / N_tr
 
     def _compare_innerprod(
@@ -223,6 +224,7 @@ class TransitionBlock:
     def compare(
         self, other: "TransitionBlock", method: str, shallow: bool = True
     ) -> tuple[float, float, float]:
+        comp: Any
         if method == "w-abs":
             comp = self._compare_wabs
         elif method == "inner-prod":
@@ -232,6 +234,7 @@ class TransitionBlock:
         elif method == "pearson":
             comp = self._compare_pearson
         else:
+            comp = None
             raise ValueError(f"Method not recognized {method}")
         if not self.std_ready():
             self.generate_std()

@@ -1,7 +1,7 @@
 from xtraee.irrep import Irrep
 from xtraee.lazypattern import LP
 from xtraee.parser.base import BaseParser, Block, PathType
-from xtraee.trblock import CCSDTransitionBlock
+from xtraee.trblock import CCSDTransitionBlock, TransitionBlock
 
 meta_patterns = dict(
     irrepsolv=LP(
@@ -57,11 +57,11 @@ class QCCSDParser(BaseParser):
             Block.trprops: self.process_trprops
         })
 
-    def reset(self):
+    def reset(self) -> None:
         super().reset()
         self._inside_eomee = False
         self._inside_eeprop = False
-        self._current_trblock: None | CCSDTransitionBlock = None
+        self._current_trblock: None | TransitionBlock = None
         self._current_irrep: None | Irrep = None
         self._current_multi: str = ""
         self._current_trprop: str = ""
@@ -115,6 +115,7 @@ class QCCSDParser(BaseParser):
                 if self._current_irrep is not None:
                     self._current_irrep.append(self._current_trblock)
         elif self._inside_eeprop:
+            assert self._current_trblock is not None
             if not self._current_trblock.completed_extras:
                 self._current_trblock.add_data(line)
             else:

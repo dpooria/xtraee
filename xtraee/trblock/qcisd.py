@@ -1,5 +1,5 @@
 from xtraee.lazypattern import LP
-from xtraee.transition import CISDTransition
+from xtraee.transition import Transition, CISDTransition
 from xtraee.utils import Ha, nan
 from .trblock import TransitionBlock
 
@@ -28,11 +28,11 @@ class CISDTransitionBlock(TransitionBlock):
             total_energy,
             oscillator_strength,
         )
-        self.transitions: list[CISDTransition] = []
+        self.transitions: list[Transition] = []
         self.tr_cls = CISDTransition
         self.end_trblock = "\n"
         # -0.6395                 12(   A1) B   ->    0(   A1) B
-        self.tr_indicator = LP(
+        self.tr_indicator: str | LP = LP(
             r"^\s*[-+]?\d+\.\d+"
             r"\s+\d+\s*\(.+\)\s+[AB]"
             r"\s*->\s*"
