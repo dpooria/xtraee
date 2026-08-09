@@ -7,7 +7,7 @@ from pathlib import Path
 @pytest.mark.parametrize(
     "inputfile, expected_output",
     [
-        ("input1.log", "happy_family1.txt"),
+        ("input1.log", "output1.txt"),
     ],
 )
 def test_qcis(inputfile, expected_output):

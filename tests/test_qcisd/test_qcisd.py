@@ -8,7 +8,7 @@ from pathlib import Path
 @pytest.mark.parametrize(
     "inputfile, expected_output",
     [
-        ("input_CISD1.log", "happy_family1.txt"),
+        ("input1.log", "output1.txt"),
     ],
 )
 def test_qcisd(inputfile, expected_output):
@@ -35,7 +35,7 @@ if __name__ == "__main__":
     mode = sys.argv[1]
     if mode not in ["test", "update-test"]:
         usage_and_exit()
-    for inputfile, output in [("input_CISD1.log", "happy_family1.txt")]:
+    for inputfile, output in [("input1.log", "output1.txt")]:
         if mode == "test":
             test_qcisd(inputfile, output)
         else:
@@ -44,5 +44,6 @@ if __name__ == "__main__":
             output_path = test_dir / output
             qccsd = Parser(inputfile_path, 0.2)
             qccsd.process_file()
+            breakpoint()
             qccsd.write_dataset(output_path)
     exit(0)
