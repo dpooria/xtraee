@@ -57,7 +57,7 @@ class QCISParser(BaseParser):
                     raise ValueError(
                         f"Unknown excitation {self._current_trblock}")
             self._current_trblock = CISTransitionBlock(
-                int(m.group(1)), name=self.name)
+                int(m.group(1)), name=self.name, threshold=self.threshold)
             self._current_trblock.excitation_energy = float(m.group(2))
         elif self._current_trblock is not None:
             self._current_trblock.add_data(line)

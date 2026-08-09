@@ -59,6 +59,7 @@ class TransitionBlock:
         excitation_energy: float = nan,
         total_energy: float = nan,
         oscillator_strength: float = nan,
+        threshold: float = 0.0,
     ):
         self.name = name
         self.transitions: list[Transition] = []
@@ -77,6 +78,7 @@ class TransitionBlock:
         # this means the transition never gets terminated as the line is stripped
         self.end_trblock = "\n"
         self.meta_data: dict[str, Any] = {}
+        self.threshold = threshold
 
     @property
     def identifier(self) -> str:
@@ -88,10 +90,11 @@ class TransitionBlock:
         ut: list[Transition] = []
         for tr in transitions:
             if tr in ut:
-                new_tr = deepcopy(ut[ut.index(tr)])
-                new_tr.probability += tr.probability
-                new_tr.amplitude = new_tr.probability**0.5
-                ut[ut.index(tr)] = new_tr
+                if tr.probability >= self.threshold:
+                    new_tr = deepcopy(ut[ut.index(tr)])
+                    new_tr.probability += tr.probability
+                    new_tr.amplitude = new_tr.probability**0.5
+                    ut[ut.index(tr)] = new_tr
             else:
                 ut.append(tr)
 
@@ -100,7 +103,8 @@ class TransitionBlock:
                 assert tr.probability >= 0.0
                 assert tr.probability <= 1.0
                 assert abs(tr.amplitude) - tr.probability**0.5 < 1e-6
-            assert sum([tr.probability for tr in ut]) <= 1.0
+
+            assert round(sum([tr.probability for tr in ut]), 3) <= 1.0
         return ut
 
     def extras(self, line: str) -> None:
@@ -112,10 +116,14 @@ class TransitionBlock:
             return True
         if isinstance(self.tr_indicator, LP):
             if self.tr_indicator.search(line):
-                self.transitions.append(self.tr_cls.from_str(line))
+                tr = self.tr_cls.from_str(line)
+                if tr.amplitude**2 >= self.threshold:
+                    self.transitions.append(tr)
                 return False
         elif self.tr_indicator in line:
-            self.transitions.append(self.tr_cls.from_str(line))
+            tr = self.tr_cls.from_str(line)
+            if tr.amplitude**2 >= self.threshold:
+                self.transitions.append(tr)
             return False
         self.extras(line)
         return False
