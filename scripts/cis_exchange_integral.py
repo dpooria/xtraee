@@ -76,6 +76,9 @@ def get_iac(trblock: TransitionBlock, homo: int,
             a.append(transition.id_f[0].orb_num + homo - 1)
             c.append(transition.amplitude)
 
+    i = np.array(i, dtype=int)
+    a = np.array(a, dtype=int)
+    c = np.array(c, dtype=float)
     return i, a, c
 
 
@@ -134,21 +137,25 @@ def get_phase_amplitudes_energy(amplitudes: list[float], td: pyscf_t, E: float,
             phase.append(np.sign(td_amp) * np.sign(c))
         else:
             phase.append(1.0)
+    phase = np.array(phase, dtype=float)
+    cis_amplitudes = np.array(cis_amplitudes, dtype=float)
     return phase, cis_amplitudes, energy
 
 
 def parse_args() -> Namespace:
-    parser = ArgumentParser()
+    parser = ArgumentParser(description="Calculate the CIS exchange integral using Pyscf from a QChem CIS calculation.")
     parser.add_argument('cis_file', type=str)
     parser.add_argument('singlet', type=str, help='e.g. singlet-3/')
     parser.add_argument('triplet', type=str, help='e.g. triplet-2/')
-    parser.add_argument('-o', '--out', default=None, type=str)
-    parser.add_argument('--ref-pyscf', action='store_true')
-    parser.add_argument('--threshold', type=float, default=1e-5)
+    parser.add_argument('-o', '--out', default=None, type=str, help='name of the output .csv file')
+    parser.add_argument('--threshold', type=float, default=1e-5, help='minimum amplitude^2 to consider from the logfile')
+    parser.add_argument('--ref-pyscf', action='store_true', help='not implemented yet!')
     return parser.parse_args()
 
 
 def main() -> int:
+
+    # ----------- Args ------------
     args = parse_args()
     cis_file = args.cis_file
     outfile = args.out or cis_file + '.csv'
@@ -157,6 +164,7 @@ def main() -> int:
     use_pyscf_indices = args.ref_pyscf
     threshold = args.threshold
 
+    # ----------- Parse inputfile ------------
     parser = Parser(cis_file, threshold=threshold)
     assert isinstance(
         parser, QCISParser), f"This is not a CIS calculation: {cis_file}: {type(parser)}"
@@ -172,9 +180,11 @@ def main() -> int:
     n_singlets = parser.irreps['singlet-A'].n_states
     n_triplets = parser.irreps['triplet-A'].n_states
 
+    # ----------- Pyscf run ------------
     mol, mf = run_hf(parser.atoms)
     cis_s, cis_t = run_cis(mf, n_singlets, n_triplets)
 
+    # ----------- extract transition indices ------------
     i, a, c_s = get_iac(singlet, homo, cis_s, use_pyscf_indices)
     j, b, c_t = get_iac(triplet, homo, cis_t, use_pyscf_indices)
 
@@ -187,6 +197,8 @@ def main() -> int:
         cis_amp_s), np.linalg.norm(cis_amp_t))
     print("QChem amplitudes norm: ", np.linalg.norm(
         c_s), np.linalg.norm(c_t))
+
+    # ----------- QChem CIS ------------
     K_S = calculate_CIS_exchange(
         mol, mf, c_s, i, a, phase_s, c_s, i, a, phase_s)
 
@@ -195,6 +207,38 @@ def main() -> int:
 
     K_avg = (K_S + K_T) / 2.0
 
+    # ----------- HL ------------
+    homo_ind = homo - 1
+    lumo_ind = homo_ind + 1
+
+    ind_hl_s = (i == homo_ind) & (a == lumo_ind)
+    if np.any(ind_hl_s):
+        c_hl = c_s[ind_hl_s]
+        phase_hl = phase_s[ind_hl_s]
+        KHL_S = calculate_CIS_exchange(mol, mf,
+                                       c_hl, [homo_ind], [lumo_ind], phase_hl,
+                                       c_hl, [homo_ind], [lumo_ind], phase_hl)
+    else:
+        c_hl = 0.0
+        KHL_S = 0.0
+
+    print('Singlet HL ampitude^2:', c_hl**2, 'HL transition: ', np.where(ind_hl_s)[0])
+
+    ind_hl_t = (j == homo_ind) & (b == lumo_ind)
+    if np.any(ind_hl_t):
+        c_hl = c_t[ind_hl_t]
+        phase_hl = phase_t[ind_hl_t]
+        KHL_T = calculate_CIS_exchange(mol, mf,
+                                       c_hl, [homo_ind], [lumo_ind], phase_hl,
+                                       c_hl, [homo_ind], [lumo_ind], phase_hl)
+    else:
+        c_hl = 0.0
+        KHL_T = 0.0
+    print('Triplet HL ampitude^2:', c_hl**2, 'HL transition: ', np.where(ind_hl_t)[0])
+
+    KHL_avg = (KHL_S + KHL_T) / 2.0
+
+    # ----------- PYSCF CIS ------------
     KCIS_S = calculate_CIS_exchange(
         mol, mf, cis_amp_s, i, a, 1.0, cis_amp_s, i, a, 1.0)
 
@@ -207,6 +251,7 @@ def main() -> int:
     print("singlets: ", [f"{c:.3f}" for c in cis_amp_s])
     print("triplets: ", [f"{c:.3f}" for c in cis_amp_t])
 
+    # ----------- output ------------
     data = {
         "singlet": singlet.identifier, "triplet": triplet.identifier,
         "E_S": E_S, "E_T": E_T,
@@ -215,6 +260,7 @@ def main() -> int:
         "K_pyscfCIS_S": KCIS_S, "K_pyscfCIS_T": KCIS_T,
         "dE_ST": E_S - E_T, "2K_avg": 2 * K_avg,
         "dE_pyscf_ST": ECIS_S - ECIS_T, "2K_pyscf_avg": 2 * KCIS_avg,
+        "KHL_S": KHL_S, "KHL_T": KHL_T, "2KHL_avg": 2 * KHL_avg,
     }
     df = pd.DataFrame([data])
     print(df)
