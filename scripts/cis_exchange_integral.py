@@ -143,13 +143,18 @@ def get_phase_amplitudes_energy(amplitudes: list[float], td: pyscf_t, E: float,
 
 
 def parse_args() -> Namespace:
-    parser = ArgumentParser(description="Calculate the CIS exchange integral using Pyscf from a QChem CIS calculation.")
+    parser = ArgumentParser(
+        description="Calculate the CIS exchange integral using Pyscf from a QChem CIS calculation.")
     parser.add_argument('cis_file', type=str)
     parser.add_argument('singlet', type=str, help='e.g. singlet-3/')
     parser.add_argument('triplet', type=str, help='e.g. triplet-2/')
-    parser.add_argument('-o', '--out', default=None, type=str, help='name of the output .csv file')
-    parser.add_argument('--threshold', type=float, default=1e-5, help='minimum amplitude^2 to consider from the logfile')
-    parser.add_argument('--ref-pyscf', action='store_true', help='not implemented yet!')
+    parser.add_argument('-o', '--out', default=None, type=str,
+                        help='name of the output .csv file')
+    parser.add_argument('--threshold', type=float, default=1e-5,
+                        help='minimum amplitude^2 to consider from the logfile')
+    parser.add_argument("--pyscf_output_file", type=str, default="pyscf.txt", help="file to write the CIS amplitudes from pyscf")
+    parser.add_argument('--ref-pyscf', action='store_true',
+                        help='not implemented yet!')
     return parser.parse_args()
 
 
@@ -207,36 +212,51 @@ def main() -> int:
 
     K_avg = (K_S + K_T) / 2.0
 
-    # ----------- HL ------------
+    # ----------- dom/HL ------------
     homo_ind = homo - 1
     lumo_ind = homo_ind + 1
 
-    ind_hl_s = (i == homo_ind) & (a == lumo_ind)
-    if np.any(ind_hl_s):
-        c_hl = c_s[ind_hl_s]
-        phase_hl = phase_s[ind_hl_s]
-        KHL_S = calculate_CIS_exchange(mol, mf,
-                                       c_hl, [homo_ind], [lumo_ind], phase_hl,
-                                       c_hl, [homo_ind], [lumo_ind], phase_hl)
-    else:
-        c_hl = 0.0
-        KHL_S = 0.0
+    dom_ind_s = np.argmax(c_s**2)
+    i_dom = np.atleast_1d(i[dom_ind_s])
+    a_dom = np.atleast_1d(a[dom_ind_s])
+    ind_hl_s = np.where((i == homo_ind) & (a == lumo_ind))[0]
+    is_HL_s = np.any(ind_hl_s == dom_ind_s)
 
-    print('Singlet HL ampitude^2:', c_hl**2, 'HL transition: ', np.where(ind_hl_s)[0])
+    c_dom = np.atleast_1d(c_s[dom_ind_s])
+    phase_dom = phase_s[dom_ind_s]
+    Kdom_S = calculate_CIS_exchange(mol, mf,
+                                    c_dom, i_dom, a_dom, phase_dom,
+                                    c_dom, i_dom, a_dom, phase_dom)
 
-    ind_hl_t = (j == homo_ind) & (b == lumo_ind)
-    if np.any(ind_hl_t):
-        c_hl = c_t[ind_hl_t]
-        phase_hl = phase_t[ind_hl_t]
-        KHL_T = calculate_CIS_exchange(mol, mf,
-                                       c_hl, [homo_ind], [lumo_ind], phase_hl,
-                                       c_hl, [homo_ind], [lumo_ind], phase_hl)
-    else:
-        c_hl = 0.0
-        KHL_T = 0.0
-    print('Triplet HL ampitude^2:', c_hl**2, 'HL transition: ', np.where(ind_hl_t)[0])
+    print(
+        'Singlet dominant ampitude^2:', c_dom**2,
+        'HL transition: ', ind_hl_s,
+        'dominant_transition:', dom_ind_s, is_HL_s
+    )
 
-    KHL_avg = (KHL_S + KHL_T) / 2.0
+    dom_ind_t = np.argmax(c_t**2)
+    j_dom = np.atleast_1d(j[dom_ind_t])
+    b_dom = np.atleast_1d(b[dom_ind_t])
+    ind_hl_t = np.where((j == homo_ind) & (b == lumo_ind))[0]
+    is_HL_t = np.any(ind_hl_t == dom_ind_t)
+
+    if j_dom != i_dom or a_dom != b_dom:
+        print("WARNING: triplet and singlet dominant transitions don't match:"
+              f"({i_dom}, {a_dom})!= ({j_dom}, {b_dom})")
+
+    c_dom = np.atleast_1d(c_t[dom_ind_t])
+    phase_dom = phase_t[dom_ind_t]
+    Kdom_T = calculate_CIS_exchange(mol, mf,
+                                    c_dom, j_dom, b_dom, phase_dom,
+                                    c_dom, j_dom, b_dom, phase_dom)
+
+    print(
+        'Triplet dominant ampitude^2:', c_dom**2,
+        'HL transition: ', ind_hl_t,
+        'dominant_transition:', dom_ind_t, is_HL_t
+    )
+
+    Kdom_avg = (Kdom_S + Kdom_T) / 2.0
 
     # ----------- PYSCF CIS ------------
     KCIS_S = calculate_CIS_exchange(
@@ -247,9 +267,10 @@ def main() -> int:
 
     KCIS_avg = (KCIS_S + KCIS_T) / 2.0
 
-    print("CIS transition amplitudes from pyscf:")
-    print("singlets: ", [f"{c:.3f}" for c in cis_amp_s])
-    print("triplets: ", [f"{c:.3f}" for c in cis_amp_t])
+    with open(args.pyscf_output_file, "w") as f:
+        print("singlets: ", [f"{c:.3f}" for c in cis_amp_s], file=f)
+        print("triplets: ", [f"{c:.3f}" for c in cis_amp_t], file=f)
+    print(f"CIS transition amplitudes from pyscf are written to {args.pyscf_output_file}")
 
     # ----------- output ------------
     data = {
@@ -260,7 +281,8 @@ def main() -> int:
         "K_pyscfCIS_S": KCIS_S, "K_pyscfCIS_T": KCIS_T,
         "dE_ST": E_S - E_T, "2K_avg": 2 * K_avg,
         "dE_pyscf_ST": ECIS_S - ECIS_T, "2K_pyscf_avg": 2 * KCIS_avg,
-        "KHL_S": KHL_S, "KHL_T": KHL_T, "2KHL_avg": 2 * KHL_avg,
+        "Kdom_S": Kdom_S, "Kdom_T": Kdom_T, "2Kdom_avg": 2 * Kdom_avg,
+        "is_HL_s": is_HL_s, "is_HL_t": is_HL_t
     }
     df = pd.DataFrame([data])
     print(df)
