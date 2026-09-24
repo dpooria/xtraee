@@ -6,6 +6,14 @@ from .trblock import TransitionBlock
 
 oscillator_pattern = LP(r"Strength\s+:\s*([-+]?\d*\.?\d+)\s*")
 multplicity_pattern = LP(r"Multiplicity:\s*(Singlet|Triplet)")
+# QChem prints <0|mu|n> in atomic units on a single line, e.g.
+#     Trans. Mom.: -1.4374 X   0.0061 Y   0.2550 Z
+transition_dipole_pattern = LP(
+    r"Trans\.\s*Mom\.\s*:\s*"
+    r"([-+]?\d*\.?\d+)\s*X\s*"
+    r"([-+]?\d*\.?\d+)\s*Y\s*"
+    r"([-+]?\d*\.?\d+)\s*Z"
+)
 
 
 class CISTransitionBlock(TransitionBlock):
@@ -18,6 +26,7 @@ class CISTransitionBlock(TransitionBlock):
         excitation_energy: float = nan,
         total_energy: float = nan,
         oscillator_strength: float = nan,
+        transition_dipole: tuple[float, float, float] = (nan, nan, nan),
         threshold: float = 0.0,
     ):
         super().__init__(
@@ -28,6 +37,7 @@ class CISTransitionBlock(TransitionBlock):
             excitation_energy,
             total_energy,
             oscillator_strength,
+            transition_dipole,
             threshold=threshold,
         )
         self.transitions: list[Transition] = []
@@ -40,5 +50,7 @@ class CISTransitionBlock(TransitionBlock):
             self.total_energy = float(flp.search(line).group(0)) * Ha
         if (m := oscillator_pattern.match(line)) is not None:
             self.oscillator_strength = float(m.group(1))
+        elif (m := transition_dipole_pattern.match(line)) is not None:
+            self.transition_dipole = tuple(float(m.group(i)) for i in (1, 2, 3))
         elif (m := multplicity_pattern.match(line)) is not None:
             self.multi = m.group(1).lower()

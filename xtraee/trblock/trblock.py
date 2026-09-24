@@ -59,6 +59,7 @@ class TransitionBlock:
         excitation_energy: float = nan,
         total_energy: float = nan,
         oscillator_strength: float = nan,
+        transition_dipole: tuple[float, float, float] = (nan, nan, nan),
         threshold: float = 0.0,
     ):
         self.name = name
@@ -73,6 +74,8 @@ class TransitionBlock:
         self.excitation_energy = excitation_energy
         self.total_energy = total_energy
         self.oscillator_strength = oscillator_strength
+        # electronic transition dipole moment <0|mu|n> in atomic units
+        self.transition_dipole = transition_dipole
         self.tr_cls = Transition
         self.tr_indicator: str | LP = "->"
         # this means the transition never gets terminated as the line is stripped

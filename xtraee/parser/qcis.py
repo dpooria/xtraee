@@ -45,17 +45,27 @@ class QCISParser(BaseParser):
             self.process_irreps()
             self.block = Block.mo
 
+    def flush_trblock(self) -> None:
+        """File the transition block being read, if any.
+
+        The block is only known to be finished once the next one starts or the
+        excitation section ends, so this has to be called from both places;
+        otherwise the highest excited state is silently discarded.
+        """
+        if self._current_trblock is None:
+            return
+        self._current_trblock.sort()
+        if self._current_trblock.multi == "singlet":
+            self.irrep_singlets.append(self._current_trblock)
+        elif self._current_trblock.multi == "triplet":
+            self.irrep_triplets.append(self._current_trblock)
+        else:
+            raise ValueError(f"Unknown excitation {self._current_trblock}")
+        self._current_trblock = None
+
     def process_trblock(self, line: str) -> None:
         if (m := trblock_begin_pattern.match(line)) is not None:
-            if self._current_trblock is not None:
-                self._current_trblock.sort()
-                if self._current_trblock.multi == "singlet":
-                    self.irrep_singlets.append(self._current_trblock)
-                elif self._current_trblock.multi == "triplet":
-                    self.irrep_triplets.append(self._current_trblock)
-                else:
-                    raise ValueError(
-                        f"Unknown excitation {self._current_trblock}")
+            self.flush_trblock()
             self._current_trblock = CISTransitionBlock(
                 int(m.group(1)), name=self.name, threshold=self.threshold)
             self._current_trblock.excitation_energy = float(m.group(2))
@@ -63,6 +73,7 @@ class QCISParser(BaseParser):
             self._current_trblock.add_data(line)
 
     def process_irreps(self) -> None:
+        self.flush_trblock()
         self.irrep_singlets.sort()
         self.irrep_triplets.sort()
         self.irrep_singlets.n_states = len(self.irrep_singlets)
