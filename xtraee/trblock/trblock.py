@@ -2,12 +2,13 @@ from typing import Any
 from copy import deepcopy
 from functools import partial
 
-from xtraee.config import debug, get_logger
+from xtraee import config
+from xtraee.config import get_logger
 from xtraee.lazypattern import LP
 from xtraee.transition import Transition
 from xtraee.utils import nan
 
-log = get_logger("trblock", debug)
+log = get_logger("trblock")
 
 
 def lsq_fit(
@@ -101,11 +102,11 @@ class TransitionBlock:
             else:
                 ut.append(tr)
 
-        if debug:
+        if config.debug:
             for tr in ut:
                 assert tr.probability >= 0.0
                 assert tr.probability <= 1.0
-                assert abs(tr.amplitude) - tr.probability**0.5 < 1e-6
+                assert abs(abs(tr.amplitude) - tr.probability**0.5) < 1e-6
 
             assert round(sum([tr.probability for tr in ut]), 3) <= 1.0
         return ut
@@ -160,6 +161,9 @@ class TransitionBlock:
         N_tr = len(transitions)
         N_pos = 0
         my_sum = sum([tr.probability for tr in transitions])
+        if my_sum == 0.0:
+            # no state weight at all: there is no overlap to measure
+            return 0.0, 1.0, 0.0
         # I am the reference :)
         for tr in transitions:
             matched = False
@@ -195,12 +199,45 @@ class TransitionBlock:
                     break
             else:
                 probs.append((tr.probability, 0.0))
-        probs_arr = np.array(probs)
-        if np.sum(probs_arr[:, 1]) == 0.0:
+        probs_arr = np.array(probs, dtype=float)
+        if probs_arr.size == 0 or np.allclose(probs_arr[:, 1], 0.0):
+            acc = 0.0
+        elif np.allclose(probs_arr[:, 0], probs_arr[0, 0]) or np.allclose(
+            probs_arr[:, 1], probs_arr[0, 1]
+        ):
+            # a constant column has no correlation; corrcoef would return nan
             acc = 0.0
         else:
-            acc = np.corrcoef(probs_arr.T)[0, 1]
+            with np.errstate(invalid="ignore", divide="ignore"):
+                acc = float(np.corrcoef(probs_arr.T)[0, 1])
+            if np.isnan(acc):
+                acc = 0.0
         return acc, 1 - acc**2, N_pos / N_tr
+
+    def _matched_pairs(
+        self,
+        transitions: list[Transition],
+        other_transitions: list[Transition],
+        shallow: bool = False,
+    ) -> tuple[list[tuple[float, float]], int]:
+        """Pair every transition of ``self`` with its counterpart in ``other``.
+
+        Unmatched transitions are paired with a 0.0 amplitude so they still
+        count against the state.  Returns the pairs and how many matched.
+        """
+        amps: list[tuple[float, float]] = []
+        n_pos = 0
+        for tr in transitions:
+            matched = False
+            for o_tr in other_transitions:
+                if tr.is_equal(o_tr, shallow=shallow):
+                    amps.append((tr.amplitude, o_tr.amplitude))
+                    matched = True
+                    n_pos += 1
+                    break
+            if not matched:
+                amps.append((tr.amplitude, 0.0))
+        return amps, n_pos
 
     def _compare_innerprod(
         self,
@@ -209,21 +246,12 @@ class TransitionBlock:
         retreive: bool = False,
         shallow: bool = False,
     ) -> tuple[float, float, float]:
-        amps = []
-        N_tr = len(transitions)
-        N_pos = 0
-        # I am the reference
-        for tr in transitions:
-            matched = False
-            for o_tr in other_transitions:
-                if tr.is_equal(o_tr, shallow=shallow):
-                    amps.append((tr.amplitude, o_tr.amplitude))
-                    matched = True
-                    N_pos += 1
-                    break
-            if not matched:
-                amps.append((tr.amplitude, 0.0))
+        amps, N_pos = self._matched_pairs(
+            transitions, other_transitions, shallow=shallow
+        )
 
+        # I am the reference
+        N_tr = len(transitions)
         if retreive and len(transitions) < len(other_transitions):
             # construct the missing transitions that maximize the accuracy
             lsq_fit(transitions, other_transitions, amps)
@@ -231,6 +259,30 @@ class TransitionBlock:
         acc = sum([abs(m_amp) * abs(o_amp) for m_amp, o_amp in amps])
         mae = 1.0 - acc
         return acc, mae, N_pos / N_tr
+
+    def _compare_cosine(
+        self,
+        transitions: list[Transition],
+        other_transitions: list[Transition],
+        shallow: bool = False,
+    ) -> tuple[float, float, float]:
+        """Normalized overlap of the two amplitude vectors.
+
+        ``inner-prod`` sums ``|a_i||b_i|``, so a state compared with itself
+        scores ``sum(a_i**2)`` -- less than one whenever the printed
+        amplitudes do not carry the whole state.  The cosine divides by both
+        norms, so identical states score exactly 1.0 whatever the print
+        threshold was.
+        """
+        amps, N_pos = self._matched_pairs(
+            transitions, other_transitions, shallow=shallow
+        )
+        norm_mine = sum(m_amp * m_amp for m_amp, _ in amps) ** 0.5
+        norm_other = sum(o_amp * o_amp for _, o_amp in amps) ** 0.5
+        if norm_mine == 0.0 or norm_other == 0.0:
+            return 0.0, 1.0, 0.0
+        acc = sum(m_amp * o_amp for m_amp, o_amp in amps) / (norm_mine * norm_other)
+        return acc, 1.0 - acc, N_pos / len(transitions)
 
     def compare(
         self, other: "TransitionBlock", method: str, shallow: bool = True
@@ -244,6 +296,8 @@ class TransitionBlock:
             comp = partial(self._compare_innerprod, retreive=True)
         elif method == "pearson":
             comp = self._compare_pearson
+        elif method == "cosine":
+            comp = self._compare_cosine
         else:
             comp = None
             raise ValueError(f"Method not recognized {method}")
@@ -253,7 +307,10 @@ class TransitionBlock:
             other.generate_std()
         if len(self.std_transitions) == 0 or len(other.std_transitions) == 0:
             return 0.0, 1.0, 0.0
-        return comp(self.utrs(), other.utrs(), shallow=shallow)
+        mine, theirs = self.utrs(), other.utrs()
+        if not mine or not theirs:
+            return 0.0, 1.0, 0.0
+        return comp(mine, theirs, shallow=shallow)
 
     def generate_std(self) -> list[Transition]:
         self.std_transitions = [tr.to_std(self.homo) for tr in self.transitions]

@@ -1,5 +1,23 @@
+"""Logging for xtraee.
+
+Importing the package never changes the level of the root logger: everything
+xtraee logs goes through the ``xtraee`` logger tree, which defaults to
+warnings and errors.  The CLI calls :func:`configure` once it knows whether
+``--debug`` was requested, so ``--debug`` actually controls verbosity instead
+of every parser shouting to stdout.
+"""
+
 import logging
 import sys
+
+LOGGER_NAME = "xtraee"
+
+#: True when debug logging (and the internal consistency assertions) is enabled.
+debug = False
+_LEVEL = logging.WARNING
+
+_FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
+_DATEFMT = "%Y-%m-%d %H:%M:%S"
 
 
 class ColorFormatter(logging.Formatter):
@@ -19,22 +37,31 @@ class ColorFormatter(logging.Formatter):
         return f"{color}{msg}{self.RESET}"
 
 
-def get_logger(name: str | None = None, debug: bool = False) -> logging.Logger:
+def configure(verbose: bool = False) -> None:
+    """Set the verbosity of the whole ``xtraee`` logger tree.
+
+    ``verbose=False`` keeps only warnings and errors, so a normal run stays
+    quiet.  ``verbose=True`` (the CLI's ``--debug``) turns on debug messages
+    and the internal consistency checks that read :data:`debug`.
     """
-    Returns a logger with a single console handler using ColorFormatter.
-    """
-    logger = logging.getLogger(name)
-    # only add handlers once
-    if not logger.hasHandlers():
-        fmt = "%(asctime)s - %(levelname)s - %(message)s"
-        datefmt = "%Y-%m-%d %H:%M:%S"
+    global _LEVEL, debug
+    debug = bool(verbose)
+    _LEVEL = logging.DEBUG if debug else logging.WARNING
+
+    logger = logging.getLogger(LOGGER_NAME)
+    logger.setLevel(_LEVEL)
+    if not logger.handlers:
         handler = logging.StreamHandler(sys.stdout)
-        handler.setFormatter(ColorFormatter(fmt, datefmt))
+        handler.setFormatter(ColorFormatter(_FORMAT, _DATEFMT))
         logger.addHandler(handler)
-
-    logger.setLevel(logging.DEBUG if debug else logging.WARNING)
     logger.propagate = False
-    return logger
 
 
-debug = True
+def get_logger(name: str | None = None) -> logging.Logger:
+    """Return the logger for one module, under the shared ``xtraee`` tree."""
+    if not name:
+        return logging.getLogger(LOGGER_NAME)
+    return logging.getLogger(f"{LOGGER_NAME}.{name}")
+
+
+configure()

@@ -1,4 +1,5 @@
 from typing import NamedTuple
+from xtraee.config import get_logger
 from xtraee.lazypattern import LP, VERBOSE
 
 
@@ -40,8 +41,13 @@ class Transition:
         self.id_f: list[TrID] = []
         self._spin_ind = 2
         self.is_double = False
+        self.parsed = False
         if not self.parse(self.initial, self.final):
-            raise ValueError(f"Cannot parse {initial} -> {final}")
+            # Keep the transition for its amplitude, but it can never be
+            # matched against another state (see is_equal).
+            get_logger("transition").debug(
+                "Could not match the orbitals in %r -> %r", initial, final
+            )
 
     @classmethod
     def from_str(cls, line: str):
@@ -58,17 +64,26 @@ class Transition:
         return trid
 
     def parse(self, initial, final) -> bool:
+        """Match the orbital labels on both sides of the arrow.
+
+        Returns False when either side carries no recognizable orbital, which
+        happens for truncated or non-standard output lines.  Such a transition
+        keeps its amplitude but must never be treated as equal to another one:
+        comparing empty orbital lists used to match *everything*.
+        """
         self.id_i = self.trid_match(initial)
         self.id_f = self.trid_match(final)
-        if len(self.id_i) > 1 or len(self.id_f) > 1:
-            self.is_double = True
-        else:
-            self.is_double = False
-        return True
+        self.is_double = len(self.id_i) > 1 or len(self.id_f) > 1
+        self.parsed = bool(self.id_i) and bool(self.id_f)
+        return self.parsed
 
     def is_equal(self, other: "Transition", shallow=False) -> bool:
         # currently we don't check for spin matching at all (use trblock.utrs)
+        if not self.parsed or not other.parsed:
+            return False
         if self.is_double != other.is_double:
+            return False
+        if len(self.id_i) != len(other.id_i):
             return False
 
         equal_orbnum = True
@@ -154,6 +169,9 @@ class CISTransition(Transition):
 
     def to_std(self, homo: int = 0) -> CCSDTransition:
         # not considering symmetry and there is no double excitation in CIS
+        if not self.id_i or not self.id_f:
+            # nothing to renumber; stays unmatched (is_equal returns False)
+            return CCSDTransition(self.amplitude, self.initial, self.final)
         initial = f"{self.id_i[0].orb_num} (A) A"
         final = f"{self.id_f[0].orb_num + homo} (A) A"
         return CCSDTransition(self.amplitude, initial, final)
@@ -186,7 +204,7 @@ class CISDTransition(Transition):
                 final = (f"{id_f.orb_num + homo + 1}"
                          f"({id_f.irrep}) {id_f.multi}")
             else:
-                initial = f"{id_i.orb_num + 1} (A) {id_i.multi})"
+                initial = f"{id_i.orb_num + 1} (A) {id_i.multi}"
                 final = f"{id_f.orb_num + homo + 1} (A) {id_f.multi}"
             initials.append(initial)
             finals.append(final)

@@ -41,6 +41,7 @@ class CCSDTransitionBlock(TransitionBlock):
         excitation_energy: float = nan,
         total_energy: float = nan,
         oscillator_strength: float = nan,
+        threshold: float = 0.0,
     ):
         super().__init__(
             id_number,
@@ -50,6 +51,7 @@ class CCSDTransitionBlock(TransitionBlock):
             excitation_energy,
             total_energy,
             oscillator_strength,
+            threshold=threshold,
         )
         self.transitions: list[Transition] = []
         self.tr_cls = CCSDTransition
@@ -68,7 +70,7 @@ class CCSDTransitionBlock(TransitionBlock):
                 "rhre": nan,
                 "alphabeta": nan,
                 "corr_coef": nan,
-                "froniter_no": [],
+                "frontier_no": [],
                 "nu": nan,
                 "nl": nan,
                 "prno": nan,
@@ -91,22 +93,22 @@ class CCSDTransitionBlock(TransitionBlock):
             elif self.wait_frontier_no:
                 if (m := self.frontier_no_pattern.match(line)) is not None:
                     self.wait_frontier_no = False
-                    meta["froniter_no"] = [float(m.group(1)), float(m.group(2))]
+                    meta["frontier_no"] = [float(m.group(1)), float(m.group(2))]
                 else:
                     raise ValueError(
                         f"Could not match the Occupations of the frontier NO for {self}"
                     )
             elif self.unpaired_no in line:
                 if m := self.unpaired_no_pattern.match(line):
-                    meta["nu"] = m.group(1)
-                    meta["nl"] = m.group(2)
+                    meta["nu"] = float(m.group(1))
+                    meta["nl"] = float(m.group(2))
                 else:
                     raise ValueError(
                         f"Could not match the number of unpaired electrons for {self}"
                     )
             elif self.prno_ind in line:
                 if (m := self.prno_pattern.match(line)) is not None:
-                    meta["prno"] = m.group(1)
+                    meta["prno"] = float(m.group(1))
                 else:
                     raise ValueError(
                         f"Could not match the participation number for {self}"

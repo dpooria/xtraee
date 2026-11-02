@@ -69,7 +69,8 @@ class TMCC2Parser(BaseParser):
             id_number = int(m.group(3))
             cc2_energy = float(m.group(4))
             transition_block = TMCC2TransitionBlock(
-                id_number, irrep, multi, self.name, cc2_energy
+                id_number, irrep, multi, self.name, cc2_energy,
+                threshold=self.threshold,
             )
             t1 = float(m.group(5))
             t2 = float(m.group(6))

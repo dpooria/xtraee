@@ -47,16 +47,19 @@ class Irrep:
     def __getitem__(self, key) -> TransitionBlock:
         return self.trblocks[key]
 
-    def compare(self, other, method: str) -> pd.DataFrame:
+    def compare(self, other: "Irrep", method: str) -> pd.DataFrame:
+        """Score every state of this irrep against every state of ``other``.
+
+        Returns a state-by-state matrix.  When either side holds no parsed
+        states the matrix is empty but still labelled, so ``compareall`` can
+        write it instead of dying on an irrep that produced no states
+        (previously ``UnboundLocalError: columns``).
+        """
+        rows = [tr.identifier for tr in self.trblocks]
+        columns = [o_tr.identifier for o_tr in other.trblocks]
+        if not rows or not columns:
+            return pd.DataFrame(index=rows, columns=columns, dtype=float)
         scores = []
-        rows = []
         for tr in self.trblocks:
-            rows.append(tr.identifier)
-            score_tr = []
-            columns = []
-            for o_tr in other.trblocks:
-                columns.append(o_tr.identifier)
-                score, *_ = tr.compare(o_tr, method)
-                score_tr.append(score)
-            scores.append(score_tr)
+            scores.append([tr.compare(o_tr, method)[0] for o_tr in other.trblocks])
         return pd.DataFrame(scores, columns=columns, index=rows)

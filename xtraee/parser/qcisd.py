@@ -2,6 +2,7 @@ from xtraee.irrep import Irrep
 from xtraee.lazypattern import LP, VERBOSE
 from xtraee.parser.base import BaseParser, Block, PathType
 from xtraee.trblock import CISDTransitionBlock
+from xtraee.utils import Ha
 
 trblock_begin_pattern = LP(
     r"""
@@ -76,7 +77,9 @@ class QCISDParser(BaseParser):
                 irrep.multi,
                 self.name,
                 float(m["ex"]),
-                float(m["tote"]),
+                # every other parser reports the total energy in eV
+                float(m["tote"]) * Ha,
+                threshold=self.threshold,
             )
             trblock.meta_data.update(
                 {

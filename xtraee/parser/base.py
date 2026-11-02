@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Any, Callable
 
 from pandas.core.frame import DataFrame
-from xtraee.config import debug, get_logger
+from xtraee.config import get_logger
 from xtraee.irrep import Irrep
 from xtraee.lazypattern import LP
 from xtraee.trblock import TransitionBlock
@@ -41,9 +41,9 @@ class BaseParser:
         self.parser: dict[Block, Callable[[str], None]] = {
             Block.null: lambda line: None,
             Block.input: self.process_input,
-            Block.mol: self.read_molcule_structure
+            Block.mol: self.read_molecule_structure
         }
-        self.log = get_logger(self.name, debug)
+        self.log = get_logger(self.name)
         self.reset()
 
     def reset(self) -> None:
@@ -74,10 +74,21 @@ class BaseParser:
 
     @staticmethod
     def select_lowest_excitations(states: list[Irrep]) -> list[TransitionBlock]:
-        n_states = [irr.n_states for irr in states]
+        """Pick the n lowest states of every irrep, one block per state index.
+
+        ``Irrep.n_states`` is the number of states the calculation asked for,
+        but an irrep can come back shorter when a root did not converge, so the
+        usable depth is what was actually parsed.  An empty list of states (a
+        calculation with no states of that multiplicity) yields no blocks.
+        """
+        if not states:
+            return []
+        depth = min(len(irr) for irr in states)
         lowest_excitations = []
-        for i in range(min(n_states)):
-            e_block = min([irr[i] for irr in states], key=lambda t: t.excitation_energy)
+        for i in range(depth):
+            e_block = min(
+                (irr[i] for irr in states), key=lambda t: t.excitation_energy
+            )
             lowest_excitations.append(e_block)
         return lowest_excitations
 
@@ -100,15 +111,20 @@ class BaseParser:
     def write_dataset(self, fname: PathType) -> None:
         if len(self.data) == 0:
             self.data = data = self.create_dataset()
+        else:
+            data = self.data
         with open(fname, "w") as f:
             f.write("---- Happy family ----\n")
             for s, d in data.items():
                 f.write(f"------------{s}------------\n")
                 f.write(f"{d['singlet']}\n")
-                f.write("Matched triplets: " + "\n")  # noqa
-                for tr, triplet in d["matched_triplets"].items():
-                    f.write(f"{tr} <==> {',        '.join(triplet)}\n")
-            f.write("--- End of the happy family :) ---")
+                if d["matched_triplets"]:
+                    f.write("Matched triplets:\n")
+                    for tr, triplet in d["matched_triplets"].items():
+                        f.write(f"{tr} <==> {',        '.join(triplet)}\n")
+                else:
+                    f.write("Matched triplets: none\n")
+            f.write("--- End of the happy family :) ---\n")
 
     def create_dataset(self) -> DatasetType:
         for irr in self.irreps.values():
@@ -122,27 +138,36 @@ class BaseParser:
                 triplets.append(irr)
             else:
                 raise ValueError(f"Unknown excitation type {irr.multi}")
+        if not singlets:
+            self.log.warning(
+                "No singlet states parsed from %s: nothing to match against "
+                "the triplet states",
+                self.input_file,
+            )
+            self.data = {}
+            return {}
         lowest_singlets = BaseParser.select_lowest_excitations(singlets)
-        data = {}
+        data: DatasetType = {}
         for i, singlet in enumerate(lowest_singlets):
             matched_triplets: dict[str, list[str]] = {}
-            for idx, s_max in enumerate(singlet.transitions):
-                if abs(s_max.amplitude) > self.threshold:
-                    key = str(s_max)
-                    matched_triplets[key] = []
-                    for triplet in triplets:
-                        for trblock in triplet.trblocks:
-                            for tr in trblock.transitions:
-                                if s_max.is_equal(tr):
-                                    matched_triplets[key].append(
-                                        f"{trblock.id_number} {trblock.irrep} {tr.amplitude:.4f} "
-                                    )
-                                    data[f"S{i + 1}"] = {
-                                        "idx": idx,
-                                        "singlet": singlet,
-                                        "matched_triplets": matched_triplets,
-                                    }
-                                    break
+            for s_max in singlet.transitions:
+                if abs(s_max.amplitude) <= self.threshold:
+                    continue
+                key = str(s_max)
+                matched_triplets[key] = []
+                for triplet in triplets:
+                    for trblock in triplet.trblocks:
+                        for tr in trblock.transitions:
+                            if s_max.is_equal(tr):
+                                matched_triplets[key].append(
+                                    f"{trblock.id_number} {trblock.irrep} {tr.amplitude:.4f} "
+                                )
+                                break
+            data[f"S{i + 1}"] = {
+                "idx": i,
+                "singlet": singlet,
+                "matched_triplets": matched_triplets,
+            }
         self.data = data
         return data
 
@@ -184,7 +209,7 @@ class BaseParser:
             f"No equivalent irrep found for {other_irrep.multi} {other_irrep.name}"
         )
 
-    def write_vs_std(self, path: str, o_irreps: dict[str, Irrep]) -> None:
+    def write_vs_std(self, path: PathType, o_irreps: dict[str, Irrep]) -> None:
         data: dict[str, list[dict[str, Any]]] = {}
         for other_key, other_irrep in o_irreps.items():
             my_irrep = self._find_equivalent_irrep(other_irrep)
@@ -247,13 +272,21 @@ class BaseParser:
                     return trblock
         return None
 
-    def read_molcule_structure(self, line: str) -> None:
+    def read_molecule_structure(self, line: str) -> None:
         sp = line.split(' ')
         if len(sp) <= 2:
             return
         symbol = sp[0].strip()
-        positions = tuple(float(pos) for pos in sp[1:] if pos.strip() != '')
+        try:
+            positions = tuple(float(pos) for pos in sp[1:] if pos.strip() != '')
+        except ValueError:
+            # a header or a comment inside the $molecule block, not an atom
+            self.log.debug("Skipping non-numeric molecule line %r", line)
+            return
         self.atoms.append((symbol, positions))
+
+    #: Kept for callers that still use the old (misspelled) name.
+    read_molcule_structure = read_molecule_structure
 
     def run(self) -> None:
         self.process_file()

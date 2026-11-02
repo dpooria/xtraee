@@ -54,7 +54,9 @@ class QCADC2Parser(BaseParser):
             if irrep is None:
                 irrep = Irrep(m["irrep"], m["multi"], 0, self.name)
                 self.irreps[key] = irrep
-            trblock = ADC2TransitionBlock(int(m["root"]), irrep.name, irrep.multi)
+            trblock = ADC2TransitionBlock(
+                int(m["root"]), irrep.name, irrep.multi, threshold=self.threshold
+            )
             irrep.append(trblock)
             self._current_trblock = trblock
         elif self._current_trblock is not None:

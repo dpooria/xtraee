@@ -15,6 +15,7 @@ class TMCC2TransitionBlock(TransitionBlock):
         excitation_energy: float = nan,
         total_energy: float = nan,
         oscillator_strength: float = nan,
+        threshold: float = 0.0,
     ):
         super().__init__(
             id_number,
@@ -24,6 +25,7 @@ class TMCC2TransitionBlock(TransitionBlock):
             excitation_energy,
             total_energy,
             oscillator_strength,
+            threshold=threshold,
         )
         self.transitions: list[Transition] = []
         self.tr_cls = TMCC2Transition

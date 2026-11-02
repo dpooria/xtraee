@@ -2,6 +2,7 @@ from xtraee.irrep import Irrep
 from xtraee.lazypattern import LP
 from xtraee.parser.base import BaseParser, Block, PathType
 from xtraee.trblock import CCSDTransitionBlock, TransitionBlock
+from xtraee.utils import nan
 
 meta_patterns = dict(
     irrepsolv=LP(
@@ -93,15 +94,19 @@ class QCCSDParser(BaseParser):
                 self._inside_eeprop = False
                 self._inside_eomee = False
                 multi = m.group(3)
-                if multi == "singlet":
-                    n_states = self.ee_singlets[self._singlet_irrep_counter]
-                    self._singlet_irrep_counter += 1
-                else:
-                    n_states = self.ee_triplets[self._triplet_irrep_counter]
-                    self._triplet_irrep_counter += 1
+                n_states = self._next_irrep_size(multi)
                 if self._current_irrep is not None:
                     cc = self._current_irrep
-                    assert len(cc) == cc.n_states, "Irrep states mismatch"
+                    if cc.n_states >= 0 and len(cc) != cc.n_states:
+                        self.log.warning(
+                            "%s %s irrep %s: %d states were requested but %d "
+                            "were parsed",
+                            self.name,
+                            cc.multi,
+                            cc.name,
+                            cc.n_states,
+                            len(cc),
+                        )
                     cc.sort()
                 self._current_irrep = Irrep(
                     m.group(2), multi, n_states, parent=self.name
@@ -134,7 +139,11 @@ class QCCSDParser(BaseParser):
                 # else:
                 #     raise ValueError("No current transition block")
                 self._current_trblock = CCSDTransitionBlock(
-                    int(m.group(1)), irrep, self._current_multi, name=self.name
+                    int(m.group(1)),
+                    irrep,
+                    self._current_multi,
+                    name=self.name,
+                    threshold=self.threshold,
                 )
             elif start_indicators["eeprop"] in line:
                 if (m := meta_patterns["eeprop"].match(line)) is not None:
@@ -182,6 +191,42 @@ class QCCSDParser(BaseParser):
                         self._current_trprop = ""  # end the current trprop state
                     break
 
+    def process_file(self) -> None:
+        super().process_file()
+        self.finalize_irreps()
+
+    def _next_irrep_size(self, multi: str) -> int:
+        """Number of states the calculation asked for in this irrep.
+
+        Q-Chem prints one ``Solving for ...`` section per irrep and the
+        requested counts live in ``EE_SINGLETS``/``EE_TRIPLETS`` of ``$rem``.
+        When that list is absent or shorter than the number of sections
+        (multi-irrep runs, hand-written inputs), the parsed state count is used
+        instead of raising ``IndexError``.
+        """
+        if multi == "singlet":
+            counts, counter = self.ee_singlets, "_singlet_irrep_counter"
+        else:
+            counts, counter = self.ee_triplets, "_triplet_irrep_counter"
+        idx = getattr(self, counter)
+        setattr(self, counter, idx + 1)
+        if idx < len(counts):
+            return counts[idx]
+        self.log.debug(
+            "%s: no requested %s count for irrep #%d, using the parsed count",
+            self.name,
+            multi,
+            idx + 1,
+        )
+        return -1
+
+    def finalize_irreps(self) -> None:
+        """Sort every irrep and resolve sizes that were not given in ``$rem``."""
+        for irrep in self.irreps.values():
+            if irrep.n_states < 0:
+                irrep.n_states = len(irrep)
+            irrep.sort()
+
     def gather_descriptors(self, id_prefix: str = ""):
         data = []
         for irr in self.irreps.values():
@@ -192,7 +237,13 @@ class QCCSDParser(BaseParser):
                 meta.pop("R1")
                 meta["identifier"] = id_prefix + trblock.identifier
                 meta["|r_e-r_h|"] = meta.pop("rhre")
-                frontier_no = meta.pop("frontier_no")
+                frontier_no = meta.pop("frontier_no", None)
+                if frontier_no is None:
+                    # outputs written before the key was spelled correctly
+                    frontier_no = meta.pop("froniter_no", None)
+                if not frontier_no:
+                    # the state has no NO analysis section at all
+                    frontier_no = [nan, nan]
                 meta["frontier_no_1"] = frontier_no[0]
                 meta["frontier_no_2"] = frontier_no[1]
                 data.append(meta)
