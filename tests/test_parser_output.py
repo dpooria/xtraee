@@ -20,6 +20,8 @@ def test_happy_family(path, inputfile, expected_output, tmp_path):
     test_dir = Path(__file__).parent / path
     inputfile_path = test_dir / inputfile
     expected_output_path = test_dir / expected_output
+    if not inputfile_path.exists() or not expected_output_path.exists():
+        pytest.skip(f"fixture {path}/{inputfile} is not part of this checkout")
     outputfile = tmp_path / ("test_" + expected_output)
     qccsd = Parser(inputfile_path, 0.2)
     qccsd.process_file()

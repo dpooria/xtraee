@@ -1,28 +1,39 @@
-import subprocess
+import pytest
+
 from pathlib import Path
+
+from xtraee.cli import main
 
 
 def test_compareall():
-    # Run the compareall.py script
+    """``compareall`` on a CIS and an EOM-CCSD log writes both matrices."""
     cwd = Path(__file__).parent
-    result = subprocess.run(
+    cis = cwd / "../test_qcis/input1.log"
+    ccsd = cwd / "../test_qccsd/input2.log"
+    missing = [str(path) for path in (cis, ccsd) if not path.exists()]
+    if missing:
+        pytest.skip(f"missing fixtures: {', '.join(missing)}")
+
+    outdir = cwd / "_compare_out"
+    exit_code = main(
         [
-            "xtraee",
             "compareall",
-            cwd / "../test_qcis/input1.log",
-            cwd / "../test_qccsd/input2.log",
+            str(cis),
+            str(ccsd),
             "--acc-method=inner-prod",
-            f"--outdir={cwd.as_posix()}",
-        ],
-        capture_output=True,
-        text=True,
+            f"--outdir={outdir}",
+        ]
     )
-
-    # Check if the script ran successfully
-    assert result.returncode == 0, f"Script failed with error: {result.stderr}"
-
-    # Optionally, print the output for debugging
-    print(result.stdout)
+    try:
+        assert exit_code == 0
+        produced = sorted(path.name for path in outdir.glob("*.csv"))
+        assert any(name.startswith("singlet-") for name in produced)
+        assert any(name.startswith("CIS_") for name in produced)
+    finally:
+        for path in outdir.glob("*"):
+            path.unlink()
+        if outdir.exists():
+            outdir.rmdir()
 
 
 if __name__ == "__main__":
