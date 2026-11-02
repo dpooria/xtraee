@@ -101,7 +101,8 @@ def test_descriptors_writes_the_csv_into_outdir(tmp_path, capsys):
 def test_descriptors_accepts_a_path_and_a_custom_name(tmp_path):
     target = tmp_path / "nested" / "meta.csv"
     assert main(
-        ["descriptors", str(REAL_LOG), "--descriptors-file", str(target)]
+        ["descriptors", str(REAL_LOG), "--outdir", str(tmp_path / "out"),
+         "--descriptors-file", str(target)]
     ) == 0
     assert target.exists()
 
